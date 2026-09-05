@@ -445,7 +445,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.34";
+const APP_VERSAO="v2026-08-28.35";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -1017,28 +1017,39 @@ function processarArquivoMarcacoes(e){
 }
 function mostrarResumoImportacaoMarcacoes(lista){
   const funcNorm=DB.func.filter(ativo).map(f=>({f,norm:normalizaNome(f.nome)}));
-  const encontrados=[],naoEncontrados=new Set(),jaTinhamRegistro=[];
+  const encontrados=[],naoEncontrados=new Set(),jaTinhamRegistro=[],vaoCompletar=[];
   lista.forEach(item=>{
     const match=funcNorm.find(x=>x.norm===normalizaNome(item.nome));
     if(!match){naoEncontrados.add(item.nome);return;}
-    const jaTem=DB.faltas.some(fa=>fa.func===match.f.id&&fa.data===item.data);
-    if(jaTem){jaTinhamRegistro.push({nome:item.nome,data:item.data});return;}
+    const existente=DB.faltas.find(fa=>fa.func===match.f.id&&fa.data===item.data);
+    if(existente){
+      if(existente.tipo==="Presença"&&!existente.horaSaida&&item.saida){
+        vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida});
+      }else{
+        jaTinhamRegistro.push({nome:item.nome,data:item.data});
+      }
+      return;
+    }
     encontrados.push({fid:match.f.id,nome:match.f.nome,data:item.data,entrada:item.entrada,saida:item.saida});
   });
   const semSaida=encontrados.filter(x=>x.entrada&&!x.saida);
   window._importMarcacoesPendente=encontrados;
+  window._importMarcacoesCompletar=vaoCompletar;
   openModal(`<div class="modal-h"><h3>Importar marcações</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
+   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat steel"><div class="n">${vaoCompletar.length}</div><div class="l">Vão completar saída que faltava</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro completo (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
+   ${vaoCompletar.length?`<p class="hint" style="color:var(--steel);margin-bottom:10px">🔄 Esses já tinham Presença lançada sem saída, e agora a planilha trouxe a saída — vou completar: ${vaoCompletar.map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")}</p>`:""}
    ${semSaida.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px">⚠ Só bateram entrada, sem saída registrada (esqueceram de bater ou saíram sem avisar): ${semSaida.map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")}</p>`:""}
    ${naoEncontrados.size?`<p class="hint" style="color:var(--red);margin-bottom:10px">Nomes que não bateram com ninguém ativo cadastrado (confere grafia/cadastro): ${[...naoEncontrados].map(n=>esc(n)).join(", ")}</p>`:""}
-   <p class="hint">Isso marca <b>Presença</b> (com hora de entrada/saída, quando tiver) nos dias em que a pessoa bateu ponto e ainda não tinha nenhum registro naquele dia (não mexe em Falta/Atestado/Baixada/Férias já lançados). Quem ficou sem saída fica marcado pra você revisar depois.</p>
-   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" ${encontrados.length?"":"disabled"} onclick="confirmarImportacaoMarcacoes()">Confirmar e salvar ${encontrados.length} presenças</button></div>`);
+   <p class="hint">Isso marca <b>Presença</b> (com hora de entrada/saída, quando tiver) nos dias em que a pessoa bateu ponto e ainda não tinha nenhum registro naquele dia (não mexe em Falta/Atestado/Baixada/Férias já lançados). Se já tinha Presença sem saída, completa. Quem ficou sem saída fica marcado pra você revisar depois.</p>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" ${(encontrados.length||vaoCompletar.length)?"":"disabled"} onclick="confirmarImportacaoMarcacoes()">Confirmar (${encontrados.length} novas + ${vaoCompletar.length} completadas)</button></div>`);
 }
 function confirmarImportacaoMarcacoes(){
   if(!confirmarSenhaSalvar())return;
   const lista=window._importMarcacoesPendente||[];
+  const completar=window._importMarcacoesCompletar||[];
   lista.forEach(item=>{DB.faltas.push({id:uid(),func:item.fid,data:item.data,tipo:"Presença",horaEntrada:item.entrada||"",horaSaida:item.saida||"",motivo:"Importado de marcações"});});
-  save("faltas");window._importMarcacoesPendente=null;closeModal();render();toast(lista.length+" presenças importadas.");
+  completar.forEach(item=>{const fa=DB.faltas.find(x=>x.id===item.existenteId);if(fa)fa.horaSaida=item.saida;});
+  save("faltas");window._importMarcacoesPendente=null;window._importMarcacoesCompletar=null;closeModal();render();toast(lista.length+" presenças importadas, "+completar.length+" completadas com a saída.");
 }
 const REGIMES_PONTO={"Normal":"Normal — bate ponto no tablet","NaoBate":"Não bate ponto (cargo de confiança)","Manual":"Bate ponto manualmente"};
 function abrirGerenciarRegimePonto(){
