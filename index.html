@@ -166,10 +166,6 @@ const SENHA_SALVAR="1205"; /* pedida antes de qualquer salvar/editar/excluir, s�
 const SENHA_SALVAR_MIN=30; /* minutos que a liberação vale depois de digitar certo */
 let _senhaSalvarValidaAte=0;
 function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
-const AREAS_COM_PERMISSAO_EXTRA=[
-  {prefixos:["salvarEstoque(","salvarEstoqueMov(","salvarSaidaLote(","formSaidaLote(","salvarAlmoxPedido(","salvarDecisaoAlmoxPedido(","salvarRetiradaAlmoxPedido("],campo:"acessoAlmoxarifado",nome:"Almoxarifado"},
-  {prefixos:["salvarPedido(","salvarOrdemCompra(","concluirSalvarOrdemCompra(","salvarLancamentoDireto(","concluirSalvarLancamentoDireto("],campo:"acessoPedidos",nome:"Pedidos"}
-];
 (function(){
   document.addEventListener('click',function(e){
     if(!SENHA_SALVAR_ATIVA)return;
@@ -186,8 +182,15 @@ const AREAS_COM_PERMISSAO_EXTRA=[
       abrirLoginUsuario();
       return;
     }
-    const area=AREAS_COM_PERMISSAO_EXTRA.find(a=>a.prefixos.some(p=>onclickAttr.startsWith(p)));
-    if(area&&!confirmarPermissaoArea(area.campo,area.nome))return;
+    const fLogado=DB.func.find(x=>x.id===_usuarioLogadoId);
+    if(fLogado&&fLogado.perfilSoLeitura&&!usuarioLogadoPodeAutorizarPin()){toast("Seu perfil é somente leitura — não é possível salvar ou modificar.");return;}
+    const secaoChave=secaoDaTela(CUR);
+    if(secaoChave&&nivelPermissaoUsuario(secaoChave)!=="salvar"){
+      const secaoInfo=SECOES_PERMISSAO.find(s=>s.chave===secaoChave);
+      const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão de salvar em \""+(secaoInfo?secaoInfo.nome:secaoChave)+"\". Senha mestra pra liberar mesmo assim:");
+      if(pass===null)return;
+      if(pass!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");return;}
+    }
     executar();
   },true);
 })();
@@ -398,8 +401,45 @@ function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
 const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
-const APP_VERSAO="v2026-08-28.22";
-function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+MENU.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
+const SECOES_PERMISSAO=[
+  {chave:"rh",nome:"RH Geral",desc:"Funcionários, Experiência, Admissões, Movimentações, Mobilização, Baixada, Ponto",telas:["painel","func","experiencia","contratacao","mov","mobilizacao","baixada","ponto"]},
+  {chave:"reembolso",nome:"Reembolsos",desc:"Reembolsos, férias, demissão, adiantamento",telas:["reemb"]},
+  {chave:"recrutamento",nome:"Recrutamento",desc:"Vagas abertas e currículos",telas:["recrutamento"]},
+  {chave:"estrutura",nome:"Estrutura",desc:"Locais/Rota, Mapa, Veículos, Abastecimento",telas:["locais","mapa","veiculos","abastecimento"]},
+  {chave:"compras",nome:"Compras (administrativo)",desc:"Painel Compras, Pedidos, Lançamentos, Fornecedores, Contratos, Notas, Setores, Despesas",telas:["painelCompras","lancamentos","pedidos","fornecedores","contratos","notasfiscais","setores","despesas"]},
+  {chave:"almoxarifado",nome:"Almoxarifado",desc:"Estoque e Pedidos de Material/EPI",telas:["almoxarifado","almoxPedidos"]},
+  {chave:"areas",nome:"Painel de Áreas",desc:"Visão geral pro time de campo",telas:["areas"]}
+];
+const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
+function migrarPermissoesAntigas(f){
+  if(f.permissoes)return f.permissoes;
+  return{
+    rh:"salvar",estrutura:"salvar",compras:"salvar",areas:"ver",
+    reembolso:f.acessoReembolso?"salvar":"nenhum",
+    recrutamento:f.acessoRecrutamento?"salvar":"nenhum",
+    almoxarifado:f.acessoAlmoxarifado?"salvar":"nenhum"
+  };
+}
+function nivelPermissaoUsuario(secaoChave){
+  if(!_usuarioLogadoId)return null;
+  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  if(!f)return null;
+  if(usuarioLogadoPodeAutorizarPin())return"salvar";
+  const perms=migrarPermissoesAntigas(f);
+  let nivel=perms[secaoChave]||"nenhum";
+  if(f.perfilSoLeitura&&nivel==="salvar")nivel="ver";
+  return nivel;
+}
+function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
+const APP_VERSAO="v2026-08-28.23";
+function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
+  let menuFiltrado=MENU;
+  if(_usuarioLogadoId){
+    menuFiltrado=MENU.filter(m=>{if(m.sec)return true;const chave=secaoDaTela(m.v);if(!chave)return true;return nivelPermissaoUsuario(chave)!=="nenhum";});
+    menuFiltrado=menuFiltrado.filter((m,i)=>{if(!m.sec)return true;for(let j=i+1;j<menuFiltrado.length;j++){if(menuFiltrado[j].sec)return false;return true;}return false;});
+    if(!menuFiltrado.some(m=>m.v===CUR)){CUR="painel";setTimeout(render,0);}
+  }
+  nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+menuFiltrado.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><a href="#" onclick="abrirGerenciarPermissoes();return false" style="color:#9aa3ad;text-decoration:underline">⚙ Gerenciar permissões</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
 function atualizarBannerIdentificacao(){
   const el=$("#idBanner");if(!el)return;
   el.innerHTML=_usuarioLogadoNome?"":`<div class="idbanner-bar" onclick="abrirLoginUsuario()">👤 <b>Você ainda não se identificou.</b> Clique aqui pra identificar-se com seu CPF + PIN — isso garante que fique registrado quem faz cada alteração no sistema.<span style="text-decoration:underline;white-space:nowrap">Identificar-se →</span></div>`;
@@ -407,6 +447,36 @@ function atualizarBannerIdentificacao(){
 let _usuarioLogadoId="",_usuarioLogadoNome="";
 try{const s=JSON.parse(sessionStorage.getItem('obra_usuario')||'null');if(s){_usuarioLogadoId=s.id;_usuarioLogadoNome=s.nome;}}catch(e){}
 function nomeUsuarioLogado(){return _usuarioLogadoNome;}
+function abrirGerenciarPermissoes(){
+  const senha=prompt("Senha mestra pra gerenciar permissões:");
+  if(senha===null)return;
+  if(senha!==SENHA_MESTRA){toast("Senha incorreta.");return;}
+  renderGerenciarPermissoes();
+}
+function renderGerenciarPermissoes(){
+  const termo=(window._gpBusca||"").toLowerCase();
+  const lista=porNome(DB.func.filter(f=>ativo(f)&&(!termo||f.nome.toLowerCase().includes(termo))));
+  openModal(`<div class="modal-h"><h3>⚙ Gerenciar permissões</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:14px">Pra cada pessoa, define o nível em cada área: <b>Nenhum</b> (nem aparece no menu), <b>Ver</b> (só olhar, não salva nada) ou <b>Ver e Salvar</b> (acesso completo). Muda direto, salva sozinho.</p>
+   <input type="search" id="gp_busca" placeholder="Buscar por nome..." value="${esc(window._gpBusca||"")}" oninput="window._gpBusca=this.value;renderGerenciarPermissoes()" style="width:100%;padding:8px;border:1px solid #dcdfe3;border-radius:8px;margin-bottom:14px">
+   <div class="tblwrap" style="max-height:60vh;overflow-y:auto"><table class="tbl"><thead><tr><th>Pessoa</th>${SECOES_PERMISSAO.map(s=>`<th>${esc(s.nome)}</th>`).join("")}<th>Somente leitura (tudo)</th><th>Admin total</th></tr></thead><tbody>${
+     lista.map(f=>{const perms=migrarPermissoesAntigas(f);return `<tr><td><b>${esc(f.nome)}</b>${usuarioLogadoPodeAutorizarPin()&&normalizaNome(f.nome).includes("VITOR")&&normalizaNome(f.nome).includes("MARTINS")?'<br><span class="tag t-green" style="font-size:10px">admin nato</span>':''}</td>${
+       SECOES_PERMISSAO.map(s=>`<td><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></td>`).join("")
+     }<td style="text-align:center"><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""}></td><td style="text-align:center"><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""}></td></tr>`;}).join("")
+   }</tbody></table></div>
+   </div><div class="modal-f"><button class="btn btn-a" onclick="closeModal()">Fechar</button></div>`);
+}
+function mudarPermissao(fid,secaoChave,nivel){
+  const f=DB.func.find(x=>x.id===fid);
+  f.permissoes=migrarPermissoesAntigas(f);
+  f.permissoes[secaoChave]=nivel;
+  save("func");toast("Permissão atualizada.");
+}
+function mudarFlagPermissao(fid,campo,valor){
+  const f=DB.func.find(x=>x.id===fid);
+  f[campo]=valor;
+  save("func");toast("Atualizado.");
+}
 function abrirLoginUsuario(){
   openModal(`<div class="modal-h"><h3>👤 Identificar-se</h3><button class="x" onclick="pularIdentificacao()">×</button></div><div class="modal-b">
    ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:14px">Logado como <b>${esc(_usuarioLogadoNome)}</b>.</p><button class="btn btn-g" style="margin-bottom:14px" onclick="sairUsuario()">Sair / trocar de pessoa</button>`:`<p class="hint" style="margin-bottom:14px">Isso é opcional — se não quiser agora, pode continuar sem identificar sem problema.</p>`}
@@ -468,7 +538,7 @@ function usuarioLogadoPodeAutorizarPin(){
   const f=DB.func.find(x=>x.id===_usuarioLogadoId);
   if(!f)return false;
   const nomeNorm=normalizaNome(f.nome);
-  if(nomeNorm.includes("VITOR")&&nomeNorm.includes("CASTRO")&&nomeNorm.includes("MARTINS"))return true;
+  if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
 function abrirTrocaPin(fid,origem){
@@ -711,11 +781,9 @@ function confirmarSenhaSalvar(){
   if(val!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");abrirLoginUsuario();return false;}
   return true;
 }
-function confirmarPermissaoArea(campo,nomeArea){
-  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
-  if(f&&usuarioLogadoPodeAutorizarPin())return true;
-  if(f&&f[campo])return true;
-  const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão liberada pra "+nomeArea+". Senha mestra pra liberar mesmo assim:");
+function confirmarPermissaoArea(secaoChave,nomeArea){
+  if(nivelPermissaoUsuario(secaoChave)==="salvar")return true;
+  const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão de salvar em \""+nomeArea+"\". Senha mestra pra liberar mesmo assim:");
   if(pass===null)return false;
   if(pass!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");return false;}
   return true;
@@ -942,10 +1010,9 @@ function formFerias(){if(!DB.func.filter(ativo).length){toast("Cadastre um funci
 function salvarFerias(){const func=$("#fe_f").value,inicio=$("#fe_i").value,fim=$("#fe_o").value;if(!inicio||!fim){toast("Preencha as datas.");return;}if(pd(fim)<pd(inicio)){toast("Fim antes do início.");return;}DB.ferias.push({id:uid(),func,inicio,fim});save("ferias");closeModal();render();toast("Férias registradas.");}
 function delFerias(id){DB.ferias=DB.ferias.filter(x=>x.id!==id);save("ferias");render();}
 let _reembUnlocked=false;
-function usuarioLogadoTemAcesso(campo){
-  if(!_usuarioLogadoId)return false;
-  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
-  return !!(f&&f[campo]);
+function usuarioLogadoTemAcesso(secaoChave){
+  const nivel=nivelPermissaoUsuario(secaoChave);
+  return nivel==="ver"||nivel==="salvar";
 }
 function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
   return `<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">${titulo}</h2>
@@ -955,7 +1022,7 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
 function vReemb(){
-  if(!_reembUnlocked&&usuarioLogadoTemAcesso("acessoReembolso"))_reembUnlocked=true;
+  if(!_reembUnlocked&&usuarioLogadoTemAcesso("reembolso"))_reembUnlocked=true;
   if(!_reembUnlocked){
     main.innerHTML=telaAreaRestrita("Reembolsos e lançamentos","acessoReembolso","desbloquearReemb");
     return;
@@ -2050,7 +2117,7 @@ function verPedido(id){
 }
 function liberarExcecao(id){
   if(!confirmarSenhaSalvar())return;
-  if(!confirmarPermissaoArea("acessoPedidos","Pedidos"))return;
+  if(!confirmarPermissaoArea("compras","Compras"))return;
   const obs=prompt("Observação da liberação (opcional):","");
   const p=DB.compras_pedidos.find(x=>x.id===id);
   p.excecaoLiberada=true;p.excecaoLiberadaData=iso(today());p.excecaoLiberadaObs=obs||"";
@@ -3581,7 +3648,7 @@ function diasEntreEtapas(hist,statusA,statusB){
 }
 let _recrutUnlocked=false;
 function vRecrutamento(){
-  if(!_recrutUnlocked&&usuarioLogadoTemAcesso("acessoRecrutamento"))_recrutUnlocked=true;
+  if(!_recrutUnlocked&&usuarioLogadoTemAcesso("recrutamento"))_recrutUnlocked=true;
   if(!_recrutUnlocked){
     main.innerHTML=telaAreaRestrita("Recrutamento","acessoRecrutamento","desbloquearRecrutamento");
     return;
