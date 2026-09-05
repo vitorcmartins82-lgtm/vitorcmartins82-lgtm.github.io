@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.3";
+const APP_VERSAO="v2026-09-05.4";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -750,9 +750,36 @@ function periodoPontoPadrao(){const t=today();const y=t.getFullYear(),m=t.getMon
 let _pontoPeriodo=periodoPontoPadrao();
 function overlapDias(iniStr,fimStr,de,ate){if(!iniStr)return 0;const ini=pd(iniStr);const fim=fimStr?pd(fimStr):ini;const pDe=pd(de),pAte=pd(ate);if(!pDe||!pAte)return 0;const s=ini>pDe?ini:pDe;const e=fim<pAte?fim:pAte;if(s>e)return 0;return diasEntre(s,e)+1;}
 function resumoPeriodoPonto(de,ate){const JUST=["Falta justificada","Atestado","Abono"];return DB.func.filter(ativo).map(f=>{const faltas=DB.faltas.filter(x=>x.func===f.id&&(x.tipo||"Falta")==="Falta"&&x.data>=de&&x.data<=ate).length;const justificadas=DB.faltas.filter(x=>x.func===f.id&&JUST.includes(x.tipo)&&x.data>=de&&x.data<=ate).length;let baixadaDias=0;DB.baixadas.filter(b=>b.func===f.id).forEach(b=>{const fimReal=b.dataFim||iso(new Date(pd(b.dataInicio).getTime()+((+b.dias||1)-1)*MS));baixadaDias+=overlapDias(b.dataInicio,fimReal,de,ate);});let feriasDias=0;DB.ferias.filter(x=>x.func===f.id).forEach(x=>{feriasDias+=overlapDias(x.inicio,x.fim,de,ate);});return {f,faltas,justificadas,baixadaDias,feriasDias};});}
-function atualizarPeriodoPonto(){_pontoPeriodo={de:$("#pp_de").value,ate:$("#pp_ate").value};renderResumoPeriodoPonto();}
-function resetPeriodoPonto(){_pontoPeriodo=periodoPontoPadrao();$("#pp_de").value=_pontoPeriodo.de;$("#pp_ate").value=_pontoPeriodo.ate;renderResumoPeriodoPonto();}
+function atualizarPeriodoPonto(){_pontoPeriodo={de:$("#pp_de").value,ate:$("#pp_ate").value};renderResumoPeriodoPonto();renderGradeDiariaPonto();}
+function resetPeriodoPonto(){_pontoPeriodo=periodoPontoPadrao();$("#pp_de").value=_pontoPeriodo.de;$("#pp_ate").value=_pontoPeriodo.ate;renderResumoPeriodoPonto();renderGradeDiariaPonto();}
 function renderResumoPeriodoPonto(){const {de,ate}=_pontoPeriodo;const el=$("#pp_tbl");if(!el||!de||!ate)return;const rows=resumoPeriodoPonto(de,ate).sort((a,b)=>a.f.nome.localeCompare(b.f.nome,"pt-BR"));el.innerHTML=rows.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Faltas</th><th>Justif./Atestado</th><th>Baixada (dias)</th><th>Férias (dias)</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.f.nome)}</td><td class="num">${r.faltas}</td><td class="num">${r.justificadas}</td><td class="num">${r.baixadaDias}</td><td class="num">${r.feriasDias}</td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Sem funcionários ativos.</p></div>`;}
+const STATUS_ABREV={"Presença":"P","Falta":"F","Falta justificada":"FJ","Atestado":"A","Abono":"Ab","Treinamento":"T","Baixada":"Bx","Férias":"Fé","Sem registro":"—"};
+function renderGradeDiariaPonto(){
+  const {de,ate}=_pontoPeriodo;const el=$("#pp_grade");if(!el||!de||!ate)return;
+  const dias=[];let cursor=pd(de);const fim=pd(ate);
+  while(cursor<=fim&&dias.length<40){dias.push(iso(cursor));cursor=new Date(cursor.getTime()+MS);}
+  const ativos=DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate").sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  if(!ativos.length){el.innerHTML='<div class="empty"><p>Sem funcionários pra mostrar.</p></div>';return;}
+  el.innerHTML=`<table class="tbl" style="font-size:11.5px"><thead><tr><th style="position:sticky;left:0;background:#fff;z-index:1">Funcionário</th>${dias.map(d=>`<th style="text-align:center;padding:4px 6px">${d.slice(8,10)}/${d.slice(5,7)}</th>`).join("")}</tr></thead><tbody>${
+    ativos.map(f=>{
+      const chegada=dataChegadaNestaObra(f.id).data;
+      return `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap">${esc(f.nome)}</td>${dias.map(d=>{
+        if(chegada&&d<chegada)return `<td style="text-align:center;color:#d5d8d3">·</td>`;
+        const s=statusDoDia(f.id,d);
+        const clicavel=s.tipo==="Sem registro"&&d<=iso(today());
+        return `<td style="text-align:center;padding:4px 2px;${clicavel?'cursor:pointer':''}" ${clicavel?`onclick="marcarFaltaRapida('${f.id}','${d}')" title="Clica pra marcar falta"`:''}><span class="tag ${s.cls}" style="font-size:10px;padding:1px 5px">${STATUS_ABREV[s.tipo]||s.tipo}</span></td>`;
+      }).join("")}</tr>`;
+    }).join("")
+  }</tbody></table>
+  <p class="hint" style="margin-top:8px">P=Presença · F=Falta · FJ=Falta justificada · A=Atestado · Ab=Abono · T=Treinamento · Bx=Baixada · Fé=Férias · —=Sem registro (clicável até hoje) · ·=antes de chegar na obra</p>`;
+}
+function marcarFaltaRapida(fid,data){
+  if(!confirmarSenhaSalvar())return;
+  const f=DB.func.find(x=>x.id===fid);
+  if(!confirm("Marcar falta pra "+f.nome+" em "+fmt(data)+"?"))return;
+  DB.faltas.push({id:uid(),func:fid,data,tipo:"Falta",motivo:""});
+  save("faltas");renderGradeDiariaPonto();toast("Falta registrada.");
+}
 function statusDoDia(fid,dataStr){
   const fer=DB.ferias.find(x=>x.func===fid&&x.inicio&&x.fim&&x.inicio<=dataStr&&x.fim>=dataStr);
   if(fer)return{tipo:"Férias",cls:"t-steel"};
@@ -815,9 +842,10 @@ function vPonto(){main.innerHTML=`<div class="head"><div><h1>Ponto & Ocorrência
    <input type="file" id="marc_file" accept=".xlsx,.xls" style="display:none" onchange="processarArquivoMarcacoes(event)">
    <div class="panel"><h2><span class="t">✓ Chamada do dia <span id="pp_contagem"></span></span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Data</span><input type="date" id="pp_data" value="${_chamadaData}" onchange="atualizarChamada()"><button class="btn btn-g btn-sm" onclick="$('#pp_data').value=iso(today());atualizarChamada()">Hoje</button><button class="btn btn-a btn-sm" onclick="marcarTodosPresentes()">✓ Marcar todos sem registro como presença</button><button class="btn btn-g btn-sm" onclick="exportChamadaExcel()">⭳ Exportar dia</button></div><div class="tblwrap" id="pp_chamada"></div><p class="hint" style="padding:0 18px 14px">Quem não tiver nada registrado nesse dia aparece como "Sem registro" — é o sinal pra ir atrás do motivo.</p></div>
    <div class="panel"><h2><span class="t">📅 Resumo do período de ponto</span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">De</span><input type="date" id="pp_de" value="${_pontoPeriodo.de}" onchange="atualizarPeriodoPonto()"><span class="hint">até</span><input type="date" id="pp_ate" value="${_pontoPeriodo.ate}" onchange="atualizarPeriodoPonto()"><button class="btn btn-g btn-sm" onclick="resetPeriodoPonto()">Período atual (16 a 15)</button></div><div class="tblwrap" id="pp_tbl"></div><p class="hint" style="padding:0 18px 14px">Referência p/ desconto de vale-alimentação — confirme a regra final com o RH.</p></div>
+   <div class="panel"><h2><span class="t">📆 Dia a dia — quem bateu, quem faltou</span></h2><p class="hint" style="padding:0 18px 10px">Um dia por coluna. Clica em qualquer "sem registro" (cinza) pra marcar falta na hora.</p><div class="tblwrap" id="pp_grade" style="overflow-x:auto"></div></div>
    <div class="panel"><h2><span class="t">Faltas & ocorrências (lista)</span></h2><div class="tblwrap">${DB.faltas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Motivo</th><th>Reflexo</th><th></th></tr></thead><tbody>${DB.faltas.slice().sort((a,b)=>a.data<b.data?1:-1).map(f=>{const alojado=estadiaAtual(f.func);const tipo=f.tipo||"Falta";const descontaBaixada=tipo==="Falta";const cls=tipo==="Presença"?"t-green":tipo==="Falta"?"t-red":tipo==="Treinamento"?"t-steel":"t-amber";return `<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.data)}</td><td><span class="tag ${cls}">${esc(tipo)}</span></td><td><small style="color:var(--muted)">${esc(f.motivo||"—")}</small></td><td><small>${descontaBaixada?(alojado?"Alojado: −1 dia de baixada":"Local: tira café + passagem"):"Não desconta baixada"}</small></td><td><button class="btn btn-g btn-sm" onclick="delFalta('${f.id}')">Excluir</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma ocorrência registrada.</p></div>`}</div></div>
    <div class="panel"><h2><span class="t">Férias</span></h2><div class="tblwrap">${DB.ferias.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th>Dias</th><th></th></tr></thead><tbody>${DB.ferias.slice().sort((a,b)=>a.inicio<b.inicio?1:-1).map(f=>`<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.inicio)}</td><td>${fmt(f.fim)}</td><td class="num">${diasEntre(pd(f.inicio),pd(f.fim))+1}</td><td><button class="btn btn-g btn-sm" onclick="delFerias('${f.id}')">Excluir</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma férias registrada.</p></div>`}</div></div>
-   <div class="panel"><h2><span class="t">Baixada (períodos)</span></h2><div class="tblwrap">${DB.baixadas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th>Dias</th><th>Obs</th><th></th></tr></thead><tbody>${DB.baixadas.slice().sort((a,b)=>a.dataInicio<b.dataInicio?1:-1).map(b=>`<tr><td>${esc(funcNome(b.func))}</td><td>${fmt(b.dataInicio)}</td><td>${b.dataFim?fmt(b.dataFim):"—"}</td><td class="num">${b.dias}</td><td>${esc(b.obs||"—")}</td><td><button class="btn btn-g btn-sm" onclick="delBaixada('${b.id}')">Excluir</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhum período registrado.</p></div>`}</div></div>`;renderResumoPeriodoPonto();renderChamada();}
+   <div class="panel"><h2><span class="t">Baixada (períodos)</span></h2><div class="tblwrap">${DB.baixadas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th>Dias</th><th>Obs</th><th></th></tr></thead><tbody>${DB.baixadas.slice().sort((a,b)=>a.dataInicio<b.dataInicio?1:-1).map(b=>`<tr><td>${esc(funcNome(b.func))}</td><td>${fmt(b.dataInicio)}</td><td>${b.dataFim?fmt(b.dataFim):"—"}</td><td class="num">${b.dias}</td><td>${esc(b.obs||"—")}</td><td><button class="btn btn-g btn-sm" onclick="delBaixada('${b.id}')">Excluir</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhum período registrado.</p></div>`}</div></div>`;renderResumoPeriodoPonto();renderGradeDiariaPonto();renderChamada();}
 function selectFunc(idsel){return `<input type="text" id="${idsel}_busca" placeholder="Buscar por nome..." oninput="filtrarSelectFunc('${idsel}_busca','${idsel}')" style="margin-bottom:6px"><select id="${idsel}">${porNome(DB.func.filter(ativo)).map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select>`;}
 function filtrarSelectFunc(buscaId,selectId){const q=$("#"+buscaId).value;const sel=$("#"+selectId);const cur=sel.value;const list=funcMatch(DB.func.filter(ativo),q);sel.innerHTML=list.map(f=>`<option value="${f.id}" ${f.id===cur?"selected":""}>${esc(f.nome)}</option>`).join("");}
 function funcionarioEmBaixadaNaData(fid,data){
