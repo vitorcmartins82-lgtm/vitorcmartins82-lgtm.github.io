@@ -415,7 +415,7 @@ function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
 const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
-const SECOES_PERMISSAO=MENU.filter(m=>!m.sec).map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
+const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
   const ehFormatoAntigo=f.permissoes&&("rh" in f.permissoes||"estrutura" in f.permissoes||"compras" in f.permissoes||"reembolso" in f.permissoes);
@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.1";
+const APP_VERSAO="v2026-09-05.2";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -497,21 +497,14 @@ function renderDetalhePermissoes(){
   if(!f){el.innerHTML='<div class="panel"><p class="hint" style="padding:20px">Escolhe uma pessoa na lista ao lado.</p></div>';return;}
   const perms=migrarPermissoesAntigas(f);
   const ehAdminNato=normalizaNome(f.nome).includes("VITOR")&&normalizaNome(f.nome).includes("MARTINS");
-  const SECOES_SENSIVEIS=["reemb","recrutamento"];
-  const gerais=SECOES_PERMISSAO.filter(s=>!SECOES_SENSIVEIS.includes(s.chave));
-  const sensiveis=SECOES_PERMISSAO.filter(s=>SECOES_SENSIVEIS.includes(s.chave));
   const linhaSecao=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid #eef0ec"><b style="font-size:14px">${esc(s.nome)}</b><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:150px;padding:7px;font-size:13.5px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`;
   el.innerHTML=`<div class="panel" style="padding:24px">
    <h2 style="margin:0 0 4px;font-size:19px">${esc(f.nome)}</h2>
    <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")} · ${esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
-   ${gerais.map(linhaSecao).join("")}
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada — não afeta as áreas sensíveis abaixo, que são sempre separadas</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
-   <div style="margin-top:20px;border:2px solid var(--amber);border-radius:10px;padding:16px;background:#fdf8ee">
-     <b style="font-size:13.5px;color:var(--amber-d)">🔒 Áreas sensíveis — sempre separadas, nunca liberadas em conjunto com o resto</b>
-     <p class="hint" style="margin:6px 0 14px">Dados pessoais/financeiros. Precisa ser decidido individualmente pra cada pessoa, mesmo que ela já veja tudo o mais.</p>
-     ${sensiveis.map(linhaSecao).join("")}
-   </div>
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre, incluindo as áreas sensíveis — igual o Vitor</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
+   ${SECOES_PERMISSAO.map(linhaSecao).join("")}
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
+   <p class="hint" style="margin-top:14px">🔒 Reembolsos e Recrutamento não entram nessa lista — essas duas áreas só abrem com a senha mestra, direto na tela delas (não dependem de liberação por pessoa).</p>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre — igual o Vitor</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
    </div>`;
 }
 function mudarPermissao(fid,secaoChave,nivel){
@@ -1021,6 +1014,11 @@ function usuarioLogadoTemAcesso(secaoChave){
   const nivel=nivelPermissaoUsuario(secaoChave);
   return nivel==="ver"||nivel==="salvar";
 }
+function telaSenhaMestra(titulo,funcaoDesbloquear){
+  return `<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">${titulo}</h2>
+   <p class="hint" style="margin-bottom:16px">Área protegida — só abre com a senha mestra.</p>
+   <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar</button></div>`;
+}
 function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
   return `<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">${titulo}</h2>
    ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:16px">Você está identificado como <b>${esc(_usuarioLogadoNome)}</b>, mas essa pessoa não tem acesso liberado a essa área.</p>`:`<p class="hint" style="margin-bottom:16px">Precisa se identificar (com permissão liberada) ou usar a senha mestra.</p>`}
@@ -1029,9 +1027,8 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
 function vReemb(){
-  if(!_reembUnlocked&&usuarioLogadoTemAcesso("reemb"))_reembUnlocked=true;
   if(!_reembUnlocked){
-    main.innerHTML=telaAreaRestrita("Reembolsos e lançamentos","acessoReembolso","desbloquearReemb");
+    main.innerHTML=telaSenhaMestra("Reembolsos e lançamentos","desbloquearReemb");
     return;
   }
   const tot=DB.reemb.reduce((s,r)=>s+(+r.valor||0),0);main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div><div class="grid stats"><div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total lançado</div></div><div class="stat amber"><div class="n">${DB.reemb.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes</div></div></div><div class="panel"><div class="tblwrap">${DB.reemb.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${DB.reemb.slice().sort((a,b)=>a.data<b.data?1:-1).map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento ainda.</p><button class="btn btn-a" onclick="formReemb()">Novo lançamento</button></div>`}</div></div>`;}
@@ -3655,9 +3652,8 @@ function diasEntreEtapas(hist,statusA,statusB){
 }
 let _recrutUnlocked=false;
 function vRecrutamento(){
-  if(!_recrutUnlocked&&usuarioLogadoTemAcesso("recrutamento"))_recrutUnlocked=true;
   if(!_recrutUnlocked){
-    main.innerHTML=telaAreaRestrita("Recrutamento","acessoRecrutamento","desbloquearRecrutamento");
+    main.innerHTML=telaSenhaMestra("Recrutamento","desbloquearRecrutamento");
     return;
   }
   const ativas=vagasAbertasAtivas();
