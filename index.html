@@ -181,7 +181,7 @@ function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
   },true);
 })();
 async function sha256(str){const enc=new TextEncoder().encode(str);const buf=await crypto.subtle.digest('SHA-256',enc);return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
-async function tentarDesbloquear(){const val=document.getElementById("lockPass").value;const valTrim=val.trim();const h=await sha256(val);const ls=document.getElementById("lockScreen");const erro=document.getElementById("lockErro");if(h===SENHA_HASH||valTrim===SENHA_MESTRA){try{sessionStorage.setItem('obra_unlocked','1');}catch(e){}ls.style.display='none';}else{erro.style.display='block';}}
+async function tentarDesbloquear(){const val=document.getElementById("lockPass").value;const valTrim=val.trim();const h=await sha256(val);const ls=document.getElementById("lockScreen");const erro=document.getElementById("lockErro");if(h===SENHA_HASH||valTrim===SENHA_MESTRA){try{sessionStorage.setItem('obra_unlocked','1');}catch(e){}ls.style.display='none';if(!_usuarioLogadoNome&&sessionStorage.getItem('obra_identificacao_pulada')!=='1')setTimeout(()=>abrirLoginUsuario(),300);}else{erro.style.display='block';}}
 function bloquearApp(){try{sessionStorage.removeItem('obra_unlocked');}catch(e){}location.reload();}
 function confirmarRestaurar(){
   const val=prompt("Ação sensível: restaurar um backup SUBSTITUI todos os dados atuais.\nDigite a senha pra continuar:");
@@ -189,7 +189,7 @@ function confirmarRestaurar(){
   if(!senhaOk(val,SENHA_SALVAR)){toast("Senha incorreta — restaurar cancelado.");return;}
   $("#fileimport").click();
 }
-(function(){try{if(!SENHA_ATIVA||sessionStorage.getItem('obra_unlocked')==='1'){document.addEventListener('DOMContentLoaded',()=>{const ls=document.getElementById('lockScreen');if(ls)ls.style.display='none';});}}catch(e){}})();
+(function(){try{if(!SENHA_ATIVA||sessionStorage.getItem('obra_unlocked')==='1'){document.addEventListener('DOMContentLoaded',()=>{const ls=document.getElementById('lockScreen');if(ls)ls.style.display='none';if(!_usuarioLogadoNome&&sessionStorage.getItem('obra_identificacao_pulada')!=='1')setTimeout(()=>abrirLoginUsuario(),500);});}}catch(e){}})();
 const KEYS=["func","locais","mov","faltas","ferias","baixadas","reemb","veiculos","rotas","abastecimentos","mobilizacoes","vagas","compras_setores","compras_pedidos","compras_despesas","compras_estoque","compras_contratos","compras_notas","compras_estoque_mov","compras_fornecedores","almox_pedidos","vagas_abertas"];
 const CFG_DEFAULT={baixadaCarencia:60,baixadaMes:2.5,faltaDesc:1,expF1:30,expF2:90,alertaBaixada:5,alertaAntecedenciaDias:20,comboioCapacidade:6000,diasAlertaParado:5,prazoNotaFiscalDias:5,alertaVencimentoDias:10};
 const SUPA={url:"https://imuguwwwlbwmqslmsmrk.supabase.co",key:"sb_publishable_c0RC7oGRtKQ0ZskiLnmbHQ_me4LMDoF"};
@@ -385,10 +385,99 @@ function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setT
 function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
-ov.addEventListener("click",e=>{if(e.target===ov)closeModal();});
+/* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
 const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
-const APP_VERSAO="v2026-08-28.12";
-function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+MENU.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));}
+const APP_VERSAO="v2026-08-28.20";
+function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioTxt=_usuarioLogadoNome?`👤 ${esc(_usuarioLogadoNome)} · <a href="#" onclick="abrirLoginUsuario();return false" style="color:#9aa3ad;text-decoration:underline">trocar</a>`:`<a href="#" onclick="abrirLoginUsuario();return false" style="color:#e8b34a;text-decoration:underline">👤 Identificar-se</a>`;nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+MENU.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${usuarioTxt}<br>${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));}
+let _usuarioLogadoId="",_usuarioLogadoNome="";
+try{const s=JSON.parse(sessionStorage.getItem('obra_usuario')||'null');if(s){_usuarioLogadoId=s.id;_usuarioLogadoNome=s.nome;}}catch(e){}
+function nomeUsuarioLogado(){return _usuarioLogadoNome;}
+function abrirLoginUsuario(){
+  openModal(`<div class="modal-h"><h3>👤 Identificar-se</h3><button class="x" onclick="pularIdentificacao()">×</button></div><div class="modal-b">
+   ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:14px">Logado como <b>${esc(_usuarioLogadoNome)}</b>.</p><button class="btn btn-g" style="margin-bottom:14px" onclick="sairUsuario()">Sair / trocar de pessoa</button>`:`<p class="hint" style="margin-bottom:14px">Isso é opcional — se não quiser agora, pode continuar sem identificar sem problema.</p>`}
+   <div class="fg"><label>Seu CPF</label><input type="text" id="lg_cpf" inputmode="numeric" placeholder="só os números" onkeydown="if(event.key==='Enter')buscarPorCpfLogin()"></div>
+   <button class="btn btn-g btn-sm" style="margin-bottom:10px" onclick="buscarPorCpfLogin()">Buscar</button>
+   <div id="lg_pessoawrap"></div>
+   </div><div class="modal-f" id="lg_footer"><button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button></div>`);
+}
+function buscarPorCpfLogin(){
+  const cpfDigitado=($("#lg_cpf").value||"").replace(/\D/g,"");
+  if(!cpfDigitado){toast("Digite o CPF.");return;}
+  const f=DB.func.find(x=>ativo(x)&&x.cpf&&x.cpf.replace(/\D/g,"")===cpfDigitado);
+  const wrap=$("#lg_pessoawrap");
+  if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — se continuar sem achar, favor entrar em contato com o Vitor Martins.</p>`;return;}
+  wrap.innerHTML=`<p class="hint" style="margin-bottom:10px">Encontrado: <b>${esc(f.nome)}</b></p><input type="hidden" id="lg_func" value="${f.id}"><div id="lg_pinarea"></div>`;
+  mostrarCampoPinLogin();
+}
+function mostrarCampoPinLogin(){
+  const fid=$("#lg_func")?.value;const area=$("#lg_pinarea");const footer=$("#lg_footer");if(!area||!fid)return;
+  const f=DB.func.find(x=>x.id===fid);
+  if(!f)return;
+  if(!f.pin){
+    area.innerHTML=`<p class="hint" style="margin-bottom:10px">Primeira vez? Escolhe um PIN de 4 dígitos pra ser seu daqui pra frente.</p><div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="lg_pin_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar PIN</label><input type="password" id="lg_pin_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>`;
+    footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="criarPinProprio()">Criar meu PIN e entrar</button>`;
+  }else{
+    area.innerHTML=`<div class="fg"><label>PIN pessoal</label><input type="password" id="lg_pin" maxlength="4" inputmode="numeric" placeholder="4 dígitos" onkeydown="if(event.key==='Enter')confirmarLoginUsuario()"></div><p class="hint"><a href="#" onclick="abrirTrocaPin('${fid}');return false" style="color:var(--steel)">Esqueci o PIN / quero trocar</a></p>`;
+    footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="confirmarLoginUsuario()">Entrar</button>`;
+  }
+}
+function criarPinProprio(){
+  const fid=$("#lg_func").value,novo=$("#lg_pin_novo").value.trim(),conf=$("#lg_pin_confirma").value.trim();
+  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
+  if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
+  const f=DB.func.find(x=>x.id===fid);
+  f.pin=novo;save("func");
+  _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
+  try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
+  closeModal();buildNav();toast("PIN criado! Identificado como "+f.nome+".");
+}
+function pularIdentificacao(){
+  try{sessionStorage.setItem('obra_identificacao_pulada','1');}catch(e){}
+  closeModal();
+}
+function confirmarLoginUsuario(){
+  const fid=$("#lg_func").value,pin=$("#lg_pin").value.trim();
+  const f=DB.func.find(x=>x.id===fid);
+  if(!f||!pin||f.pin!==pin){toast("PIN incorreto.");return;}
+  _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
+  try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
+  closeModal();buildNav();toast("Identificado como "+f.nome+".");
+}
+function sairUsuario(){
+  _usuarioLogadoId="";_usuarioLogadoNome="";
+  try{sessionStorage.removeItem('obra_usuario');}catch(e){}
+  closeModal();buildNav();toast("Saiu.");
+}
+function usuarioLogadoPodeAutorizarPin(){
+  if(!_usuarioLogadoId)return false;
+  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  if(!f)return false;
+  const nomeNorm=normalizaNome(f.nome);
+  if(nomeNorm.includes("VITOR")&&nomeNorm.includes("CASTRO")&&nomeNorm.includes("MARTINS"))return true;
+  return !!f.podeAutorizarPin;
+}
+function abrirTrocaPin(fid,origem){
+  const jaAutorizado=usuarioLogadoPodeAutorizarPin();
+  const voltar=origem==="ficha"?`verFunc('${fid}')`:"abrirLoginUsuario()";
+  openModal(`<div class="modal-h"><h3>Trocar PIN</h3><button class="x" onclick="${voltar}">×</button></div><div class="modal-b">
+   ${jaAutorizado?`<p class="hint" style="margin-bottom:14px">Autorizado automaticamente — ${esc(_usuarioLogadoNome)} tem permissão pra autorizar trocas de PIN.</p>`:`<div class="fg"><label>Senha de autorização *</label><input type="password" id="tp_senha" placeholder="senha mestra"></div>`}
+   <div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="tp_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar</label><input type="password" id="tp_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="${voltar}">Cancelar</button><button class="btn btn-a" onclick="confirmarTrocaPin('${fid}','${origem||""}')">Trocar PIN</button></div>`);
+}
+function confirmarTrocaPin(fid,origem){
+  const jaAutorizado=usuarioLogadoPodeAutorizarPin();
+  if(!jaAutorizado){
+    const senha=$("#tp_senha").value;
+    if(senha!==SENHA_MESTRA){toast("Senha de autorização incorreta.");return;}
+  }
+  const novo=$("#tp_novo").value.trim(),conf=$("#tp_confirma").value.trim();
+  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
+  if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
+  const f=DB.func.find(x=>x.id===fid);
+  f.pin=novo;save("func");
+  closeModal();toast("PIN trocado com sucesso.");
+  if(origem==="ficha")verFunc(fid);else abrirLoginUsuario();
+}
 function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas}[CUR])();}
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];ativos.forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
@@ -448,6 +537,9 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="sub">Contagem de baixada <span style="text-transform:none;font-weight:400;color:var(--muted)">(2,5 dias/mês após ${DB.cfg.baixadaCarencia}d de carência)</span></div>
    <div class="fg"><label>Tem direito à baixada? <span class="opt">(quem vai pra casa toda semana/quinzena, ou é "Local", normalmente não tem)</span></label><select id="f_direitobaixada"><option value="Sim" ${f.direitoBaixada!=="Não"?"selected":""}>Sim</option><option value="Não" ${f.direitoBaixada==="Não"?"selected":""}>Não</option></select></div>
    <div class="fg"><label>Regime de ponto <span class="opt">(pra não aparecer "sem registro"/falta indevido na Chamada do dia)</span></label><select id="f_regimeponto"><option value="Normal" ${(!f.regimePonto||f.regimePonto==="Normal")?"selected":""}>Normal — bate ponto todo dia</option><option value="NaoBate" ${f.regimePonto==="NaoBate"?"selected":""}>Não bate ponto (ex.: diretoria/engenharia)</option><option value="Manual" ${f.regimePonto==="Manual"?"selected":""}>Ponto manual (ex.: trabalha fora, horário diferenciado)</option></select></div>
+   <div class="fg"><label>PIN pessoal do sistema</label><p class="hint" style="margin:4px 0 0">${f.pin?'✓ PIN já configurado — a pessoa mesma escolhe/troca na tela de "Identificar-se" (com autorização)':'Ainda não configurado — a pessoa escolhe o próprio PIN na primeira vez que clicar em "Identificar-se"'}</p></div>
+   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_podeautorizarpin" style="width:auto;margin-right:6px" ${f.podeAutorizarPin?"checked":""}>Pode autorizar troca de PIN de qualquer pessoa</label></div><div class="fg"></div></div>
+   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_acessoreembolso" style="width:auto;margin-right:6px" ${f.acessoReembolso?"checked":""}>Acesso à área de Reembolsos</label></div><div class="fg"><label><input type="checkbox" id="f_acessorecrutamento" style="width:auto;margin-right:6px" ${f.acessoRecrutamento?"checked":""}>Acesso à área de Recrutamento</label></div></div>
    <div class="fg"><label>Ponto de sincronização da baixada <span class="opt">(veio transferido, ou precisa "zerar e recomeçar" um histórico bagunçado — deixe em branco no caso comum)</span></label><div class="row2"><div><label class="opt">Contar a partir de</label><input type="date" id="f_chegadaobra" value="${esc(f.dataChegadaObra)}"></div><div><label class="opt">Saldo nesse dia (dias)</label><input type="number" step="0.5" id="f_saldoinicial" value="${esc(f.saldoBaixadaInicial)}" placeholder="ex.: 5"></div></div><p class="hint" style="margin-top:6px">Preenchendo, a contagem passa a valer <b>a partir dessa data</b> (não mais da admissão original), somando o saldo informado, sem precisar esperar os 60 dias de carência de novo. Use isso tanto pra quem veio de outra obra quanto pra sincronizar alguém cujo histórico anterior não estava confiável — a partir daí, os registros feitos aqui no sistema já contam certinho sozinhos.</p></div>
    <div class="row2"><div class="fg"><label>Saldo manual (dias) <span class="opt">(sobrepõe o cálculo, se preenchido)</span></label><input type="number" step="0.5" id="f_baix_val" value="${esc(f.baixadaAjusteValor)}" placeholder="deixe vazio p/ usar cálculo automático"></div><div class="fg"><label>Data de atualização do manual</label><input type="date" id="f_baix_data" value="${esc(f.baixadaAjusteData)}"></div></div>
    <div class="sub">Dados de PIX <span style="text-transform:none;font-weight:400;color:var(--muted)">(para reembolso — não aparece p/ as áreas)</span></div><div class="row3"><div class="fg"><label>Tipo de chave</label><select id="f_pixt"><option value="">—</option>${["CPF","Telefone","E-mail","Aleatória"].map(x=>`<option ${f.pixTipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Chave PIX</label><input id="f_pixk" value="${esc(f.pixChave)}"></div><div class="fg"><label>Banco</label><input id="f_pixb" value="${esc(f.pixBanco)}"></div></div><div class="fg"><label>Observações</label><textarea id="f_obs" rows="2">${esc(f.obs)}</textarea></div>
@@ -455,7 +547,7 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="row2"><div class="fg"><label>Direção</label><select id="f_transf_dir"><option value="">— não registrar agora —</option><option value="Chegando">Chegando de outra obra</option><option value="Saindo">Indo para outra obra</option></select></div><div class="fg"><label>Data da transferência</label><input type="date" id="f_transf_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Obra de origem</label><input id="f_transf_origem" placeholder="ex.: GM.MG.00071"></div><div class="fg"><label>Obra de destino</label><input id="f_transf_destino" placeholder="ex.: GM.MG.00083 (aqui)"></div></div>
    </div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delFunc('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFunc('${id||""}')">Salvar</button></div>`);}
-function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
+function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:$("#f_podeautorizarpin").checked,acessoReembolso:$("#f_acessoreembolso").checked,acessoRecrutamento:$("#f_acessorecrutamento").checked,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
   const transfDir=$("#f_transf_dir")?.value;
   if(transfDir){
     const transfData=$("#f_transf_data").value||iso(today());
@@ -478,7 +570,7 @@ function reativarFuncionario(id){
 }
 function verFunc(id){const f=DB.func.find(x=>x.id===id);const s=saldoBaixada(id);const ex=expStatus(f);const est=estadias(id);const ultimaTransf=est.filter(m=>m.tipo==="Transferência").sort((a,b)=>a.entrada<b.entrada?1:-1)[0];const pix=f.pixChave?`${esc(f.pixTipo||"")} — ${esc(f.pixChave)}${f.pixBanco?" ("+esc(f.pixBanco)+")":""}`:"—";openModal(`<div class="modal-h"><h3>${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${fotoThumb(f,64)}${!ativo(f)?`<span class="tag t-grey">Desligado${f.motivoDesligamento?" — "+esc(f.motivoDesligamento):""}${f.demissao?" em "+fmt(f.demissao):""}</span>`:""}</div>
-   <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div class="stat"><div class="n" style="font-size:22px">${f.admissao?humano(diasEntre(pd(f.admissao),today())):"—"}</div><div class="l">Tempo de casa</div></div><div class="stat amber"><div class="n" style="font-size:22px">${s.saldo}</div><div class="l">Saldo baixada${s.manual?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}</div></div></div><p class="break"><b>Matrícula:</b> ${esc(f.matricula||"—")} &nbsp; <b>Função:</b> ${esc(f.funcao||"—")} &nbsp; <b>Empresa:</b> ${esc(f.empresa||"—")}<br><b>Classificação:</b> ${esc(f.classificacao||"—")} &nbsp; <b>Regime de folga:</b> ${esc(f.regimeFolga||"Não")}<br><b>CPF:</b> ${esc(f.cpf||"—")} &nbsp; <b>RG:</b> ${esc(f.rg||"—")} &nbsp; <b>Nasc.:</b> ${fmt(f.nascimento)}<br><b>Origem:</b> ${esc(f.cidade||"—")} &nbsp; <b>Tel.:</b> ${esc(f.telefone||"—")} &nbsp; <b>E-mail:</b> ${esc(f.email||"—")}<br><b>Admissão:</b> ${fmt(f.admissao)} &nbsp; <b>Experiência:</b> ${ex.txt}${ex.rest!=null?` (faltam ${ex.rest}d)`:""}<br><b>PIX:</b> ${pix}${ultimaTransf?`<br><b>Última transferência:</b> ${ultimaTransf.direcao==="Saindo"?"Saiu para "+esc(ultimaTransf.obraDestino||"—"):"Chegou de "+esc(ultimaTransf.obraOrigem||"—")} em ${fmt(ultimaTransf.entrada)}`:""}</p><div class="panel" style="box-shadow:none;border:1px solid #e6e8e4;margin:14px 0"><h2 style="font-size:13px"><span class="t">Composição da baixada</span></h2><p class="break" style="padding:10px 18px">${s.manual?`Saldo definido manualmente: <b>${s.saldo}</b> dias — atualizado em <b>${fmt(s.manualData)}</b><br><small>Para voltar ao automático, apague o "saldo manual" na edição do cadastro.</small>`:s.semAcumulo?`<b style="color:var(--muted)">Não acumula baixada</b> — ${f.direitoBaixada==="Não"?'esse funcionário está marcado como "sem direito à baixada" no cadastro':'regime de folga é "'+esc(f.regimeFolga)+'" (já vai pra casa periodicamente, então não soma baixada em cima disso)'}. Pra mudar, ajuste no cadastro.`:`${s.usaDataInicio?`Contando desde <b>${fmt(s.dataChegada)}</b> (${f.dataChegadaObra?"ponto de sincronização definido no cadastro":"chegada por transferência, detectada automaticamente"}) — saldo naquele dia: <b>${f.saldoBaixadaInicial||0}</b> dias`:`Dias desde a admissão: <b>${s.hosp}</b>`} · − férias: <b>${s.fer}</b> · − baixada já tirada: <b>${s.usadas}</b> · − dias como "Local": <b>${diasEmLocal(id)}</b> · − faltas/atestados (${countFaltasEAtestados(id)}×${DB.cfg.faltaDesc}): <b>${s.descFaltas}</b><br>${s.emCarencia?`<b style="color:var(--amber-d)">Ainda em carência</b> (precisa de ${DB.cfg.baixadaCarencia}d, tem ${s.efetivo}d) — saldo parcial acumulando: <b>${s.saldoParcial}</b> dias (completa em ~${fmt(s.dataLiberacao)})`:`<b style="color:var(--amber-d)">Saldo atual: ${s.saldo} dias</b><br><small>${s.faltamDias===0?"✓ Já disponível pra viajar (≥ "+DB.cfg.alertaBaixada+"d)":"Faltam ~"+s.faltamDias+" dias corridos pra chegar aos "+DB.cfg.alertaBaixada+" dias de folga"}</small>`}`}</p></div><h3 style="font-size:14px;margin-bottom:8px">Histórico de estadias e transferências</h3>${est.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px"><thead><tr><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${est.map(m=>m.tipo==="Transferência"?`<tr><td><span class="tag t-amber">Transferência</span> ${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`:`<tr><td>${esc(localNome(m.local))} <span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`).join("")}</tbody></table>`:`<p class="break">Sem estadias lançadas.</p>`}</div><div class="modal-f"><button class="btn btn-g" onclick="formFunc('${id}')">Editar cadastro</button>${ativo(f)?(afastado(f)?`<button class="btn btn-g" onclick="formRetornoAfastamento('${id}')">Retornar do afastamento</button>`:`<button class="btn btn-g" onclick="formAfastar('${id}')">Afastar</button>`):`<button class="btn btn-g" style="color:var(--green)" onclick="reativarFuncionario('${id}')">Reativar</button>`}${ativo(f)?`<button class="btn btn-g" style="color:var(--red)" onclick="formInativar('${id}')">Inativar</button>`:""}<button class="btn btn-a" onclick="formMov('${id}')">Nova movimentação</button></div>`);}
+   <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div class="stat"><div class="n" style="font-size:22px">${f.admissao?humano(diasEntre(pd(f.admissao),today())):"—"}</div><div class="l">Tempo de casa</div></div><div class="stat amber"><div class="n" style="font-size:22px">${s.saldo}</div><div class="l">Saldo baixada${s.manual?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}</div></div></div><p class="break"><b>Matrícula:</b> ${esc(f.matricula||"—")} &nbsp; <b>Função:</b> ${esc(f.funcao||"—")} &nbsp; <b>Empresa:</b> ${esc(f.empresa||"—")}<br><b>Classificação:</b> ${esc(f.classificacao||"—")} &nbsp; <b>Regime de folga:</b> ${esc(f.regimeFolga||"Não")}<br><b>CPF:</b> ${esc(f.cpf||"—")} &nbsp; <b>RG:</b> ${esc(f.rg||"—")} &nbsp; <b>Nasc.:</b> ${fmt(f.nascimento)}<br><b>Origem:</b> ${esc(f.cidade||"—")} &nbsp; <b>Tel.:</b> ${esc(f.telefone||"—")} &nbsp; <b>E-mail:</b> ${esc(f.email||"—")}<br><b>Admissão:</b> ${fmt(f.admissao)} &nbsp; <b>Experiência:</b> ${ex.txt}${ex.rest!=null?` (faltam ${ex.rest}d)`:""}<br><b>PIX:</b> ${pix}${ultimaTransf?`<br><b>Última transferência:</b> ${ultimaTransf.direcao==="Saindo"?"Saiu para "+esc(ultimaTransf.obraDestino||"—"):"Chegou de "+esc(ultimaTransf.obraOrigem||"—")} em ${fmt(ultimaTransf.entrada)}`:""}</p><div class="panel" style="box-shadow:none;border:1px solid #e6e8e4;margin:14px 0"><h2 style="font-size:13px"><span class="t">Composição da baixada</span></h2><p class="break" style="padding:10px 18px">${s.manual?`Saldo definido manualmente: <b>${s.saldo}</b> dias — atualizado em <b>${fmt(s.manualData)}</b><br><small>Para voltar ao automático, apague o "saldo manual" na edição do cadastro.</small>`:s.semAcumulo?`<b style="color:var(--muted)">Não acumula baixada</b> — ${f.direitoBaixada==="Não"?'esse funcionário está marcado como "sem direito à baixada" no cadastro':'regime de folga é "'+esc(f.regimeFolga)+'" (já vai pra casa periodicamente, então não soma baixada em cima disso)'}. Pra mudar, ajuste no cadastro.`:`${s.usaDataInicio?`Contando desde <b>${fmt(s.dataChegada)}</b> (${f.dataChegadaObra?"ponto de sincronização definido no cadastro":"chegada por transferência, detectada automaticamente"}) — saldo naquele dia: <b>${f.saldoBaixadaInicial||0}</b> dias`:`Dias desde a admissão: <b>${s.hosp}</b>`} · − férias: <b>${s.fer}</b> · − baixada já tirada: <b>${s.usadas}</b> · − dias como "Local": <b>${diasEmLocal(id)}</b> · − faltas/atestados (${countFaltasEAtestados(id)}×${DB.cfg.faltaDesc}): <b>${s.descFaltas}</b><br>${s.emCarencia?`<b style="color:var(--amber-d)">Ainda em carência</b> (precisa de ${DB.cfg.baixadaCarencia}d, tem ${s.efetivo}d) — saldo parcial acumulando: <b>${s.saldoParcial}</b> dias (completa em ~${fmt(s.dataLiberacao)})`:`<b style="color:var(--amber-d)">Saldo atual: ${s.saldo} dias</b><br><small>${s.faltamDias===0?"✓ Já disponível pra viajar (≥ "+DB.cfg.alertaBaixada+"d)":"Faltam ~"+s.faltamDias+" dias corridos pra chegar aos "+DB.cfg.alertaBaixada+" dias de folga"}</small>`}`}</p></div><h3 style="font-size:14px;margin-bottom:8px">Histórico de estadias e transferências</h3>${est.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px"><thead><tr><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${est.map(m=>m.tipo==="Transferência"?`<tr><td><span class="tag t-amber">Transferência</span> ${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`:`<tr><td>${esc(localNome(m.local))} <span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`).join("")}</tbody></table>`:`<p class="break">Sem estadias lançadas.</p>`}</div><div class="modal-f"><button class="btn btn-g" onclick="formFunc('${id}')">Editar cadastro</button>${usuarioLogadoPodeAutorizarPin()?`<button class="btn btn-g" onclick="abrirTrocaPin('${id}','ficha')">🔑 Resetar PIN</button>`:""}${ativo(f)?(afastado(f)?`<button class="btn btn-g" onclick="formRetornoAfastamento('${id}')">Retornar do afastamento</button>`:`<button class="btn btn-g" onclick="formAfastar('${id}')">Afastar</button>`):`<button class="btn btn-g" style="color:var(--green)" onclick="reativarFuncionario('${id}')">Reativar</button>`}${ativo(f)?`<button class="btn btn-g" style="color:var(--red)" onclick="formInativar('${id}')">Inativar</button>`:""}<button class="btn btn-a" onclick="formMov('${id}')">Nova movimentação</button></div>`);}
 function vMov(){const list=DB.mov.slice().sort((a,b)=>(a.entrada<b.entrada?1:-1));main.innerHTML=`<div class="head"><div><h1>Movimentações</h1><p>Entradas e saídas de hospedagem, e transferências entre obras.</p></div><button class="btn btn-a" onclick="formMov()">＋ Nova movimentação</button></div><div class="panel"><div class="tblwrap">${list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Tipo</th><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Dias</th><th>Motivo</th><th></th></tr></thead><tbody>${list.map(m=>{if(m.tipo==="Transferência"){return `<tr><td>${esc(funcNome(m.func))}</td><td><span class="tag t-amber">Transferência</span></td><td>${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button></div></td></tr>`;}const dias=m.entrada?(diasEntre(pd(m.entrada),m.saida?pd(m.saida):today())+1):0;return `<tr><td>${esc(funcNome(m.func))}</td><td><span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${esc(localNome(m.local))}</td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td class="num">${dias}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact">${m.saida?"":`<button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Dar saída</button>`}<button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button></div></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">⇄</div><p>Nenhuma movimentação. Cadastre um funcionário e lance a primeira estadia.</p><button class="btn btn-a" onclick="formMov()">Nova movimentação</button></div>`}</div></div>`;}
 let _movFunc="",_movLocal="";
 function formMov(preFunc,id){if(!DB.func.filter(ativo).length){toast("Cadastre um funcionário primeiro.");formFunc();return;}const m=id?DB.mov.find(x=>x.id===id):{tipo:"Alojamento"};_movFunc=id?m.func:(preFunc||"");_movLocal=m.local||"";openModal(`<div class="modal-h"><h3>${id?"Editar":"Nova"} movimentação</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><div class="cbx"><input id="m_busca" placeholder="Digite nome, matrícula ou CPF..." autocomplete="off"><div class="cbx-list" id="m_list"></div></div><div id="m_picked"></div></div><div class="row2"><div class="fg"><label>Tipo *</label><select id="m_tipo" onchange="fillLocais()"><option ${m.tipo==="Alojamento"?"selected":""}>Alojamento</option><option ${m.tipo==="Hotel"?"selected":""}>Hotel</option><option ${m.tipo==="Local"?"selected":""}>Local</option><option ${m.tipo==="Baixada"?"selected":""}>Baixada</option><option ${m.tipo==="Transferência"?"selected":""}>Transferência</option></select></div><div class="fg" id="m_localwrap"><label>Local *</label><select id="m_local"></select><div class="hint">Não achou? <a href="#" onclick="closeModal();CUR='locais';buildNav();render();return false" style="color:var(--steel)">cadastre em Locais</a></div></div></div>
@@ -818,15 +910,28 @@ function formFerias(){if(!DB.func.filter(ativo).length){toast("Cadastre um funci
 function salvarFerias(){const func=$("#fe_f").value,inicio=$("#fe_i").value,fim=$("#fe_o").value;if(!inicio||!fim){toast("Preencha as datas.");return;}if(pd(fim)<pd(inicio)){toast("Fim antes do início.");return;}DB.ferias.push({id:uid(),func,inicio,fim});save("ferias");closeModal();render();toast("Férias registradas.");}
 function delFerias(id){DB.ferias=DB.ferias.filter(x=>x.id!==id);save("ferias");render();}
 let _reembUnlocked=false;
+function usuarioLogadoTemAcesso(campo){
+  if(!_usuarioLogadoId)return false;
+  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  return !!(f&&f[campo]);
+}
+function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
+  return `<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">${titulo}</h2>
+   ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:16px">Você está identificado como <b>${esc(_usuarioLogadoNome)}</b>, mas essa pessoa não tem acesso liberado a essa área.</p>`:`<p class="hint" style="margin-bottom:16px">Precisa se identificar (com permissão liberada) ou usar a senha mestra.</p>`}
+   <button class="btn btn-g" style="width:100%;margin-bottom:10px" onclick="abrirLoginUsuario()">👤 Identificar-se</button>
+   <p class="hint" style="margin-bottom:10px">— ou —</p>
+   <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
+}
 function vReemb(){
+  if(!_reembUnlocked&&usuarioLogadoTemAcesso("acessoReembolso"))_reembUnlocked=true;
   if(!_reembUnlocked){
-    main.innerHTML=`<div class="panel" style="max-width:360px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">Reembolsos e lançamentos</h2><p class="hint" style="margin-bottom:16px">Área restrita — senha necessária.</p><input type="password" id="reemb_senha" placeholder="Senha" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')desbloquearReemb()"><button class="btn btn-a" style="width:100%" onclick="desbloquearReemb()">Entrar</button></div>`;
+    main.innerHTML=telaAreaRestrita("Reembolsos e lançamentos","acessoReembolso","desbloquearReemb");
     return;
   }
   const tot=DB.reemb.reduce((s,r)=>s+(+r.valor||0),0);main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div><div class="grid stats"><div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total lançado</div></div><div class="stat amber"><div class="n">${DB.reemb.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes</div></div></div><div class="panel"><div class="tblwrap">${DB.reemb.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${DB.reemb.slice().sort((a,b)=>a.data<b.data?1:-1).map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento ainda.</p><button class="btn btn-a" onclick="formReemb()">Novo lançamento</button></div>`}</div></div>`;}
 function desbloquearReemb(){
-  const v=$("#reemb_senha").value;
-  if(senhaOk(v,"907")){_reembUnlocked=true;render();}else{toast("Senha incorreta.");}
+  const v=$("#area_restrita_senha").value;
+  if(v===SENHA_MESTRA){_reembUnlocked=true;render();}else{toast("Senha incorreta.");}
 }
 function formaPagamentoTxt(r){
   if(r.formaPag==="Fluig")return `Fluig${r.fluigNumero?" nº "+esc(r.fluigNumero):""}${r.fluigLink?` · <a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel)">abrir</a>`:""}`;
@@ -837,7 +942,7 @@ function formReemb(id){if(!DB.func.length){toast("Cadastre um funcionário.");re
    <div class="sub">Pagamento</div>
    <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="r_pag"><option value="Caixa - Vitor" ${r.formaPag==="Caixa - Vitor"?"selected":""}>Caixa - Vitor</option><option value="Caixa - Arthur" ${r.formaPag==="Caixa - Arthur"?"selected":""}>Caixa - Arthur</option><option value="Fluig" ${r.formaPag==="Fluig"?"selected":""}>Fluig</option></select></div><div class="fg"><label>Status do pagamento</label><select id="r_s">${["Pendente","Aprovado","Pago"].map(x=>`<option ${r.status===x?"selected":""}>${x}</option>`).join("")}</select></div></div>
    <div class="row2"><div class="fg"><label>Número Fluig <span class="opt">(opcional)</span></label><input id="r_fluignum" value="${esc(r.fluigNumero)}" placeholder="ex.: 123456"></div><div class="fg"><label>Link Fluig</label><input id="r_fluiglink" value="${esc(r.fluigLink)}" placeholder="https://..."></div></div>
-   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando esse lançamento)</span></label><input id="r_lancadopor" value="${esc(r.lancadoPor)}" placeholder="seu nome"></div>
+   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando esse lançamento)</span></label><input id="r_lancadopor" value="${esc(r.lancadoPor)||nomeUsuarioLogado()}" placeholder="seu nome"></div>
    <div class="fg"><label>Observações</label><input id="r_o" value="${esc(r.obs)}"></div></div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delReemb('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarReemb('${id||""}')">Salvar</button></div>`);mostraPix();}
 function mostraPix(){const f=DB.func.find(x=>x.id===$("#r_f").value);const el=$("#r_pixinfo");if(!el)return;el.innerHTML=f&&f.pixChave?`<div class="picked" style="margin:0 0 14px"><b>PIX p/ pagamento:</b> ${esc(f.pixTipo||"")} — ${esc(f.pixChave)}${f.pixBanco?" ("+esc(f.pixBanco)+")":""}</div>`:`<div class="hint" style="margin:-6px 0 14px;color:var(--amber-d)">⚠ Sem PIX cadastrado. <a href="#" onclick="closeModal();formFunc('${f?f.id:''}');return false" style="color:var(--steel)">completar ficha</a></div>`;}
 function salvarReemb(id){
@@ -1539,7 +1644,7 @@ function salvarSetor(id){
 function delSetor(id){if(!confirm("Excluir este setor?"))return;DB.compras_setores=DB.compras_setores.filter(x=>x.id!==id);save("compras_setores");closeModal();render();toast("Excluído.");}
 
 /* ============ COMPRAS: pedidos ============ */
-let _pedFiltroSetor="",_pedFiltroStatus="";
+let _pedFiltroSetor="",_pedFiltroStatus="",_pedFiltroForn="",_pedFiltroBusca="";
 const TIPOS_PEDIDO=["Material","Serviço","Locação","EPI/Segurança","Manutenção","Outro"];
 const ENGENHEIROS_APROVADORES=["Arthur Ferreira","João Paulo Fernandes Soares"];
 function resumoItensPedido(p){
@@ -1581,10 +1686,13 @@ function proximaDataDiaSemana(diaSemana){
   return iso(new Date(hoje.getTime()+diff*MS));
 }
 function vPedidos(){
+  const fornecedores=[...new Set(DB.compras_pedidos.flatMap(p=>(p.ordensCompra||[]).map(oc=>oc.fornecedor)).filter(Boolean))].sort();
   main.innerHTML=`<div class="head"><div><h1>Pedidos de compra <span id="ped_total" class="tag t-steel" style="font-size:13px;vertical-align:middle"></span></h1><p>Fluxo: ${STATUS_FLUXO.join(" → ")}</p></div><div class="acts"><button class="btn btn-g" onclick="formLancamentoDireto()">🖇 Lançar direto (compra por fora)</button><button class="btn btn-a" onclick="formPedido()">＋ Novo pedido</button></div></div>
-   <div class="toolbar"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select>
+   <div class="toolbar"><input type="search" id="pf_busca" placeholder="Buscar por item/descrição..." value="${esc(_pedFiltroBusca)}" oninput="_pedFiltroBusca=this.value;renderPedidosTbl()"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${_pedFiltroSetor===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><select id="pf_forn" onchange="_pedFiltroForn=this.value;renderPedidosTbl()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_pedFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="pf_status" onchange="_pedFiltroStatus=this.value;renderPedidosTbl()"><option value="">Todas as etapas</option>${STATUS_FLUXO.map(s=>`<option value="${s}" ${_pedFiltroStatus===s?"selected":""}>${s}</option>`).join("")}</select></div>
+   <div class="toolbar">
      <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento</button>
      <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✓ Finalizados</button>
+     ${(_pedFiltroSetor||_pedFiltroForn||_pedFiltroStatus||_pedFiltroBusca)?`<button class="btn btn-g btn-sm" onclick="_pedFiltroSetor='';_pedFiltroForn='';_pedFiltroStatus='';_pedFiltroBusca='';render()">Limpar filtro</button>`:''}
      <button class="btn btn-g btn-sm" onclick="exportPedidosExcel()">⭳ Exportar Excel</button></div>
    <div id="ped_tbl"></div>`;
   renderPedidosTbl();
@@ -1593,7 +1701,10 @@ let _pedMostrarPagos=false;
 function renderPedidosTbl(){
   let list=DB.compras_pedidos.slice();
   if(_pedFiltroSetor)list=list.filter(p=>p.setor===_pedFiltroSetor);
+  if(_pedFiltroForn)list=list.filter(p=>(p.ordensCompra||[]).some(oc=>oc.fornecedor===_pedFiltroForn));
+  if(_pedFiltroStatus)list=list.filter(p=>p.status===_pedFiltroStatus);
   list=list.filter(p=>_pedMostrarPagos?p.status==="Pago":p.status!=="Pago");
+  if(_pedFiltroBusca){const q=_pedFiltroBusca.toLowerCase();list=list.filter(p=>(resumoItensPedidoCurto(p)||"").toLowerCase().includes(q));}
   list.sort((a,b)=>{const ua=(a.nivelUrgencia==="Urgente"||(a.foraDoDia&&!a.excecaoLiberada))&&a.status==="Solicitado",ub=(b.nivelUrgencia==="Urgente"||(b.foraDoDia&&!b.excecaoLiberada))&&b.status==="Solicitado";if(!_pedMostrarPagos&&ua!==ub)return ua?-1:1;return (a.data||"").localeCompare(b.data||"");});
   const el=$("#ped_tbl");if(!el)return;
   const totalEl=$("#ped_total");if(totalEl)totalEl.textContent=list.length;
@@ -1707,7 +1818,7 @@ function formLancamentoDireto(){
    <p class="hint" style="margin-bottom:14px">Pra compras que já aconteceram sem passar pelo pedido normal (feitas direto pelo ADM) — preenche o que já souber agora, o resto completa depois editando.</p>
    <div class="row2"><div class="fg"><label>Setor *</label><select id="ld_setor">${DB.compras_setores.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select></div><div class="fg"><label>Data da compra *</label><input type="date" id="ld_data" value="${iso(today())}"></div></div>
    <div class="fg"><label>O que é / material <span class="opt">(descrição do que foi comprado)</span></label><input id="ld_desc" placeholder="ex.: material elétrico, peça de reposição..."></div>
-   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando essa compra)</span></label><input id="ld_lancadopor" placeholder="seu nome"></div>
+   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando essa compra)</span></label><input id="ld_lancadopor" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
    <div class="sub">Ordem de Compra <span class="opt">— Fluig do pedido/OC</span></div>
    <div class="row2"><div class="fg"><label>Nº da OC <span class="opt">(se já tiver)</span></label><input id="ld_ocnum" placeholder="ex.: OC-1234"></div><div class="fg"><label>Fornecedor</label><input id="ld_forn" list="ld_fornlist" placeholder="nome do fornecedor"><datalist id="ld_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div>
    <div class="row2"><div class="fg"><label>Origem da compra</label><select id="ld_origem"><option>Suprimentos</option><option>Compra interna</option></select></div><div class="fg"><label>Tipo</label><select id="ld_tipoaq"><option>Compra</option><option>Aluguel</option></select></div></div>
@@ -2198,7 +2309,7 @@ function formAlmoxPedido(){
      <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="adicionarItemApTemp()">＋ Adicionar item</button>
    </div>
    <label style="display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:13px"><input type="checkbox" id="ap_diretoja" style="width:auto" onchange="document.getElementById('ap_diretowrap').style.display=this.checked?'block':'none'">Já autorizar agora (pedido direto — ex.: gestor de segurança liberando pra admitido novo)</label>
-   <div class="fg" id="ap_diretowrap" style="display:none;background:#f7f8f6;border-radius:8px;padding:12px"><div class="row2"><div class="fg" style="margin-bottom:0"><label>Autorizado por *</label><input id="ap_direto_por" placeholder="seu nome"></div><div class="fg" style="margin-bottom:0"><label>Senha da categoria *</label><input type="password" id="ap_direto_senha" placeholder="senha"></div></div></div>
+   <div class="fg" id="ap_diretowrap" style="display:none;background:#f7f8f6;border-radius:8px;padding:12px"><div class="row2"><div class="fg" style="margin-bottom:0"><label>Autorizado por *</label><input id="ap_direto_por" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div><div class="fg" style="margin-bottom:0"><label>Senha da categoria *</label><input type="password" id="ap_direto_senha" placeholder="senha"></div></div></div>
    </div>
    <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarAlmoxPedido()">Enviar pedido</button></div>`);
   renderItensApTemp();
@@ -2258,7 +2369,7 @@ function verAlmoxPedido(id){
 function formDecisaoAlmoxPedido(id,decisao){
   const p=DB.almox_pedidos.find(x=>x.id===id);
   openModal(`<div class="modal-h"><h3>${decisao==="Autorizado"?"Autorizar":"Negar"} pedido</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="fg"><label>Decidido por *</label><input id="da_por" placeholder="seu nome"></div>
+   <div class="fg"><label>Decidido por *</label><input id="da_por" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
    <div class="fg"><label>Senha de liberação (${esc(p.categoria)}) *</label><input type="password" id="da_senha" placeholder="senha de quem está autorizando"></div>
    <div class="fg"><label>Observação <span class="opt">(opcional)</span></label><input id="da_obs" placeholder="ex.: já tinha recebido, é o primeiro par..."></div></div>
    <div class="modal-f"><button class="btn btn-g" onclick="verAlmoxPedido('${id}')">Cancelar</button><button class="btn btn-a" onclick="salvarDecisaoAlmoxPedido('${id}','${decisao}')">Confirmar ${decisao==="Autorizado"?"autorização":"negativa"}</button></div>`);
@@ -2303,7 +2414,7 @@ function formRetiradaAlmoxPedido(id){
   const semCadastro=(p.itens||[]).filter(it=>!DB.compras_estoque.find(x=>normalizaNome(x.nome)===normalizaNome(it.nome)));
   openModal(`<div class="modal-h"><h3>Registrar retirada</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    ${semCadastro.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:14px">⚠ Não achei estes itens cadastrados no Almoxarifado por esse nome exato: ${semCadastro.map(it=>esc(it.nome)).join(", ")}. A retirada fica registrada, mas não abate do estoque desses. Confere manualmente se precisar.</p>`:''}
-   <div class="fg"><label>Retirado por * <span class="opt">(quem foi buscar)</span></label><input id="rt_por" placeholder="ex.: nome do almoxarife ou de quem retirou"></div>
+   <div class="fg"><label>Retirado por * <span class="opt">(quem foi buscar)</span></label><input id="rt_por" value="${esc(nomeUsuarioLogado())}" placeholder="ex.: nome do almoxarife ou de quem retirou"></div>
    <label style="display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:13px"><input type="checkbox" id="rt_resp" style="width:auto" checked>Itens ficam sob responsabilidade do colaborador</label>
    </div><div class="modal-f"><button class="btn btn-g" onclick="verAlmoxPedido('${id}')">Cancelar</button><button class="btn btn-a" onclick="salvarRetiradaAlmoxPedido('${id}')">Confirmar retirada</button></div>`);
 }
@@ -2672,12 +2783,15 @@ function exportEstoqueExcel(){
 
 /* ============ COMPRAS: contratos ============ */
 const SEGMENTOS_CONTRATO=["Alojamento","Veículos","Equipamentos","Container/Estrutura","Segurança","Internet/Telecom","Transporte","Escritório","Serviços técnicos","Sinalização","Outro"];
-let _ctFiltroSegmento="",_ctFiltroStatus="";
+let _ctFiltroSegmento="",_ctFiltroStatus="",_ctFiltroForn="",_ctFiltroBusca="";
 function vContratos(){
   const segmentos=[...new Set(DB.compras_contratos.map(c=>c.segmento).filter(Boolean))].sort();
+  const fornecedoresCt=[...new Set(DB.compras_contratos.map(c=>c.fornecedor).filter(Boolean))].sort();
   let list=DB.compras_contratos.slice();
   if(_ctFiltroSegmento)list=list.filter(c=>c.segmento===_ctFiltroSegmento);
   if(_ctFiltroStatus)list=list.filter(c=>(c.statusContrato||"Ativo")===_ctFiltroStatus);
+  if(_ctFiltroForn)list=list.filter(c=>c.fornecedor===_ctFiltroForn);
+  if(_ctFiltroBusca){const q=_ctFiltroBusca.toLowerCase();list=list.filter(c=>(c.numero||"").toLowerCase().includes(q)||(c.objeto||"").toLowerCase().includes(q)||(c.fornecedor||"").toLowerCase().includes(q));}
   list.sort((a,b)=>(b.dataAssinatura||"").localeCompare(a.dataAssinatura||""));
   const mesAtual=iso(today()).slice(0,7);
   const pendenciasMes=[];
@@ -2702,7 +2816,7 @@ function vContratos(){
        pendenciasMes.map(p=>`<tr><td>${p.label}</td><td><span class="tag t-amber">${esc(p.status)}</span></td><td><button class="btn btn-a btn-sm" onclick="${p.onclick}">Lançar</button></td></tr>`).join("")
      }</tbody></table></div>`:`<div class="empty"><p>✓ Tudo lançado esse mês.</p></div>`}
    </div>
-   <div class="toolbar"><select id="ct_fseg" onchange="_ctFiltroSegmento=this.value;render()"><option value="">Todos os segmentos</option>${segmentos.map(s=>`<option value="${esc(s)}" ${_ctFiltroSegmento===s?"selected":""}>${esc(s)}</option>`).join("")}</select><select id="ct_fstatus" onchange="_ctFiltroStatus=this.value;render()"><option value="">Ativos e inativos</option><option value="Ativo" ${_ctFiltroStatus==="Ativo"?"selected":""}>Só ativos</option><option value="Inativo" ${_ctFiltroStatus==="Inativo"?"selected":""}>Só inativos</option></select></div>
+   <div class="toolbar"><input type="search" id="ct_busca" placeholder="Buscar por número/objeto/fornecedor..." value="${esc(_ctFiltroBusca)}" oninput="_ctFiltroBusca=this.value;render()"><select id="ct_forn" onchange="_ctFiltroForn=this.value;render()"><option value="">Todos os fornecedores</option>${fornecedoresCt.map(f=>`<option value="${esc(f)}" ${_ctFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="ct_fseg" onchange="_ctFiltroSegmento=this.value;render()"><option value="">Todos os segmentos</option>${segmentos.map(s=>`<option value="${esc(s)}" ${_ctFiltroSegmento===s?"selected":""}>${esc(s)}</option>`).join("")}</select><select id="ct_fstatus" onchange="_ctFiltroStatus=this.value;render()"><option value="">Ativos e inativos</option><option value="Ativo" ${_ctFiltroStatus==="Ativo"?"selected":""}>Só ativos</option><option value="Inativo" ${_ctFiltroStatus==="Inativo"?"selected":""}>Só inativos</option></select>${(_ctFiltroSegmento||_ctFiltroStatus||_ctFiltroForn||_ctFiltroBusca)?`<button class="btn btn-g btn-sm" onclick="_ctFiltroSegmento='';_ctFiltroStatus='';_ctFiltroForn='';_ctFiltroBusca='';render()">Limpar filtro</button>`:''}</div>
    <div class="panel"><div class="tblwrap">${list.length?`<table class="tbl"><thead><tr><th>Nº</th><th>Fornecedor</th><th>Segmento</th><th>Objeto</th><th>Valor total</th><th>Faturamento</th><th>Vigência</th><th>Status</th><th></th></tr></thead><tbody>${
      list.map(c=>{const vencido=c.vigenciaFim&&pd(c.vigenciaFim)<today();const st=c.statusContrato||"Ativo";const caucaoPendente=c.segmento==="Alojamento"&&(+c.caucaoValor||0)>0&&c.caucaoDevolvida!=="Sim";const ultimaMed=(c.medicoes||[]).slice().sort((a,b)=>(b.mesReferencia||"").localeCompare(a.mesReferencia||""))[0];const medCls={"Aguardando fatura ou medição":"t-grey","Medição aprovada":"t-amber","BM assinado":"t-steel","Faturamento enviado para pagamento (Central de Notas)":"t-green"};return `<tr><td><b>${esc(c.numero)}</b>${(c.anexos&&c.anexos.length)?` <span class="tag t-steel">📎 ${c.anexos.length}</span>`:''}</td><td>${esc(c.fornecedor)}${c.cnpj?`<br><small style="color:var(--muted)">${esc(c.cnpj)}</small>`:''}</td><td>${c.segmento?`<span class="tag t-steel">${esc(c.segmento)}</span>`:'—'}</td><td>${esc(c.objeto||"—")}${(c.itensContrato&&c.itensContrato.length)?`<br><small style="color:var(--muted)">${c.itensContrato.map(it=>esc(it.nome)).join(", ")}</small>`:''}</td><td class="num">R$ ${(+c.valorTotal||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td>${c.periodicidadeFaturamento?`<span class="tag t-grey">${esc(c.periodicidadeFaturamento)}</span>`:'—'}${(c.custosExtras&&c.custosExtras.length)?`<br><small style="color:var(--muted)">+ ${c.custosExtras.map(ce=>esc(ce.tipo)).join(", ")}</small>`:''}${caucaoPendente?'<br><span class="tag t-amber" style="font-size:10px">caução pendente</span>':''}${ultimaMed?`<br><span class="tag ${medCls[ultimaMed.status]||'t-grey'}" style="font-size:10px">${esc(ultimaMed.mesReferencia)}: ${esc(ultimaMed.status)}</span>`:''}</td><td>${fmt(c.vigenciaInicio)} — ${fmt(c.vigenciaFim)}${vencido?' <span class="tag t-red">vencido</span>':''}</td><td><span class="tag ${st==='Ativo'?'t-green':'t-grey'}">${st}</span></td><td><button class="btn btn-g btn-sm" onclick="formContrato('${c.id}')">Editar</button></td></tr>`;}).join("")
    }</tbody></table>`:`<div class="empty"><div class="big">📄</div><p>Nenhum contrato encontrado.</p><button class="btn btn-a" onclick="formContrato()">Cadastrar o primeiro</button></div>`}</div></div>`;
@@ -3434,14 +3548,17 @@ function diasEntreEtapas(hist,statusA,statusB){
 }
 let _recrutUnlocked=false;
 function vRecrutamento(){
+  if(!_recrutUnlocked&&usuarioLogadoTemAcesso("acessoRecrutamento"))_recrutUnlocked=true;
   if(!_recrutUnlocked){
-    main.innerHTML=`<div class="panel" style="max-width:360px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px;margin-bottom:10px">🔒</div><h2 style="margin:0 0 6px">Recrutamento</h2><p class="hint" style="margin-bottom:16px">Área restrita — senha necessária.</p><input type="password" id="recrut_senha" placeholder="Senha" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')desbloquearRecrutamento()"><button class="btn btn-a" style="width:100%" onclick="desbloquearRecrutamento()">Entrar</button></div>`;
+    main.innerHTML=telaAreaRestrita("Recrutamento","acessoRecrutamento","desbloquearRecrutamento");
     return;
   }
   const ativas=vagasAbertasAtivas();
   const totalNecessario=ativas.reduce((s,v)=>s+(+v.quantidade||1),0);
   const totalAdmitido=ativas.reduce((s,v)=>s+admitidosNaVaga(v.id),0);
-  const totalEmProcesso=candidatosList().filter(c=>c.vagaAbertaId&&ativas.some(v=>v.id===c.vagaAbertaId)&&c.status!=="Admitido"&&c.status!=="Reprovado").length;
+  const emAndamento=candidatosList().filter(c=>c.vagaAbertaId&&ativas.some(v=>v.id===c.vagaAbertaId)&&c.status!=="Admitido"&&c.status!=="Reprovado");
+  const totalEmProcesso=emAndamento.length;
+  const porEtapa=STATUS_CANDIDATO.slice(0,-1).map(s=>({status:s,n:emAndamento.filter(c=>c.status===s).length}));
   main.innerHTML=`<div class="head"><div><h1>Recrutamento <span id="cand_total" class="tag t-steel" style="font-size:13px;vertical-align:middle"></span></h1><p>Vagas abertas no InHire + central de currículos, organizados por vaga.</p></div><div class="acts"><button class="btn btn-g" onclick="formVagaAberta()">＋ Vaga aberta (InHire)</button><button class="btn btn-a" onclick="formCandidato()">＋ Novo currículo</button></div></div>
    <div class="grid stats">
      <div class="stat steel"><div class="n">${totalNecessario}</div><div class="l">Vagas necessárias (aberto)</div></div>
@@ -3449,6 +3566,9 @@ function vRecrutamento(){
      <div class="stat amber"><div class="n">${Math.max(0,totalNecessario-totalAdmitido)}</div><div class="l">Ainda faltam</div></div>
      <div class="stat"><div class="n">${totalEmProcesso}</div><div class="l">Currículos em processo</div></div>
    </div>
+   <div class="panel"><h2><span class="t">📊 Andamento do processo <span class="hint">(currículos em cada etapa agora — mostra que está andando)</span></span></h2><div style="padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px">${
+     porEtapa.map((e,i)=>`<div style="flex:1;min-width:110px;text-align:center;background:#f7f8f6;border-radius:8px;padding:10px 6px"><div style="font-size:20px;font-weight:700;color:${e.n?'var(--steel)':'#c7ccd3'}">${e.n}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(e.status)}</div></div>${i<porEtapa.length-1?'<div style="align-self:center;color:#c7ccd3;font-size:16px">→</div>':''}`).join("")
+   }</div></div>
    <div class="panel"><h2><span class="t">Vagas abertas</span></h2><div class="tblwrap">${ativas.length?`<table class="tbl"><thead><tr><th>Função</th><th>Tipo</th><th>Preenchimento</th><th>Aberto por</th><th>Criada em</th><th>Aprovada em</th><th></th></tr></thead><tbody>${
      ativas.map(v=>{const nec=+v.quantidade||1;const adm=admitidosNaVaga(v.id);const pct=Math.min(100,(adm/nec)*100);return `<tr><td><b>${esc(v.funcao)}</b></td><td><span class="tag ${v.tipoVaga==='Substituição'?'t-amber':v.tipoVaga==='Vaga nova'?'t-green':'t-steel'}">${esc(v.tipoVaga)}</span></td><td><b>${adm}/${nec}</b><div class="minibar" style="width:110px"><i style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--amber)'}"></i></div></td><td>${esc(v.abertoPor||"—")}</td><td>${fmt(v.dataCriada)}</td><td>${v.dataAprovacao?fmt(v.dataAprovacao):'<span class="tag t-amber">aguardando</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formVagaAberta('${v.id}')">Editar</button></td></tr>`;}).join("")
    }</tbody></table>`:`<div class="empty"><p>Nenhuma vaga aberta cadastrada ainda.</p></div>`}</div></div>
@@ -3457,8 +3577,8 @@ function vRecrutamento(){
   renderCandidatosTbl();
 }
 function desbloquearRecrutamento(){
-  const v=$("#recrut_senha").value;
-  if(senhaOk(v,"907")){_recrutUnlocked=true;render();}else{toast("Senha incorreta.");}
+  const v=$("#area_restrita_senha").value;
+  if(v===SENHA_MESTRA){_recrutUnlocked=true;render();}else{toast("Senha incorreta.");}
 }
 function renderCandidatosTbl(){
   let list=candidatosList();
@@ -3516,7 +3636,7 @@ function verCandidato(id){
   const reprovado=c.status==="Reprovado";
   const hist=c.statusHistorico||[];
   openModal(`<div class="modal-h"><h3>${esc(c.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   ${reprovado?`<p class="hint" style="color:var(--red);margin-bottom:14px">✗ Reprovado</p>`:`<div class="step">${STATUS_CANDIDATO.map((s,i)=>`<span class="s ${i<idxAtual?'done':i===idxAtual?'cur':''}">${s}</span>${i<STATUS_CANDIDATO.length-1?'<span class="arrow">→</span>':''}`).join("")}</div>`}
+   ${reprovado?`<p class="hint" style="color:var(--red);margin-bottom:14px">✗ Reprovado${c.motivoReprovacao?" — "+esc(c.motivoReprovacao):""}</p>`:`<div class="step">${STATUS_CANDIDATO.map((s,i)=>`<span class="s ${i<idxAtual?'done':i===idxAtual?'cur':''}">${s}</span>${i<STATUS_CANDIDATO.length-1?'<span class="arrow">→</span>':''}`).join("")}</div>`}
    <p class="break"><b>Vaga:</b> ${esc(c.vaga||"—")}<br><b>Localidade:</b> ${esc(c.localidade||"—")}<br><b>Telefone:</b> ${esc(c.telefone||"—")}${c.email?` · <b>E-mail:</b> ${esc(c.email)}`:""}<br><b>Recebido em:</b> ${fmt(c.dataRecebimento)}${c.obs?`<br><b>Obs:</b> ${esc(c.obs)}`:""}</p>
    ${(c.anexos&&c.anexos.length)?`<h3 style="font-size:14px;margin:14px 0 8px">Anexos (${c.anexos.length})</h3><div style="border:1px solid #eef0ec;border-radius:8px;padding:8px 12px;margin-bottom:14px">${c.anexos.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f2f3f1">${iconeAnexo(a)}<span style="flex:1;font-size:13px">${esc(a.nome)}</span><a href="${a.dados}" target="_blank" download="${esc(a.nome)}" class="btn btn-g btn-sm">Ver</a></div>`).join("")}</div>`:""}
    <h3 style="font-size:14px;margin:14px 0 8px">Linha do tempo do processo</h3>
@@ -3528,7 +3648,7 @@ function verCandidato(id){
    <div class="modal-f">
      <button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delCandidato('${id}')">Excluir</button>
      <button class="btn btn-g" onclick="formCandidato('${id}')">Editar dados</button>
-     ${!reprovado&&c.status!=="Admitido"?`<button class="btn btn-g" style="color:var(--red)" onclick="reprovarCandidato('${id}')">Reprovar</button>`:""}
+     ${!reprovado&&c.status!=="Admitido"?`<button class="btn btn-g" style="color:var(--red)" onclick="formReprovarCandidato('${id}')">Reprovar</button>`:""}
      ${!reprovado&&idxAtual<STATUS_CANDIDATO.length-1?`<button class="btn btn-a" onclick="avancarStatusCandidato('${id}')">Avançar → ${STATUS_CANDIDATO[idxAtual+1]}</button>`:""}
    </div>`);
 }
@@ -3550,10 +3670,20 @@ function avancarStatusCandidato(id){
   }
   save("mobilizacoes");closeModal();render();toast("Avançou para "+proximo+"."+msgExtra);
 }
-function reprovarCandidato(id){
-  if(!confirm("Marcar esse candidato como reprovado?"))return;
+const MOTIVOS_REPROVACAO=["Já está empregado","Não tem mais interesse na vaga","Pretensão salarial incompatível","Não atende ao perfil técnico da vaga","Não compareceu / não respondeu","Vaga preenchida por outro candidato","Outro"];
+function formReprovarCandidato(id){
   const c=candidatosList().find(x=>x.id===id);
-  c.status="Reprovado";(c.statusHistorico=c.statusHistorico||[]).push({status:"Reprovado",data:iso(today())});
+  openModal(`<div class="modal-h"><h3>Reprovar ${esc(c.nome)}</h3><button class="x" onclick="verCandidato('${id}')">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:14px">Isso não precisa significar que a pessoa não é boa — várias vezes é só o momento ou a situação dela.</p>
+   <div class="fg"><label>Motivo</label><select id="rp_motivo" onchange="document.getElementById('rp_outrowrap').style.display=this.value==='Outro'?'block':'none'">${MOTIVOS_REPROVACAO.map(m=>`<option>${m}</option>`).join("")}</select></div>
+   <div class="fg" id="rp_outrowrap" style="display:none"><label>Qual motivo?</label><input id="rp_motivo_outro" placeholder="descreve o motivo"></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="verCandidato('${id}')">Cancelar</button><button class="btn btn-a" style="background:var(--red);color:#fff" onclick="confirmarReprovacao('${id}')">Confirmar reprovação</button></div>`);
+}
+function confirmarReprovacao(id){
+  const motivoSel=$("#rp_motivo").value;
+  const motivo=motivoSel==="Outro"?($("#rp_motivo_outro").value.trim()||"Outro"):motivoSel;
+  const c=candidatosList().find(x=>x.id===id);
+  c.status="Reprovado";c.motivoReprovacao=motivo;(c.statusHistorico=c.statusHistorico||[]).push({status:"Reprovado",data:iso(today())});
   save("mobilizacoes");closeModal();render();toast("Candidato reprovado.");
 }
 function exportCandidatosExcel(){
@@ -3562,7 +3692,7 @@ function exportCandidatosExcel(){
     const hist=c.statusHistorico||[];
     const get=s=>{const h=hist.find(x=>x.status===s);return h?h.data:"";};
     const v=c.vagaAbertaId?DB.vagas_abertas.find(x=>x.id===c.vagaAbertaId):null;
-    return{Nome:c.nome,Telefone:c.telefone||"",Localidade:c.localidade||"",Vaga:c.vaga||"","Tipo de vaga":v?v.tipoVaga:"","Vagas necessárias":v?(v.quantidade||1):"",Status:c.status,"Recebido em":c.dataRecebimento,"Aprovado em":get("Aprovado"),"Enviado p/ sede em":get("Enviado para a sede"),"ASO em":get("Fazendo ASO"),"Liberado em":get("Liberado para contratação"),"Admitido em":get("Admitido"),"Dias totais":diasEntre(pd(c.dataRecebimento),(c.status==="Admitido"||c.status==="Reprovado")?pd(hist.slice(-1)[0]?.data||c.dataRecebimento):today()),Obs:c.obs||""};
+    return{Nome:c.nome,Telefone:c.telefone||"",Localidade:c.localidade||"",Vaga:c.vaga||"","Tipo de vaga":v?v.tipoVaga:"","Vagas necessárias":v?(v.quantidade||1):"",Status:c.status,"Motivo reprovação":c.motivoReprovacao||"","Recebido em":c.dataRecebimento,"Aprovado em":get("Aprovado"),"Enviado p/ sede em":get("Enviado para a sede"),"ASO em":get("Fazendo ASO"),"Liberado em":get("Liberado para contratação"),"Admitido em":get("Admitido"),"Dias totais":diasEntre(pd(c.dataRecebimento),(c.status==="Admitido"||c.status==="Reprovado")?pd(hist.slice(-1)[0]?.data||c.dataRecebimento):today()),Obs:c.obs||""};
   });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),"Recrutamento");
