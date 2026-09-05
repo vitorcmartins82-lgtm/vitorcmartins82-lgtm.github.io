@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.4";
+const APP_VERSAO="v2026-09-05.5";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -758,7 +758,7 @@ function renderGradeDiariaPonto(){
   const {de,ate}=_pontoPeriodo;const el=$("#pp_grade");if(!el||!de||!ate)return;
   const dias=[];let cursor=pd(de);const fim=pd(ate);
   while(cursor<=fim&&dias.length<40){dias.push(iso(cursor));cursor=new Date(cursor.getTime()+MS);}
-  const ativos=DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate").sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+  const ativos=DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate"&&f.regimePonto!=="Manual").sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
   if(!ativos.length){el.innerHTML='<div class="empty"><p>Sem funcionários pra mostrar.</p></div>';return;}
   el.innerHTML=`<table class="tbl" style="font-size:11.5px"><thead><tr><th style="position:sticky;left:0;background:#fff;z-index:1">Funcionário</th>${dias.map(d=>`<th style="text-align:center;padding:4px 6px">${d.slice(8,10)}/${d.slice(5,7)}</th>`).join("")}</tr></thead><tbody>${
     ativos.map(f=>{
@@ -806,7 +806,7 @@ function confirmarPermissaoArea(secaoChave,nomeArea){
   return true;
 }
 function marcarPresenca(fid,data){DB.faltas.push({id:uid(),func:fid,data,tipo:"Presença",motivo:""});save("faltas");renderChamada();toast("Presença registrada.");}
-function marcarTodosPresentes(){if(!confirmarSenhaSalvar())return;const data=_chamadaData;let n=0;DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate"&&dataChegadaNestaObra(f.id).data&&dataChegadaNestaObra(f.id).data<=data).forEach(f=>{const s=statusDoDia(f.id,data);if(s.tipo==="Sem registro"){DB.faltas.push({id:uid(),func:f.id,data,tipo:"Presença",motivo:""});n++;}});if(n){save("faltas");renderChamada();toast(n+" presença(s) registrada(s).");}else{toast("Ninguém sem registro nessa data.");}}
+function marcarTodosPresentes(){if(!confirmarSenhaSalvar())return;const data=_chamadaData;let n=0;DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate"&&f.regimePonto!=="Manual"&&dataChegadaNestaObra(f.id).data&&dataChegadaNestaObra(f.id).data<=data).forEach(f=>{const s=statusDoDia(f.id,data);if(s.tipo==="Sem registro"){DB.faltas.push({id:uid(),func:f.id,data,tipo:"Presença",motivo:""});n++;}});if(n){save("faltas");renderChamada();toast(n+" presença(s) registrada(s).");}else{toast("Ninguém sem registro nessa data.");}}
 function exportChamadaExcel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
   const data=_chamadaData;
@@ -822,9 +822,9 @@ function atualizarChamada(){_chamadaData=$("#pp_data").value||iso(today());rende
 function renderChamada(){
   const el=$("#pp_chamada");if(!el)return;
   const data=_chamadaData;
-  const rows=DB.func.filter(f=>{if(!ativo(f)||f.regimePonto==="NaoBate"||afastadoNaData(f,data))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc<=data;}).map(f=>({f,s:statusDoDia(f.id,data)}));
+  const rows=DB.func.filter(f=>{if(!ativo(f)||f.regimePonto==="NaoBate"||f.regimePonto==="Manual"||afastadoNaData(f,data))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc<=data;}).map(f=>({f,s:statusDoDia(f.id,data)}));
   const naoAdmitidos=DB.func.filter(f=>{if(!ativo(f))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc>data;}).length;
-  const naoBatem=DB.func.filter(f=>ativo(f)&&f.regimePonto==="NaoBate").length;
+  const naoBatem=DB.func.filter(f=>ativo(f)&&(f.regimePonto==="NaoBate"||f.regimePonto==="Manual")).length;
   const afastados=DB.func.filter(f=>afastadoNaData(f,data)).length;
   const semRegistro=rows.filter(r=>r.s.tipo==="Sem registro");
   const semSaida=rows.filter(r=>r.s.tipo==="Presença"&&r.s.horaEntrada&&!r.s.horaSaida);
