@@ -245,6 +245,18 @@ function save(k){try{const raw=JSON.stringify(DB[k]);if(LS)localStorage.setItem(
   for(const [id,json] of curMap){if(prevMap.get(id)!==json)dbUpsert(k,JSON.parse(json));}
   _lastSynced[k]=curMap;
 }
+async function saveEsperando(k){
+  try{const raw=JSON.stringify(DB[k]);if(LS)localStorage.setItem("obra:"+k,raw);else MEM[k]=raw;}catch(e){}
+  if(!SUPA.url)return;
+  if(!Array.isArray(DB[k]))return;
+  const prevMap=_lastSynced[k]||new Map();
+  const curMap=new Map(DB[k].map(o=>[String(o.id),JSON.stringify(o)]));
+  const promessas=[];
+  for(const id of prevMap.keys()){if(!curMap.has(id))promessas.push(dbDelete(k,id));}
+  for(const [id,json] of curMap){if(prevMap.get(id)!==json)promessas.push(dbUpsert(k,JSON.parse(json)));}
+  _lastSynced[k]=curMap;
+  await Promise.all(promessas);
+}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const MS=86400000;
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
@@ -432,7 +444,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.27";
+const APP_VERSAO="v2026-08-28.28";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -530,15 +542,17 @@ function mostrarCampoPinLogin(){
     footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="confirmarLoginUsuario()">Entrar</button>`;
   }
 }
-function criarPinProprio(){
+async function criarPinProprio(){
   const fid=$("#lg_func").value,novo=$("#lg_pin_novo").value.trim(),conf=$("#lg_pin_confirma").value.trim();
   if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
   if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
+  const btn=$("#lg_footer button.btn-a");if(btn){btn.disabled=true;btn.textContent="Salvando...";}
   const f=DB.func.find(x=>x.id===fid);
-  f.pin=novo;save("func");
+  f.pin=novo;
+  await saveEsperando("func");
   _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
   try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
-  closeModal();buildNav();toast("PIN criado! Identificado como "+f.nome+".");
+  closeModal();buildNav();toast("PIN criado e salvo! Identificado como "+f.nome+".");
 }
 function pularIdentificacao(){
   try{sessionStorage.setItem('obra_identificacao_pulada','1');}catch(e){}
@@ -573,7 +587,7 @@ function abrirTrocaPin(fid,origem){
    <div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="tp_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar</label><input type="password" id="tp_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>
    </div><div class="modal-f"><button class="btn btn-g" onclick="${voltar}">Cancelar</button><button class="btn btn-a" onclick="confirmarTrocaPin('${fid}','${origem||""}')">Trocar PIN</button></div>`);
 }
-function confirmarTrocaPin(fid,origem){
+async function confirmarTrocaPin(fid,origem){
   const jaAutorizado=usuarioLogadoPodeAutorizarPin();
   if(!jaAutorizado){
     const senha=$("#tp_senha").value;
@@ -582,9 +596,11 @@ function confirmarTrocaPin(fid,origem){
   const novo=$("#tp_novo").value.trim(),conf=$("#tp_confirma").value.trim();
   if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
   if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
+  const btn=$(".modal-f button.btn-a");if(btn){btn.disabled=true;btn.textContent="Salvando...";}
   const f=DB.func.find(x=>x.id===fid);
-  f.pin=novo;save("func");
-  closeModal();toast("PIN trocado com sucesso.");
+  f.pin=novo;
+  await saveEsperando("func");
+  closeModal();toast("PIN trocado e salvo com sucesso.");
   if(origem==="ficha")verFunc(fid);else abrirLoginUsuario();
 }
 function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
