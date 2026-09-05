@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.2";
+const APP_VERSAO="v2026-09-05.3";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -758,6 +758,8 @@ function statusDoDia(fid,dataStr){
   if(fer)return{tipo:"Férias",cls:"t-steel"};
   const baix=DB.baixadas.find(b=>{if(b.func!==fid)return false;const fimReal=b.dataFim||iso(new Date(pd(b.dataInicio).getTime()+((+b.dias||1)-1)*MS));return b.dataInicio<=dataStr&&fimReal>=dataStr;});
   if(baix)return{tipo:"Baixada",cls:"t-amber"};
+  const baixMov=DB.mov.find(m=>m.func===fid&&m.tipo==="Baixada"&&m.entrada&&m.entrada<=dataStr&&(!m.saida||m.saida>=dataStr));
+  if(baixMov)return{tipo:"Baixada",cls:"t-amber"};
   const fa=DB.faltas.find(x=>x.func===fid&&x.data===dataStr);
   if(fa){const t=fa.tipo||"Falta";const cls=t==="Presença"?"t-green":t==="Falta"?"t-red":t==="Treinamento"?"t-steel":"t-amber";return{tipo:t,cls,id:fa.id,motivo:fa.motivo,horaEntrada:fa.horaEntrada,horaSaida:fa.horaSaida};}
   return{tipo:"Sem registro",cls:"t-red"};
@@ -819,7 +821,8 @@ function vPonto(){main.innerHTML=`<div class="head"><div><h1>Ponto & Ocorrência
 function selectFunc(idsel){return `<input type="text" id="${idsel}_busca" placeholder="Buscar por nome..." oninput="filtrarSelectFunc('${idsel}_busca','${idsel}')" style="margin-bottom:6px"><select id="${idsel}">${porNome(DB.func.filter(ativo)).map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select>`;}
 function filtrarSelectFunc(buscaId,selectId){const q=$("#"+buscaId).value;const sel=$("#"+selectId);const cur=sel.value;const list=funcMatch(DB.func.filter(ativo),q);sel.innerHTML=list.map(f=>`<option value="${f.id}" ${f.id===cur?"selected":""}>${esc(f.nome)}</option>`).join("");}
 function funcionarioEmBaixadaNaData(fid,data){
-  return DB.baixadas.some(b=>b.func===fid&&b.dataInicio&&b.dataInicio<=data&&(!b.dataFim||b.dataFim>=data));
+  if(DB.baixadas.some(b=>b.func===fid&&b.dataInicio&&b.dataInicio<=data&&(!b.dataFim||b.dataFim>=data)))return true;
+  return DB.mov.some(m=>m.func===fid&&m.tipo==="Baixada"&&m.entrada&&m.entrada<=data&&(!m.saida||m.saida>=data));
 }
 function funcionarioComAtestadoNaData(fid,data){
   return DB.faltas.some(f=>f.func===fid&&f.data===data&&f.tipo==="Atestado");
