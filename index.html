@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.6";
+const APP_VERSAO="v2026-09-05.7";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -1062,12 +1062,45 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <p class="hint" style="margin-bottom:10px">— ou —</p>
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
+const TIPOS_REEMB=["Reembolso - Passagem","Reembolso - Alimentação","Reembolso - Deslocamento","Reembolso - Outro","Férias","Demissão","PAF","Quebra de obra","Adiantamento"];
+let _reembFiltroFunc="",_reembFiltroDe="",_reembFiltroAte="",_reembFiltroTipo="",_reembFiltroLancadoPor="",_reembFiltroStatus="";
 function vReemb(){
   if(!_reembUnlocked){
     main.innerHTML=telaSenhaMestra("Reembolsos e lançamentos","desbloquearReemb");
     return;
   }
-  const tot=DB.reemb.reduce((s,r)=>s+(+r.valor||0),0);main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div><div class="grid stats"><div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total lançado</div></div><div class="stat amber"><div class="n">${DB.reemb.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes</div></div></div><div class="panel"><div class="tblwrap">${DB.reemb.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${DB.reemb.slice().sort((a,b)=>a.data<b.data?1:-1).map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento ainda.</p><button class="btn btn-a" onclick="formReemb()">Novo lançamento</button></div>`}</div></div>`;}
+  const lancadores=[...new Set(DB.reemb.map(r=>r.lancadoPor).filter(Boolean))].sort();
+  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div>
+   <div class="toolbar">
+     <select id="rf_func" onchange="_reembFiltroFunc=this.value;renderReembTbl()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_reembFiltroFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select>
+     <select id="rf_tipo" onchange="_reembFiltroTipo=this.value;renderReembTbl()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_reembFiltroTipo===t?"selected":""}>${t}</option>`).join("")}</select>
+     <select id="rf_lancadopor" onchange="_reembFiltroLancadoPor=this.value;renderReembTbl()"><option value="">Lançado por qualquer um</option>${lancadores.map(l=>`<option value="${esc(l)}" ${_reembFiltroLancadoPor===l?"selected":""}>${esc(l)}</option>`).join("")}</select>
+     <select id="rf_status" onchange="_reembFiltroStatus=this.value;renderReembTbl()"><option value="">Todos os status</option><option ${_reembFiltroStatus==="Pendente"?"selected":""}>Pendente</option><option ${_reembFiltroStatus==="Aprovado"?"selected":""}>Aprovado</option><option ${_reembFiltroStatus==="Pago"?"selected":""}>Pago</option></select>
+   </div>
+   <div class="toolbar">
+     <span class="hint">De</span><input type="date" id="rf_de" value="${_reembFiltroDe}" onchange="_reembFiltroDe=this.value;renderReembTbl()">
+     <span class="hint">até</span><input type="date" id="rf_ate" value="${_reembFiltroAte}" onchange="_reembFiltroAte=this.value;renderReembTbl()">
+     ${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?`<button class="btn btn-g btn-sm" onclick="limparFiltrosReemb()">Limpar filtro</button>`:''}
+   </div>
+   <div class="grid stats" id="rf_stats"></div>
+   <div class="panel"><div class="tblwrap" id="rf_tbl"></div></div>`;
+  renderReembTbl();
+}
+function limparFiltrosReemb(){_reembFiltroFunc="";_reembFiltroDe="";_reembFiltroAte="";_reembFiltroTipo="";_reembFiltroLancadoPor="";_reembFiltroStatus="";render();}
+function renderReembTbl(){
+  let list=DB.reemb.slice();
+  if(_reembFiltroFunc)list=list.filter(r=>r.func===_reembFiltroFunc);
+  if(_reembFiltroDe)list=list.filter(r=>r.data>=_reembFiltroDe);
+  if(_reembFiltroAte)list=list.filter(r=>r.data<=_reembFiltroAte);
+  if(_reembFiltroTipo)list=list.filter(r=>r.tipo===_reembFiltroTipo);
+  if(_reembFiltroLancadoPor)list=list.filter(r=>r.lancadoPor===_reembFiltroLancadoPor);
+  if(_reembFiltroStatus)list=list.filter(r=>r.status===_reembFiltroStatus);
+  list.sort((a,b)=>a.data<b.data?1:-1);
+  const tot=list.reduce((s,r)=>s+(+r.valor||0),0);
+  const statsEl=$("#rf_stats");if(statsEl)statsEl.innerHTML=`<div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total (nesse filtro)</div></div><div class="stat amber"><div class="n">${list.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes (nesse filtro)</div></div><div class="stat steel"><div class="n">${list.length}</div><div class="l">Lançamentos (nesse filtro)</div></div>`;
+  const el=$("#rf_tbl");if(!el)return;
+  el.innerHTML=list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${list.map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento encontrado${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?" com esse filtro":""}.</p>${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?"":'<button class="btn btn-a" onclick="formReemb()">Novo lançamento</button>'}</div>`;
+}
 function desbloquearReemb(){
   const v=$("#area_restrita_senha").value;
   if(v===SENHA_MESTRA){_reembUnlocked=true;render();}else{toast("Senha incorreta.");}
@@ -1077,7 +1110,7 @@ function formaPagamentoTxt(r){
   if(r.formaPag)return esc(r.formaPag);
   return `<span style="color:var(--amber-d)">não definida</span>`;
 }
-function formReemb(id){if(!DB.func.length){toast("Cadastre um funcionário.");return;}const r=id?DB.reemb.find(x=>x.id===id):{status:"Pendente",tipo:"Reembolso - Passagem",formaPag:"Caixa - Vitor"};openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><select id="r_f" onchange="mostraPix()">${porNome(DB.func).map(f=>`<option value="${f.id}" ${f.id===r.func?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div><div id="r_pixinfo"></div><div class="row3"><div class="fg"><label>Data *</label><input type="date" id="r_d" value="${esc(r.data)}"></div><div class="fg"><label>Tipo</label><select id="r_t">${["Reembolso - Passagem","Reembolso - Alimentação","Reembolso - Deslocamento","Reembolso - Outro","Férias","Demissão","PAF","Quebra de obra","Adiantamento"].map(x=>`<option ${r.tipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="r_v" value="${esc(r.valor)}"></div></div>
+function formReemb(id){if(!DB.func.length){toast("Cadastre um funcionário.");return;}const r=id?DB.reemb.find(x=>x.id===id):{status:"Pendente",tipo:"Reembolso - Passagem",formaPag:"Caixa - Vitor"};openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><select id="r_f" onchange="mostraPix()">${porNome(DB.func).map(f=>`<option value="${f.id}" ${f.id===r.func?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div><div id="r_pixinfo"></div><div class="row3"><div class="fg"><label>Data *</label><input type="date" id="r_d" value="${esc(r.data)}"></div><div class="fg"><label>Tipo</label><select id="r_t">${TIPOS_REEMB.map(x=>`<option ${r.tipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="r_v" value="${esc(r.valor)}"></div></div>
    <div class="sub">Pagamento</div>
    <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="r_pag"><option value="Caixa - Vitor" ${r.formaPag==="Caixa - Vitor"?"selected":""}>Caixa - Vitor</option><option value="Caixa - Arthur" ${r.formaPag==="Caixa - Arthur"?"selected":""}>Caixa - Arthur</option><option value="Fluig" ${r.formaPag==="Fluig"?"selected":""}>Fluig</option></select></div><div class="fg"><label>Status do pagamento</label><select id="r_s">${["Pendente","Aprovado","Pago"].map(x=>`<option ${r.status===x?"selected":""}>${x}</option>`).join("")}</select></div></div>
    <div class="row2"><div class="fg"><label>Número Fluig <span class="opt">(opcional)</span></label><input id="r_fluignum" value="${esc(r.fluigNumero)}" placeholder="ex.: 123456"></div><div class="fg"><label>Link Fluig</label><input id="r_fluiglink" value="${esc(r.fluigLink)}" placeholder="https://..."></div></div>
