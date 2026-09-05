@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.8";
+const APP_VERSAO="v2026-09-05.9";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -789,13 +789,21 @@ function renderGradeDiariaPonto(){
 }
 function formFeriado(data){
   const existente=DB.cfg.feriados&&DB.cfg.feriados.find(f=>f.data===data);
-  const nome=prompt("Nome do feriado em "+fmt(data)+" (deixa em branco só pra marcar, sem nome):",existente?existente.nome:"");
-  if(nome===null)return;
-  if(!confirmarSenhaSalvar())return;
+  openModal(`<div class="modal-h"><h3>${existente?"Editar":"Marcar"} feriado — ${fmt(data)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="fg"><label>Nome do feriado <span class="opt">(opcional)</span></label><input id="fer_nome" value="${esc(existente?existente.nome:"")}" placeholder="ex.: Independência do Brasil"></div>
+   </div><div class="modal-f">${existente?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="removerFeriado('${data}')">Remover marcação de feriado</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFeriado('${data}')">${existente?"Salvar":"Marcar feriado"}</button></div>`);
+}
+function salvarFeriado(data){
+  const nome=$("#fer_nome").value.trim();
   DB.cfg.feriados=DB.cfg.feriados||[];
   DB.cfg.feriados=DB.cfg.feriados.filter(f=>f.data!==data);
-  DB.cfg.feriados.push({data,nome:nome.trim()});
-  save("cfg");renderGradeDiariaPonto();toast("Feriado marcado.");
+  DB.cfg.feriados.push({data,nome});
+  save("cfg");closeModal();renderGradeDiariaPonto();renderChamada();toast("Feriado marcado.");
+}
+function removerFeriado(data){
+  if(!confirm("Remover a marcação de feriado desse dia? Ele volta a ser um dia normal."))return;
+  DB.cfg.feriados=(DB.cfg.feriados||[]).filter(f=>f.data!==data);
+  save("cfg");closeModal();renderGradeDiariaPonto();renderChamada();toast("Feriado removido.");
 }
 function marcarFaltaRapida(fid,data){
   if(!confirmarSenhaSalvar())return;
@@ -818,7 +826,7 @@ function statusDoDia(fid,dataStr){
 function confirmarSenhaSalvar(){
   if(!SENHA_SALVAR_ATIVA)return true;
   if(_usuarioLogadoId)return true;
-  toast("Você precisa se identificar (CPF + PIN) antes de fazer isso — mesmo a senha mestra exige isso.");
+  toast("Você precisa se identificar (CPF) antes de fazer isso.");
   abrirLoginUsuario();
   return false;
 }
