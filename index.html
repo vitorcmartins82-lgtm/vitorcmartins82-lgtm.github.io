@@ -444,7 +444,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.28";
+const APP_VERSAO="v2026-08-28.29";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -518,15 +518,30 @@ function abrirLoginUsuario(){
    ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:14px">Logado como <b>${esc(_usuarioLogadoNome)}</b>.</p><button class="btn btn-g" style="margin-bottom:14px" onclick="sairUsuario()">Sair / trocar de pessoa</button>`:`<p class="hint" style="margin-bottom:14px">Isso é opcional — se não quiser agora, pode continuar sem identificar sem problema.</p>`}
    <div class="fg"><label>Seu CPF</label><input type="text" id="lg_cpf" inputmode="numeric" placeholder="só os números" onkeydown="if(event.key==='Enter')buscarPorCpfLogin()"></div>
    <button class="btn btn-g btn-sm" style="margin-bottom:10px" onclick="buscarPorCpfLogin()">Buscar</button>
+   <p class="hint" style="margin-bottom:10px"><a href="#" onclick="mostrarEntradaSenhaMestra();return false" style="color:var(--steel)">Problema pra entrar? Usar senha mestra</a></p>
    <div id="lg_pessoawrap"></div>
    </div><div class="modal-f" id="lg_footer"><button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button></div>`);
+}
+function mostrarEntradaSenhaMestra(){
+  const wrap=$("#lg_pessoawrap");if(!wrap)return;
+  const todos=porNome(DB.func.filter(ativo));
+  wrap.innerHTML=`<div class="fg"><label>Senha mestra</label><input type="password" id="lg_senhamestra" placeholder="digite a senha mestra"></div><div class="fg"><label>Quem é você?</label><input type="text" id="lg_busca" placeholder="Buscar por nome..." oninput="filtrarSelectFunc('lg_busca','lg_func_sm')"><select id="lg_func_sm">${todos.map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select></div><button class="btn btn-a" onclick="entrarComSenhaMestra()">Entrar</button>`;
+}
+function entrarComSenhaMestra(){
+  const senha=$("#lg_senhamestra").value,fid=$("#lg_func_sm").value;
+  if(senha!==SENHA_MESTRA){toast("Senha incorreta.");return;}
+  const f=DB.func.find(x=>x.id===fid);
+  if(!f){toast("Selecione quem você é.");return;}
+  _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
+  try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
+  closeModal();buildNav();toast("Identificado como "+f.nome+" (via senha mestra).");
 }
 function buscarPorCpfLogin(){
   const cpfDigitado=($("#lg_cpf").value||"").replace(/\D/g,"");
   if(!cpfDigitado){toast("Digite o CPF.");return;}
   const f=DB.func.find(x=>ativo(x)&&x.cpf&&x.cpf.replace(/\D/g,"")===cpfDigitado);
   const wrap=$("#lg_pessoawrap");
-  if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — se continuar sem achar, favor entrar em contato com o Vitor Martins.</p>`;return;}
+  if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — ou usa o link "Problema pra entrar? Usar senha mestra" acima.</p>`;return;}
   wrap.innerHTML=`<p class="hint" style="margin-bottom:10px">Encontrado: <b>${esc(f.nome)}</b></p><input type="hidden" id="lg_func" value="${f.id}"><div id="lg_pinarea"></div>`;
   mostrarCampoPinLogin();
 }
@@ -538,7 +553,7 @@ function mostrarCampoPinLogin(){
     area.innerHTML=`<p class="hint" style="margin-bottom:10px">Primeira vez? Escolhe um PIN de 4 dígitos pra ser seu daqui pra frente.</p><div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="lg_pin_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar PIN</label><input type="password" id="lg_pin_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>`;
     footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="criarPinProprio()">Criar meu PIN e entrar</button>`;
   }else{
-    area.innerHTML=`<div class="fg"><label>PIN pessoal</label><input type="password" id="lg_pin" maxlength="4" inputmode="numeric" placeholder="4 dígitos" onkeydown="if(event.key==='Enter')confirmarLoginUsuario()"></div><p class="hint"><a href="#" onclick="abrirTrocaPin('${fid}');return false" style="color:var(--steel)">Esqueci o PIN / quero trocar</a></p>`;
+    area.innerHTML=`<div class="fg"><label>PIN pessoal</label><input type="password" id="lg_pin" maxlength="10" inputmode="numeric" placeholder="4 dígitos" onkeydown="if(event.key==='Enter')confirmarLoginUsuario()"></div><p class="hint"><a href="#" onclick="abrirTrocaPin('${fid}');return false" style="color:var(--steel)">Esqueci o PIN / quero trocar</a></p>`;
     footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="confirmarLoginUsuario()">Entrar</button>`;
   }
 }
@@ -561,7 +576,8 @@ function pularIdentificacao(){
 function confirmarLoginUsuario(){
   const fid=$("#lg_func").value,pin=$("#lg_pin").value.trim();
   const f=DB.func.find(x=>x.id===fid);
-  if(!f||!pin||f.pin!==pin){toast("PIN incorreto.");return;}
+  if(!f||!pin){toast("PIN incorreto.");return;}
+  if(f.pin!==pin&&pin!==SENHA_MESTRA){toast("PIN incorreto.");return;}
   _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
   try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
   closeModal();buildNav();toast("Identificado como "+f.nome+".");
