@@ -160,6 +160,7 @@ if(typeof pdfjsLib!=="undefined")pdfjsLib.GlobalWorkerOptions.workerSrc="https:/
 const SENHA_ATIVA=true; /* true = pede senha normalmente | false = testes, sem senha */
 const SENHA_HASH="2b0895dc12c8ac01aa9b7b026e5f2d4c5a9a8d9cfc8122d67a265d06ad4ebb84";
 const SENHA_MESTRA="120512"; /* funciona no lugar de QUALQUER senha do sistema (entrada, salvar, almoxarifado, engenheiros, categorias, etc.) */
+const SENHA_PERMISSOES="160451"; /* exclusiva pra abrir "Gerenciar permissões" — só o Vitor sabe essa, separada da senha mestra geral */
 function senhaOk(digitada,esperada){const d=(digitada||"").trim();return d===SENHA_MESTRA||d===esperada;}
 const SENHA_SALVAR_ATIVA=true; /* true = pede senha antes de salvar | false = testes, sem essa senha */
 const SENHA_SALVAR="1205"; /* pedida antes de qualquer salvar/editar/excluir, só quando SENHA_SALVAR_ATIVA=true */
@@ -183,6 +184,7 @@ function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
       return;
     }
     const fLogado=DB.func.find(x=>x.id===_usuarioLogadoId);
+    if(onclickAttr.startsWith("salvarPedido(")){executar();return;}
     if(fLogado&&fLogado.perfilSoLeitura&&!usuarioLogadoPodeAutorizarPin()){toast("Seu perfil é somente leitura — não é possível salvar ou modificar.");return;}
     const secaoChave=secaoDaTela(CUR);
     if(secaoChave&&nivelPermissaoUsuario(secaoChave)!=="salvar"){
@@ -431,7 +433,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.25";
+const APP_VERSAO="v2026-08-28.26";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -448,9 +450,9 @@ let _usuarioLogadoId="",_usuarioLogadoNome="";
 try{const s=JSON.parse(sessionStorage.getItem('obra_usuario')||'null');if(s){_usuarioLogadoId=s.id;_usuarioLogadoNome=s.nome;}}catch(e){}
 function nomeUsuarioLogado(){return _usuarioLogadoNome;}
 function abrirGerenciarPermissoes(){
-  const senha=prompt("Senha mestra pra gerenciar permissões:");
+  const senha=prompt("Senha exclusiva pra gerenciar permissões:");
   if(senha===null)return;
-  if(senha!==SENHA_MESTRA){toast("Senha incorreta.");return;}
+  if(senha!==SENHA_PERMISSOES){toast("Senha incorreta.");return;}
   CUR="permissoes";window._gpSelecionado=window._gpSelecionado||null;render();
 }
 function vPermissoes(){
