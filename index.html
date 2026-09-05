@@ -445,7 +445,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.32";
+const APP_VERSAO="v2026-08-28.33";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -503,7 +503,7 @@ function renderDetalhePermissoes(){
    <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
    <div style="background:#f7f8f6;border-radius:10px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
      <div><b style="font-size:14.5px">PIN pessoal</b><br><small style="color:var(--muted)">${f.pin?`PIN atual: `:'Ainda não configurou um PIN.'}</small>${f.pin?`<div style="font-size:22px;font-weight:700;letter-spacing:3px;margin-top:4px">${esc(f.pin)}</div>`:''}</div>
-     <div>${f.pin?`<button class="btn btn-g btn-sm" onclick="resetarPinPessoa('${f.id}')">Resetar (limpar e deixar criar de novo)</button>`:'<span class="hint">Nada pra resetar ainda.</span>'}</div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">${f.pin?`<button class="btn btn-g btn-sm" onclick="resetarPinPessoa('${f.id}')">Resetar (limpar e deixar criar de novo)</button>`:''}<button class="btn btn-a btn-sm" onclick="editarPinDireto('${f.id}')">${f.pin?"Editar PIN":"Definir PIN agora"}</button></div>
    </div>
    ${gerais.map(linhaSecao).join("")}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas áreas de cima, mas nunca consegue salvar ou modificar nada — não afeta as áreas sensíveis abaixo, que são sempre separadas</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
@@ -521,6 +521,16 @@ function resetarPinPessoa(fid){
   f.pin="";
   save("func");
   toast("PIN resetado.");
+  renderDetalhePermissoes();
+}
+function editarPinDireto(fid){
+  const f=DB.func.find(x=>x.id===fid);
+  const novo=prompt("Novo PIN de 4 dígitos pra "+f.nome+":",f.pin||"");
+  if(novo===null)return;
+  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter exatamente 4 números.");return;}
+  f.pin=novo;
+  save("func");
+  toast("PIN definido.");
   renderDetalhePermissoes();
 }
 function mudarPermissao(fid,secaoChave,nivel){
