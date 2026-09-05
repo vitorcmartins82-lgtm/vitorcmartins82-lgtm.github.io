@@ -445,7 +445,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.30";
+const APP_VERSAO="v2026-08-28.31";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -494,12 +494,21 @@ function renderDetalhePermissoes(){
   if(!f){el.innerHTML='<div class="panel"><p class="hint" style="padding:20px">Escolhe uma pessoa na lista ao lado.</p></div>';return;}
   const perms=migrarPermissoesAntigas(f);
   const ehAdminNato=normalizaNome(f.nome).includes("VITOR")&&normalizaNome(f.nome).includes("MARTINS");
+  const SECOES_SENSIVEIS=["reembolso","recrutamento"];
+  const gerais=SECOES_PERMISSAO.filter(s=>!SECOES_SENSIVEIS.includes(s.chave));
+  const sensiveis=SECOES_PERMISSAO.filter(s=>SECOES_SENSIVEIS.includes(s.chave));
+  const linhaSecao=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">${esc(s.nome)}</b><br><small style="color:var(--muted)">${esc(s.desc)}</small></div><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:160px;padding:8px;font-size:14px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`;
   el.innerHTML=`<div class="panel" style="padding:24px">
    <h2 style="margin:0 0 4px;font-size:19px">${esc(f.nome)}</h2>
    <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
-   ${SECOES_PERMISSAO.map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">${esc(s.nome)}</b><br><small style="color:var(--muted)">${esc(s.desc)}</small></div><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:160px;padding:8px;font-size:14px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`).join("")}
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">Somente leitura (em tudo)</b><br><small style="color:var(--muted)">Vê tudo que tiver liberado acima, mas nunca consegue salvar ou modificar nada, em nenhum lugar</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre — igual o Vitor. Também pode autorizar troca de PIN de qualquer pessoa</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
+   ${gerais.map(linhaSecao).join("")}
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas áreas de cima, mas nunca consegue salvar ou modificar nada — não afeta as áreas sensíveis abaixo, que são sempre separadas</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
+   <div style="margin-top:20px;border:2px solid var(--amber);border-radius:10px;padding:16px;background:#fdf8ee">
+     <b style="font-size:13.5px;color:var(--amber-d)">🔒 Áreas sensíveis — sempre separadas, nunca liberadas em conjunto com o resto</b>
+     <p class="hint" style="margin:6px 0 14px">Dados pessoais/financeiros. Precisa ser decidido individualmente pra cada pessoa, mesmo que ela já veja tudo o mais.</p>
+     ${sensiveis.map(linhaSecao).join("")}
+   </div>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre, incluindo as áreas sensíveis — igual o Vitor. Também pode autorizar troca de PIN de qualquer pessoa</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
    </div>`;
 }
 function mudarPermissao(fid,secaoChave,nivel){
