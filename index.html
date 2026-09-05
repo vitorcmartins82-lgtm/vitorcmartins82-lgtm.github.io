@@ -415,24 +415,27 @@ function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
 const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
-const SECOES_PERMISSAO=[
-  {chave:"rh",nome:"RH Geral",desc:"Funcionários, Experiência, Admissões, Movimentações, Mobilização, Baixada, Ponto",telas:["painel","func","experiencia","contratacao","mov","mobilizacao","baixada","ponto"]},
-  {chave:"reembolso",nome:"Reembolsos",desc:"Reembolsos, férias, demissão, adiantamento",telas:["reemb"]},
-  {chave:"recrutamento",nome:"Recrutamento",desc:"Vagas abertas e currículos",telas:["recrutamento"]},
-  {chave:"estrutura",nome:"Estrutura",desc:"Locais/Rota, Mapa, Veículos, Abastecimento",telas:["locais","mapa","veiculos","abastecimento"]},
-  {chave:"compras",nome:"Compras (administrativo)",desc:"Painel Compras, Pedidos, Lançamentos, Fornecedores, Contratos, Notas, Setores, Despesas",telas:["painelCompras","lancamentos","pedidos","fornecedores","contratos","notasfiscais","setores","despesas"]},
-  {chave:"almoxarifado",nome:"Almoxarifado",desc:"Estoque e Pedidos de Material/EPI",telas:["almoxarifado","almoxPedidos"]},
-  {chave:"areas",nome:"Painel de Áreas",desc:"Visão geral pro time de campo",telas:["areas"]}
-];
+const SECOES_PERMISSAO=MENU.filter(m=>!m.sec).map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
-  if(f.permissoes)return f.permissoes;
-  return{
-    rh:"nenhum",estrutura:"nenhum",compras:"nenhum",areas:"nenhum",
-    reembolso:f.acessoReembolso?"salvar":"nenhum",
-    recrutamento:f.acessoRecrutamento?"salvar":"nenhum",
-    almoxarifado:f.acessoAlmoxarifado?"salvar":"nenhum"
-  };
+  const ehFormatoAntigo=f.permissoes&&("rh" in f.permissoes||"estrutura" in f.permissoes||"compras" in f.permissoes||"reembolso" in f.permissoes);
+  if(f.permissoes&&!ehFormatoAntigo)return f.permissoes;
+  if(ehFormatoAntigo){
+    const p=f.permissoes;
+    const map={painel:p.rh,func:p.rh,experiencia:p.rh,contratacao:p.rh,mov:p.rh,mobilizacao:p.rh,baixada:p.rh,ponto:p.rh,
+      reemb:p.reembolso,recrutamento:p.recrutamento,
+      locais:p.estrutura,mapa:p.estrutura,veiculos:p.estrutura,abastecimento:p.estrutura,
+      painelCompras:p.compras,lancamentos:p.compras,pedidos:p.compras,fornecedores:p.compras,contratos:p.compras,notasfiscais:p.compras,setores:p.compras,despesas:p.compras,
+      almoxarifado:p.almoxarifado,almoxPedidos:p.almoxarifado,
+      areas:p.areas};
+    const out={};SECOES_PERMISSAO.forEach(s=>out[s.chave]=map[s.chave]||"nenhum");
+    return out;
+  }
+  const out={};SECOES_PERMISSAO.forEach(s=>out[s.chave]="nenhum");
+  if(f.acessoReembolso)out.reemb="salvar";
+  if(f.acessoRecrutamento)out.recrutamento="salvar";
+  if(f.acessoAlmoxarifado){out.almoxarifado="salvar";out.almoxPedidos="salvar";}
+  return out;
 }
 function nivelPermissaoUsuario(secaoChave){
   if(!_usuarioLogadoId)return null;
@@ -444,8 +447,8 @@ function nivelPermissaoUsuario(secaoChave){
   if(f.perfilSoLeitura&&nivel==="salvar")nivel="ver";
   return nivel;
 }
-function secaoDaTela(cur){const s=SECOES_PERMISSAO.find(s=>s.telas.includes(cur));return s?s.chave:null;}
-const APP_VERSAO="v2026-08-28.35";
+function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
+const APP_VERSAO="v2026-09-05.1";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -494,44 +497,22 @@ function renderDetalhePermissoes(){
   if(!f){el.innerHTML='<div class="panel"><p class="hint" style="padding:20px">Escolhe uma pessoa na lista ao lado.</p></div>';return;}
   const perms=migrarPermissoesAntigas(f);
   const ehAdminNato=normalizaNome(f.nome).includes("VITOR")&&normalizaNome(f.nome).includes("MARTINS");
-  const SECOES_SENSIVEIS=["reembolso","recrutamento"];
+  const SECOES_SENSIVEIS=["reemb","recrutamento"];
   const gerais=SECOES_PERMISSAO.filter(s=>!SECOES_SENSIVEIS.includes(s.chave));
   const sensiveis=SECOES_PERMISSAO.filter(s=>SECOES_SENSIVEIS.includes(s.chave));
-  const linhaSecao=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">${esc(s.nome)}</b><br><small style="color:var(--muted)">${esc(s.desc)}</small></div><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:160px;padding:8px;font-size:14px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`;
+  const linhaSecao=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid #eef0ec"><b style="font-size:14px">${esc(s.nome)}</b><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:150px;padding:7px;font-size:13.5px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`;
   el.innerHTML=`<div class="panel" style="padding:24px">
    <h2 style="margin:0 0 4px;font-size:19px">${esc(f.nome)}</h2>
-   <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
-   <div style="background:#f7f8f6;border-radius:10px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-     <div><b style="font-size:14.5px">PIN pessoal</b><br><small style="color:var(--muted)">${f.pin?`PIN atual: `:'Ainda não configurou um PIN.'}</small>${f.pin?`<div style="font-size:22px;font-weight:700;letter-spacing:3px;margin-top:4px">${esc(f.pin)}</div>`:''}</div>
-     <div style="display:flex;gap:8px;flex-wrap:wrap">${f.pin?`<button class="btn btn-g btn-sm" onclick="resetarPinPessoa('${f.id}')">Resetar (limpar e deixar criar de novo)</button>`:''}<button class="btn btn-a btn-sm" onclick="editarPinDireto('${f.id}')">${f.pin?"Editar PIN":"Definir PIN agora"}</button></div>
-   </div>
+   <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")} · ${esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
    ${gerais.map(linhaSecao).join("")}
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas áreas de cima, mas nunca consegue salvar ou modificar nada — não afeta as áreas sensíveis abaixo, que são sempre separadas</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada — não afeta as áreas sensíveis abaixo, que são sempre separadas</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
    <div style="margin-top:20px;border:2px solid var(--amber);border-radius:10px;padding:16px;background:#fdf8ee">
      <b style="font-size:13.5px;color:var(--amber-d)">🔒 Áreas sensíveis — sempre separadas, nunca liberadas em conjunto com o resto</b>
      <p class="hint" style="margin:6px 0 14px">Dados pessoais/financeiros. Precisa ser decidido individualmente pra cada pessoa, mesmo que ela já veja tudo o mais.</p>
      ${sensiveis.map(linhaSecao).join("")}
    </div>
-   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre, incluindo as áreas sensíveis — igual o Vitor. Também pode autorizar troca de PIN de qualquer pessoa</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre, incluindo as áreas sensíveis — igual o Vitor</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
    </div>`;
-}
-function resetarPinPessoa(fid){
-  if(!confirm("Limpar o PIN dessa pessoa? Ela vai precisar criar um novo na próxima vez que se identificar."))return;
-  const f=DB.func.find(x=>x.id===fid);
-  f.pin="";
-  save("func");
-  toast("PIN resetado.");
-  renderDetalhePermissoes();
-}
-function editarPinDireto(fid){
-  const f=DB.func.find(x=>x.id===fid);
-  const novo=prompt("Novo PIN de 4 dígitos pra "+f.nome+":",f.pin||"");
-  if(novo===null)return;
-  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter exatamente 4 números.");return;}
-  f.pin=novo;
-  save("func");
-  toast("PIN definido.");
-  renderDetalhePermissoes();
 }
 function mudarPermissao(fid,secaoChave,nivel){
   const f=DB.func.find(x=>x.id===fid);
@@ -549,75 +530,23 @@ function abrirLoginUsuario(){
   openModal(`<div class="modal-h"><h3>👤 Identificar-se</h3><button class="x" onclick="pularIdentificacao()">×</button></div><div class="modal-b">
    ${_usuarioLogadoNome?`<p class="hint" style="margin-bottom:14px">Logado como <b>${esc(_usuarioLogadoNome)}</b>.</p><button class="btn btn-g" style="margin-bottom:14px" onclick="sairUsuario()">Sair / trocar de pessoa</button>`:`<p class="hint" style="margin-bottom:14px">Isso é opcional — se não quiser agora, pode continuar sem identificar sem problema.</p>`}
    <div class="fg"><label>Seu CPF</label><input type="text" id="lg_cpf" inputmode="numeric" placeholder="só os números" onkeydown="if(event.key==='Enter')buscarPorCpfLogin()"></div>
-   <button class="btn btn-g btn-sm" style="margin-bottom:10px" onclick="buscarPorCpfLogin()">Buscar</button>
-   <p class="hint" style="margin-bottom:10px"><a href="#" onclick="mostrarEntradaSenhaMestra();return false" style="color:var(--steel)">Problema pra entrar? Usar senha mestra</a></p>
+   <button class="btn btn-a btn-sm" style="margin-bottom:10px" onclick="buscarPorCpfLogin()">Entrar</button>
    <div id="lg_pessoawrap"></div>
-   </div><div class="modal-f" id="lg_footer"><button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button></div>`);
-}
-function mostrarEntradaSenhaMestra(){
-  const wrap=$("#lg_pessoawrap");if(!wrap)return;
-  const todos=porNome(DB.func.filter(ativo));
-  wrap.innerHTML=`<div class="fg"><label>Senha mestra</label><input type="password" id="lg_senhamestra" placeholder="digite a senha mestra"></div><div class="fg"><label>Quem é você?</label><input type="text" id="lg_busca" placeholder="Buscar por nome..." oninput="filtrarSelectFunc('lg_busca','lg_func_sm')"><select id="lg_func_sm">${todos.map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select></div><button class="btn btn-a" onclick="entrarComSenhaMestra()">Entrar</button>`;
-}
-function entrarComSenhaMestra(){
-  const senha=$("#lg_senhamestra").value,fid=$("#lg_func_sm").value;
-  if(senha!==SENHA_MESTRA){toast("Senha incorreta.");return;}
-  const f=DB.func.find(x=>x.id===fid);
-  if(!f){toast("Selecione quem você é.");return;}
-  _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
-  try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
-  closeModal();buildNav();toast("Identificado como "+f.nome+" (via senha mestra).");
+   </div><div class="modal-f"><button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button></div>`);
 }
 function buscarPorCpfLogin(){
   const cpfDigitado=($("#lg_cpf").value||"").replace(/\D/g,"");
   if(!cpfDigitado){toast("Digite o CPF.");return;}
   const f=DB.func.find(x=>ativo(x)&&x.cpf&&x.cpf.replace(/\D/g,"")===cpfDigitado);
   const wrap=$("#lg_pessoawrap");
-  if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — ou usa o link "Problema pra entrar? Usar senha mestra" acima.</p>`;return;}
-  wrap.innerHTML=`<p class="hint" style="margin-bottom:10px">Encontrado: <b>${esc(f.nome)}</b></p><input type="hidden" id="lg_func" value="${f.id}"><div id="lg_pinarea"></div>`;
-  mostrarCampoPinLogin();
-}
-function mostrarCampoPinLogin(){
-  const fid=$("#lg_func")?.value;const area=$("#lg_pinarea");const footer=$("#lg_footer");if(!area||!fid)return;
-  const f=DB.func.find(x=>x.id===fid);
-  if(!f)return;
-  if(!f.pin){
-    area.innerHTML=`<p class="hint" style="margin-bottom:10px">Primeira vez? Escolhe um PIN de 4 dígitos pra ser seu daqui pra frente.</p><div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="lg_pin_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar PIN</label><input type="password" id="lg_pin_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>`;
-    footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="criarPinProprio()">Criar meu PIN e entrar</button>`;
-  }else{
-    area.innerHTML=`<div class="fg"><label>PIN pessoal</label><input type="password" id="lg_pin" maxlength="10" inputmode="numeric" placeholder="4 dígitos" onkeydown="if(event.key==='Enter')confirmarLoginUsuario()"></div><p class="hint"><a href="#" onclick="abrirTrocaPin('${fid}');return false" style="color:var(--steel)">Esqueci o PIN / quero trocar</a></p>`;
-    footer.innerHTML=`<button class="btn btn-g" onclick="pularIdentificacao()">Continuar sem identificar</button><button class="btn btn-a" onclick="confirmarLoginUsuario()">Entrar</button>`;
-  }
-}
-async function criarPinProprio(){
-  const fid=$("#lg_func").value,novo=$("#lg_pin_novo").value.trim(),conf=$("#lg_pin_confirma").value.trim();
-  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
-  if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
-  const btn=$("#lg_footer button.btn-a");if(btn){btn.disabled=true;btn.textContent="Salvando...";}
-  const f=DB.func.find(x=>x.id===fid);
-  f.pin=novo;
-  const deuCerto=await saveEsperando("func");
-  if(!deuCerto){
-    if(btn){btn.disabled=false;btn.textContent="Criar meu PIN e entrar";}
-    toast("⚠ Não consegui salvar na nuvem (sem conexão?). O PIN NÃO está garantido ainda — tenta de novo antes de sair da página.");
-    return;
-  }
+  if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — se continuar sem achar, favor entrar em contato com o Vitor Martins.</p>`;return;}
   _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
   try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
-  closeModal();buildNav();toast("PIN criado e salvo de verdade na nuvem! Identificado como "+f.nome+".");
+  closeModal();buildNav();toast("Identificado como "+f.nome+".");
 }
 function pularIdentificacao(){
   try{sessionStorage.setItem('obra_identificacao_pulada','1');}catch(e){}
   closeModal();
-}
-function confirmarLoginUsuario(){
-  const fid=$("#lg_func").value,pin=$("#lg_pin").value.trim();
-  const f=DB.func.find(x=>x.id===fid);
-  if(!f||!pin){toast("PIN incorreto.");return;}
-  if(f.pin!==pin&&pin!==SENHA_MESTRA){toast("PIN incorreto.");return;}
-  _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
-  try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:f.id,nome:f.nome}));}catch(e){}
-  closeModal();buildNav();toast("Identificado como "+f.nome+".");
 }
 function sairUsuario(){
   _usuarioLogadoId="";_usuarioLogadoNome="";
@@ -631,35 +560,6 @@ function usuarioLogadoPodeAutorizarPin(){
   const nomeNorm=normalizaNome(f.nome);
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
-}
-function abrirTrocaPin(fid,origem){
-  const jaAutorizado=usuarioLogadoPodeAutorizarPin();
-  const voltar=origem==="ficha"?`verFunc('${fid}')`:"abrirLoginUsuario()";
-  openModal(`<div class="modal-h"><h3>Trocar PIN</h3><button class="x" onclick="${voltar}">×</button></div><div class="modal-b">
-   ${jaAutorizado?`<p class="hint" style="margin-bottom:14px">Autorizado automaticamente — ${esc(_usuarioLogadoNome)} tem permissão pra autorizar trocas de PIN.</p>`:`<div class="fg"><label>Senha de autorização *</label><input type="password" id="tp_senha" placeholder="senha mestra"></div>`}
-   <div class="row2"><div class="fg" style="margin-bottom:0"><label>Novo PIN</label><input type="password" id="tp_novo" maxlength="4" inputmode="numeric" placeholder="4 dígitos"></div><div class="fg" style="margin-bottom:0"><label>Confirmar</label><input type="password" id="tp_confirma" maxlength="4" inputmode="numeric" placeholder="repete"></div></div>
-   </div><div class="modal-f"><button class="btn btn-g" onclick="${voltar}">Cancelar</button><button class="btn btn-a" onclick="confirmarTrocaPin('${fid}','${origem||""}')">Trocar PIN</button></div>`);
-}
-async function confirmarTrocaPin(fid,origem){
-  const jaAutorizado=usuarioLogadoPodeAutorizarPin();
-  if(!jaAutorizado){
-    const senha=$("#tp_senha").value;
-    if(senha!==SENHA_MESTRA){toast("Senha de autorização incorreta.");return;}
-  }
-  const novo=$("#tp_novo").value.trim(),conf=$("#tp_confirma").value.trim();
-  if(!/^\d{4}$/.test(novo)){toast("O PIN precisa ter 4 números.");return;}
-  if(novo!==conf){toast("Os dois PINs não são iguais.");return;}
-  const btn=$(".modal-f button.btn-a");if(btn){btn.disabled=true;btn.textContent="Salvando...";}
-  const f=DB.func.find(x=>x.id===fid);
-  f.pin=novo;
-  const deuCerto=await saveEsperando("func");
-  if(!deuCerto){
-    if(btn){btn.disabled=false;btn.textContent="Trocar PIN";}
-    toast("⚠ Não consegui salvar na nuvem (sem conexão?). O PIN NÃO foi trocado de verdade — tenta de novo.");
-    return;
-  }
-  closeModal();toast("PIN trocado e salvo de verdade na nuvem.");
-  if(origem==="ficha")verFunc(fid);else abrirLoginUsuario();
 }
 function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
@@ -720,10 +620,8 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="sub">Contagem de baixada <span style="text-transform:none;font-weight:400;color:var(--muted)">(2,5 dias/mês após ${DB.cfg.baixadaCarencia}d de carência)</span></div>
    <div class="fg"><label>Tem direito à baixada? <span class="opt">(quem vai pra casa toda semana/quinzena, ou é "Local", normalmente não tem)</span></label><select id="f_direitobaixada"><option value="Sim" ${f.direitoBaixada!=="Não"?"selected":""}>Sim</option><option value="Não" ${f.direitoBaixada==="Não"?"selected":""}>Não</option></select></div>
    <div class="fg"><label>Regime de ponto <span class="opt">(pra não aparecer "sem registro"/falta indevido na Chamada do dia)</span></label><select id="f_regimeponto"><option value="Normal" ${(!f.regimePonto||f.regimePonto==="Normal")?"selected":""}>Normal — bate ponto todo dia</option><option value="NaoBate" ${f.regimePonto==="NaoBate"?"selected":""}>Não bate ponto (ex.: diretoria/engenharia)</option><option value="Manual" ${f.regimePonto==="Manual"?"selected":""}>Ponto manual (ex.: trabalha fora, horário diferenciado)</option></select></div>
-   <div class="fg"><label>PIN pessoal do sistema</label><p class="hint" style="margin:4px 0 0">${f.pin?'✓ PIN já configurado — a pessoa mesma escolhe/troca na tela de "Identificar-se" (com autorização)':'Ainda não configurado — a pessoa escolhe o próprio PIN na primeira vez que clicar em "Identificar-se"'}</p></div>
-   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_podeautorizarpin" style="width:auto;margin-right:6px" ${f.podeAutorizarPin?"checked":""}>Pode autorizar troca de PIN de qualquer pessoa</label></div><div class="fg"></div></div>
-   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_acessoreembolso" style="width:auto;margin-right:6px" ${f.acessoReembolso?"checked":""}>Acesso à área de Reembolsos</label></div><div class="fg"><label><input type="checkbox" id="f_acessorecrutamento" style="width:auto;margin-right:6px" ${f.acessoRecrutamento?"checked":""}>Acesso à área de Recrutamento</label></div></div>
-   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_acessoalmoxarifado" style="width:auto;margin-right:6px" ${f.acessoAlmoxarifado?"checked":""}>Acesso pra mexer no Almoxarifado</label></div><div class="fg"><label><input type="checkbox" id="f_acessopedidos" style="width:auto;margin-right:6px" ${f.acessoPedidos?"checked":""}>Acesso pra mexer em Pedidos/OC</label></div></div>
+
+   <p class="hint">Acessos e permissões dessa pessoa agora ficam todos em "⚙ Gerenciar permissões" (rodapé do menu).</p>
    <div class="fg"><label>Ponto de sincronização da baixada <span class="opt">(veio transferido, ou precisa "zerar e recomeçar" um histórico bagunçado — deixe em branco no caso comum)</span></label><div class="row2"><div><label class="opt">Contar a partir de</label><input type="date" id="f_chegadaobra" value="${esc(f.dataChegadaObra)}"></div><div><label class="opt">Saldo nesse dia (dias)</label><input type="number" step="0.5" id="f_saldoinicial" value="${esc(f.saldoBaixadaInicial)}" placeholder="ex.: 5"></div></div><p class="hint" style="margin-top:6px">Preenchendo, a contagem passa a valer <b>a partir dessa data</b> (não mais da admissão original), somando o saldo informado, sem precisar esperar os 60 dias de carência de novo. Use isso tanto pra quem veio de outra obra quanto pra sincronizar alguém cujo histórico anterior não estava confiável — a partir daí, os registros feitos aqui no sistema já contam certinho sozinhos.</p></div>
    <div class="row2"><div class="fg"><label>Saldo manual (dias) <span class="opt">(sobrepõe o cálculo, se preenchido)</span></label><input type="number" step="0.5" id="f_baix_val" value="${esc(f.baixadaAjusteValor)}" placeholder="deixe vazio p/ usar cálculo automático"></div><div class="fg"><label>Data de atualização do manual</label><input type="date" id="f_baix_data" value="${esc(f.baixadaAjusteData)}"></div></div>
    <div class="sub">Dados de PIX <span style="text-transform:none;font-weight:400;color:var(--muted)">(para reembolso — não aparece p/ as áreas)</span></div><div class="row3"><div class="fg"><label>Tipo de chave</label><select id="f_pixt"><option value="">—</option>${["CPF","Telefone","E-mail","Aleatória"].map(x=>`<option ${f.pixTipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Chave PIX</label><input id="f_pixk" value="${esc(f.pixChave)}"></div><div class="fg"><label>Banco</label><input id="f_pixb" value="${esc(f.pixBanco)}"></div></div><div class="fg"><label>Observações</label><textarea id="f_obs" rows="2">${esc(f.obs)}</textarea></div>
@@ -731,7 +629,7 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="row2"><div class="fg"><label>Direção</label><select id="f_transf_dir"><option value="">— não registrar agora —</option><option value="Chegando">Chegando de outra obra</option><option value="Saindo">Indo para outra obra</option></select></div><div class="fg"><label>Data da transferência</label><input type="date" id="f_transf_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Obra de origem</label><input id="f_transf_origem" placeholder="ex.: GM.MG.00071"></div><div class="fg"><label>Obra de destino</label><input id="f_transf_destino" placeholder="ex.: GM.MG.00083 (aqui)"></div></div>
    </div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delFunc('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFunc('${id||""}')">Salvar</button></div>`);}
-function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:$("#f_podeautorizarpin").checked,acessoReembolso:$("#f_acessoreembolso").checked,acessoRecrutamento:$("#f_acessorecrutamento").checked,acessoAlmoxarifado:$("#f_acessoalmoxarifado").checked,acessoPedidos:$("#f_acessopedidos").checked,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
+function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:prev?prev.podeAutorizarPin:false,acessoReembolso:prev?prev.acessoReembolso:false,acessoRecrutamento:prev?prev.acessoRecrutamento:false,acessoAlmoxarifado:prev?prev.acessoAlmoxarifado:false,acessoPedidos:prev?prev.acessoPedidos:false,permissoes:prev?prev.permissoes:undefined,perfilSoLeitura:prev?prev.perfilSoLeitura:false,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
   const transfDir=$("#f_transf_dir")?.value;
   if(transfDir){
     const transfData=$("#f_transf_data").value||iso(today());
@@ -754,7 +652,7 @@ function reativarFuncionario(id){
 }
 function verFunc(id){const f=DB.func.find(x=>x.id===id);const s=saldoBaixada(id);const ex=expStatus(f);const est=estadias(id);const ultimaTransf=est.filter(m=>m.tipo==="Transferência").sort((a,b)=>a.entrada<b.entrada?1:-1)[0];const pix=f.pixChave?`${esc(f.pixTipo||"")} — ${esc(f.pixChave)}${f.pixBanco?" ("+esc(f.pixBanco)+")":""}`:"—";openModal(`<div class="modal-h"><h3>${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${fotoThumb(f,64)}${!ativo(f)?`<span class="tag t-grey">Desligado${f.motivoDesligamento?" — "+esc(f.motivoDesligamento):""}${f.demissao?" em "+fmt(f.demissao):""}</span>`:""}</div>
-   <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div class="stat"><div class="n" style="font-size:22px">${f.admissao?humano(diasEntre(pd(f.admissao),today())):"—"}</div><div class="l">Tempo de casa</div></div><div class="stat amber"><div class="n" style="font-size:22px">${s.saldo}</div><div class="l">Saldo baixada${s.manual?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}</div></div></div><p class="break"><b>Matrícula:</b> ${esc(f.matricula||"—")} &nbsp; <b>Função:</b> ${esc(f.funcao||"—")} &nbsp; <b>Empresa:</b> ${esc(f.empresa||"—")}<br><b>Classificação:</b> ${esc(f.classificacao||"—")} &nbsp; <b>Regime de folga:</b> ${esc(f.regimeFolga||"Não")}<br><b>CPF:</b> ${esc(f.cpf||"—")} &nbsp; <b>RG:</b> ${esc(f.rg||"—")} &nbsp; <b>Nasc.:</b> ${fmt(f.nascimento)}<br><b>Origem:</b> ${esc(f.cidade||"—")} &nbsp; <b>Tel.:</b> ${esc(f.telefone||"—")} &nbsp; <b>E-mail:</b> ${esc(f.email||"—")}<br><b>Admissão:</b> ${fmt(f.admissao)} &nbsp; <b>Experiência:</b> ${ex.txt}${ex.rest!=null?` (faltam ${ex.rest}d)`:""}<br><b>PIX:</b> ${pix}${ultimaTransf?`<br><b>Última transferência:</b> ${ultimaTransf.direcao==="Saindo"?"Saiu para "+esc(ultimaTransf.obraDestino||"—"):"Chegou de "+esc(ultimaTransf.obraOrigem||"—")} em ${fmt(ultimaTransf.entrada)}`:""}</p><div class="panel" style="box-shadow:none;border:1px solid #e6e8e4;margin:14px 0"><h2 style="font-size:13px"><span class="t">Composição da baixada</span></h2><p class="break" style="padding:10px 18px">${s.manual?`Saldo definido manualmente: <b>${s.saldo}</b> dias — atualizado em <b>${fmt(s.manualData)}</b><br><small>Para voltar ao automático, apague o "saldo manual" na edição do cadastro.</small>`:s.semAcumulo?`<b style="color:var(--muted)">Não acumula baixada</b> — ${f.direitoBaixada==="Não"?'esse funcionário está marcado como "sem direito à baixada" no cadastro':'regime de folga é "'+esc(f.regimeFolga)+'" (já vai pra casa periodicamente, então não soma baixada em cima disso)'}. Pra mudar, ajuste no cadastro.`:`${s.usaDataInicio?`Contando desde <b>${fmt(s.dataChegada)}</b> (${f.dataChegadaObra?"ponto de sincronização definido no cadastro":"chegada por transferência, detectada automaticamente"}) — saldo naquele dia: <b>${f.saldoBaixadaInicial||0}</b> dias`:`Dias desde a admissão: <b>${s.hosp}</b>`} · − férias: <b>${s.fer}</b> · − baixada já tirada: <b>${s.usadas}</b> · − dias como "Local": <b>${diasEmLocal(id)}</b> · − faltas/atestados (${countFaltasEAtestados(id)}×${DB.cfg.faltaDesc}): <b>${s.descFaltas}</b><br>${s.emCarencia?`<b style="color:var(--amber-d)">Ainda em carência</b> (precisa de ${DB.cfg.baixadaCarencia}d, tem ${s.efetivo}d) — saldo parcial acumulando: <b>${s.saldoParcial}</b> dias (completa em ~${fmt(s.dataLiberacao)})`:`<b style="color:var(--amber-d)">Saldo atual: ${s.saldo} dias</b><br><small>${s.faltamDias===0?"✓ Já disponível pra viajar (≥ "+DB.cfg.alertaBaixada+"d)":"Faltam ~"+s.faltamDias+" dias corridos pra chegar aos "+DB.cfg.alertaBaixada+" dias de folga"}</small>`}`}</p></div><h3 style="font-size:14px;margin-bottom:8px">Histórico de estadias e transferências</h3>${est.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px"><thead><tr><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${est.map(m=>m.tipo==="Transferência"?`<tr><td><span class="tag t-amber">Transferência</span> ${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`:`<tr><td>${esc(localNome(m.local))} <span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`).join("")}</tbody></table>`:`<p class="break">Sem estadias lançadas.</p>`}</div><div class="modal-f"><button class="btn btn-g" onclick="formFunc('${id}')">Editar cadastro</button>${usuarioLogadoPodeAutorizarPin()?`<button class="btn btn-g" onclick="abrirTrocaPin('${id}','ficha')">🔑 Resetar PIN</button>`:""}${ativo(f)?(afastado(f)?`<button class="btn btn-g" onclick="formRetornoAfastamento('${id}')">Retornar do afastamento</button>`:`<button class="btn btn-g" onclick="formAfastar('${id}')">Afastar</button>`):`<button class="btn btn-g" style="color:var(--green)" onclick="reativarFuncionario('${id}')">Reativar</button>`}${ativo(f)?`<button class="btn btn-g" style="color:var(--red)" onclick="formInativar('${id}')">Inativar</button>`:""}<button class="btn btn-a" onclick="formMov('${id}')">Nova movimentação</button></div>`);}
+   <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div class="stat"><div class="n" style="font-size:22px">${f.admissao?humano(diasEntre(pd(f.admissao),today())):"—"}</div><div class="l">Tempo de casa</div></div><div class="stat amber"><div class="n" style="font-size:22px">${s.saldo}</div><div class="l">Saldo baixada${s.manual?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}</div></div></div><p class="break"><b>Matrícula:</b> ${esc(f.matricula||"—")} &nbsp; <b>Função:</b> ${esc(f.funcao||"—")} &nbsp; <b>Empresa:</b> ${esc(f.empresa||"—")}<br><b>Classificação:</b> ${esc(f.classificacao||"—")} &nbsp; <b>Regime de folga:</b> ${esc(f.regimeFolga||"Não")}<br><b>CPF:</b> ${esc(f.cpf||"—")} &nbsp; <b>RG:</b> ${esc(f.rg||"—")} &nbsp; <b>Nasc.:</b> ${fmt(f.nascimento)}<br><b>Origem:</b> ${esc(f.cidade||"—")} &nbsp; <b>Tel.:</b> ${esc(f.telefone||"—")} &nbsp; <b>E-mail:</b> ${esc(f.email||"—")}<br><b>Admissão:</b> ${fmt(f.admissao)} &nbsp; <b>Experiência:</b> ${ex.txt}${ex.rest!=null?` (faltam ${ex.rest}d)`:""}<br><b>PIX:</b> ${pix}${ultimaTransf?`<br><b>Última transferência:</b> ${ultimaTransf.direcao==="Saindo"?"Saiu para "+esc(ultimaTransf.obraDestino||"—"):"Chegou de "+esc(ultimaTransf.obraOrigem||"—")} em ${fmt(ultimaTransf.entrada)}`:""}</p><div class="panel" style="box-shadow:none;border:1px solid #e6e8e4;margin:14px 0"><h2 style="font-size:13px"><span class="t">Composição da baixada</span></h2><p class="break" style="padding:10px 18px">${s.manual?`Saldo definido manualmente: <b>${s.saldo}</b> dias — atualizado em <b>${fmt(s.manualData)}</b><br><small>Para voltar ao automático, apague o "saldo manual" na edição do cadastro.</small>`:s.semAcumulo?`<b style="color:var(--muted)">Não acumula baixada</b> — ${f.direitoBaixada==="Não"?'esse funcionário está marcado como "sem direito à baixada" no cadastro':'regime de folga é "'+esc(f.regimeFolga)+'" (já vai pra casa periodicamente, então não soma baixada em cima disso)'}. Pra mudar, ajuste no cadastro.`:`${s.usaDataInicio?`Contando desde <b>${fmt(s.dataChegada)}</b> (${f.dataChegadaObra?"ponto de sincronização definido no cadastro":"chegada por transferência, detectada automaticamente"}) — saldo naquele dia: <b>${f.saldoBaixadaInicial||0}</b> dias`:`Dias desde a admissão: <b>${s.hosp}</b>`} · − férias: <b>${s.fer}</b> · − baixada já tirada: <b>${s.usadas}</b> · − dias como "Local": <b>${diasEmLocal(id)}</b> · − faltas/atestados (${countFaltasEAtestados(id)}×${DB.cfg.faltaDesc}): <b>${s.descFaltas}</b><br>${s.emCarencia?`<b style="color:var(--amber-d)">Ainda em carência</b> (precisa de ${DB.cfg.baixadaCarencia}d, tem ${s.efetivo}d) — saldo parcial acumulando: <b>${s.saldoParcial}</b> dias (completa em ~${fmt(s.dataLiberacao)})`:`<b style="color:var(--amber-d)">Saldo atual: ${s.saldo} dias</b><br><small>${s.faltamDias===0?"✓ Já disponível pra viajar (≥ "+DB.cfg.alertaBaixada+"d)":"Faltam ~"+s.faltamDias+" dias corridos pra chegar aos "+DB.cfg.alertaBaixada+" dias de folga"}</small>`}`}</p></div><h3 style="font-size:14px;margin-bottom:8px">Histórico de estadias e transferências</h3>${est.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px"><thead><tr><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${est.map(m=>m.tipo==="Transferência"?`<tr><td><span class="tag t-amber">Transferência</span> ${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`:`<tr><td>${esc(localNome(m.local))} <span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`).join("")}</tbody></table>`:`<p class="break">Sem estadias lançadas.</p>`}</div><div class="modal-f"><button class="btn btn-g" onclick="formFunc('${id}')">Editar cadastro</button>${ativo(f)?(afastado(f)?`<button class="btn btn-g" onclick="formRetornoAfastamento('${id}')">Retornar do afastamento</button>`:`<button class="btn btn-g" onclick="formAfastar('${id}')">Afastar</button>`):`<button class="btn btn-g" style="color:var(--green)" onclick="reativarFuncionario('${id}')">Reativar</button>`}${ativo(f)?`<button class="btn btn-g" style="color:var(--red)" onclick="formInativar('${id}')">Inativar</button>`:""}<button class="btn btn-a" onclick="formMov('${id}')">Nova movimentação</button></div>`);}
 function vMov(){const list=DB.mov.slice().sort((a,b)=>(a.entrada<b.entrada?1:-1));main.innerHTML=`<div class="head"><div><h1>Movimentações</h1><p>Entradas e saídas de hospedagem, e transferências entre obras.</p></div><button class="btn btn-a" onclick="formMov()">＋ Nova movimentação</button></div><div class="panel"><div class="tblwrap">${list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Tipo</th><th>Local / Obras</th><th>Entrada</th><th>Saída</th><th>Dias</th><th>Motivo</th><th></th></tr></thead><tbody>${list.map(m=>{if(m.tipo==="Transferência"){return `<tr><td>${esc(funcNome(m.func))}</td><td><span class="tag t-amber">Transferência</span></td><td>${m.direcao==="Saindo"?"Saindo → "+esc(m.obraDestino||"—"):"Chegando de "+esc(m.obraOrigem||"—")}</td><td>${fmt(m.entrada)}</td><td>—</td><td>—</td><td>${esc(m.direcao||"—")}</td><td><div class="rowact"><button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button></div></td></tr>`;}const dias=m.entrada?(diasEntre(pd(m.entrada),m.saida?pd(m.saida):today())+1):0;return `<tr><td>${esc(funcNome(m.func))}</td><td><span class="tag ${tagTipoMov(m.tipo)}">${m.tipo}</span></td><td>${esc(localNome(m.local))}</td><td>${fmt(m.entrada)}</td><td>${m.saida?fmt(m.saida):'<span class="tag t-green">atual</span>'}</td><td class="num">${dias}</td><td>${esc(m.motivo||"—")}</td><td><div class="rowact">${m.saida?"":`<button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Dar saída</button>`}<button class="btn btn-g btn-sm" onclick="formMov(null,'${m.id}')">Editar</button></div></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">⇄</div><p>Nenhuma movimentação. Cadastre um funcionário e lance a primeira estadia.</p><button class="btn btn-a" onclick="formMov()">Nova movimentação</button></div>`}</div></div>`;}
 let _movFunc="",_movLocal="";
 function formMov(preFunc,id){if(!DB.func.filter(ativo).length){toast("Cadastre um funcionário primeiro.");formFunc();return;}const m=id?DB.mov.find(x=>x.id===id):{tipo:"Alojamento"};_movFunc=id?m.func:(preFunc||"");_movLocal=m.local||"";openModal(`<div class="modal-h"><h3>${id?"Editar":"Nova"} movimentação</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><div class="cbx"><input id="m_busca" placeholder="Digite nome, matrícula ou CPF..." autocomplete="off"><div class="cbx-list" id="m_list"></div></div><div id="m_picked"></div></div><div class="row2"><div class="fg"><label>Tipo *</label><select id="m_tipo" onchange="fillLocais()"><option ${m.tipo==="Alojamento"?"selected":""}>Alojamento</option><option ${m.tipo==="Hotel"?"selected":""}>Hotel</option><option ${m.tipo==="Local"?"selected":""}>Local</option><option ${m.tipo==="Baixada"?"selected":""}>Baixada</option><option ${m.tipo==="Transferência"?"selected":""}>Transferência</option></select></div><div class="fg" id="m_localwrap"><label>Local *</label><select id="m_local"></select><div class="hint">Não achou? <a href="#" onclick="closeModal();CUR='locais';buildNav();render();return false" style="color:var(--steel)">cadastre em Locais</a></div></div></div>
@@ -1131,7 +1029,7 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
 function vReemb(){
-  if(!_reembUnlocked&&usuarioLogadoTemAcesso("reembolso"))_reembUnlocked=true;
+  if(!_reembUnlocked&&usuarioLogadoTemAcesso("reemb"))_reembUnlocked=true;
   if(!_reembUnlocked){
     main.innerHTML=telaAreaRestrita("Reembolsos e lançamentos","acessoReembolso","desbloquearReemb");
     return;
