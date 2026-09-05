@@ -39,6 +39,10 @@
   .nav .sec{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6b7480;padding:14px 18px 6px}
   .nav .foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:#7b8593}
   .main{flex:1;min-width:0;padding:26px 30px 60px}
+  .mainwrap{flex:1;min-width:0;display:flex;flex-direction:column}
+  #idBanner:empty{display:none}
+  .idbanner-bar{background:var(--amber-d);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;cursor:pointer;font-size:13.5px}
+  .idbanner-bar b{font-size:14px}
   .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}
   .head h1{font-size:24px;font-weight:700}
   .head p{color:var(--muted);font-size:13px;margin-top:3px}
@@ -146,7 +150,7 @@
   </div>
   <p style="font-size:11px;color:#6b7480;max-width:280px">Trava simples de acesso ao arquivo — não sincroniza dados entre computadores.</p>
 </div>
-<div class="app"><nav class="nav" id="nav"></nav><main class="main" id="main"></main></div>
+<div class="app"><nav class="nav" id="nav"></nav><div class="mainwrap"><div id="idBanner"></div><main class="main" id="main"></main></div></div>
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileimport" accept="application/json" style="display:none">
@@ -162,22 +166,29 @@ const SENHA_SALVAR="1205"; /* pedida antes de qualquer salvar/editar/excluir, s�
 const SENHA_SALVAR_MIN=30; /* minutos que a liberação vale depois de digitar certo */
 let _senhaSalvarValidaAte=0;
 function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
+const AREAS_COM_PERMISSAO_EXTRA=[
+  {prefixos:["salvarEstoque(","salvarEstoqueMov(","salvarSaidaLote(","formSaidaLote(","salvarAlmoxPedido(","salvarDecisaoAlmoxPedido(","salvarRetiradaAlmoxPedido("],campo:"acessoAlmoxarifado",nome:"Almoxarifado"},
+  {prefixos:["salvarPedido(","salvarOrdemCompra(","concluirSalvarOrdemCompra(","salvarLancamentoDireto(","concluirSalvarLancamentoDireto("],campo:"acessoPedidos",nome:"Pedidos"}
+];
 (function(){
-  const ISENTOS_SENHA_GERAL=["salvarPedido(","confirmarAprovacaoEngenheiro(","salvarEstoqueMov(","salvarRegimePonto(","salvarSaidaLote(","salvarReemb("];
   document.addEventListener('click',function(e){
     if(!SENHA_SALVAR_ATIVA)return;
     const btn=e.target.closest?.('.modal-f button');
     if(!btn)return;
     const onclickAttr=(btn.getAttribute('onclick')||'').trim();
     if(!onclickAttr||onclickAttr==='closeModal()')return;
-    if(ISENTOS_SENHA_GERAL.some(p=>onclickAttr.startsWith(p)))return;
-    if(senhaSalvarValida())return;
+    if(onclickAttr.startsWith("confirmarAprovacaoEngenheiro(")||onclickAttr.startsWith("salvarRegimePonto(")||onclickAttr.startsWith("salvarReemb("))return;
     e.stopImmediatePropagation();e.preventDefault();
-    const pass=prompt('Senha pra confirmar esta ação (fica liberada por '+SENHA_SALVAR_MIN+' min):');
-    if(pass===null)return;
-    if(!senhaOk(pass,SENHA_SALVAR)){toast('Senha incorreta — ação cancelada.');return;}
-    _senhaSalvarValidaAte=Date.now()+SENHA_SALVAR_MIN*60000;
-    try{(new Function(onclickAttr))();}catch(err){console.error("Erro ao executar ação:",err);toast("Erro ao executar a ação — tenta de novo.");}
+    const executar=()=>{try{(new Function(onclickAttr))();}catch(err){console.error("Erro ao executar ação:",err);toast("Erro ao executar a ação — tenta de novo.");}};
+    if(!_usuarioLogadoId){
+      if(prompt("Senha mestra")===SENHA_MESTRA){executar();return;}
+      toast("Você precisa se identificar (CPF + PIN) antes de salvar ou editar.");
+      abrirLoginUsuario();
+      return;
+    }
+    const area=AREAS_COM_PERMISSAO_EXTRA.find(a=>a.prefixos.some(p=>onclickAttr.startsWith(p)));
+    if(area&&!confirmarPermissaoArea(area.campo,area.nome))return;
+    executar();
   },true);
 })();
 async function sha256(str){const enc=new TextEncoder().encode(str);const buf=await crypto.subtle.digest('SHA-256',enc);return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
@@ -387,8 +398,12 @@ function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
 const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
-const APP_VERSAO="v2026-08-28.21";
-function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+MENU.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));}
+const APP_VERSAO="v2026-08-28.22";
+function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+MENU.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
+function atualizarBannerIdentificacao(){
+  const el=$("#idBanner");if(!el)return;
+  el.innerHTML=_usuarioLogadoNome?"":`<div class="idbanner-bar" onclick="abrirLoginUsuario()">👤 <b>Você ainda não se identificou.</b> Clique aqui pra identificar-se com seu CPF + PIN — isso garante que fique registrado quem faz cada alteração no sistema.<span style="text-decoration:underline;white-space:nowrap">Identificar-se →</span></div>`;
+}
 let _usuarioLogadoId="",_usuarioLogadoNome="";
 try{const s=JSON.parse(sessionStorage.getItem('obra_usuario')||'null');if(s){_usuarioLogadoId=s.id;_usuarioLogadoNome=s.nome;}}catch(e){}
 function nomeUsuarioLogado(){return _usuarioLogadoNome;}
@@ -540,6 +555,7 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="fg"><label>PIN pessoal do sistema</label><p class="hint" style="margin:4px 0 0">${f.pin?'✓ PIN já configurado — a pessoa mesma escolhe/troca na tela de "Identificar-se" (com autorização)':'Ainda não configurado — a pessoa escolhe o próprio PIN na primeira vez que clicar em "Identificar-se"'}</p></div>
    <div class="row2"><div class="fg"><label><input type="checkbox" id="f_podeautorizarpin" style="width:auto;margin-right:6px" ${f.podeAutorizarPin?"checked":""}>Pode autorizar troca de PIN de qualquer pessoa</label></div><div class="fg"></div></div>
    <div class="row2"><div class="fg"><label><input type="checkbox" id="f_acessoreembolso" style="width:auto;margin-right:6px" ${f.acessoReembolso?"checked":""}>Acesso à área de Reembolsos</label></div><div class="fg"><label><input type="checkbox" id="f_acessorecrutamento" style="width:auto;margin-right:6px" ${f.acessoRecrutamento?"checked":""}>Acesso à área de Recrutamento</label></div></div>
+   <div class="row2"><div class="fg"><label><input type="checkbox" id="f_acessoalmoxarifado" style="width:auto;margin-right:6px" ${f.acessoAlmoxarifado?"checked":""}>Acesso pra mexer no Almoxarifado</label></div><div class="fg"><label><input type="checkbox" id="f_acessopedidos" style="width:auto;margin-right:6px" ${f.acessoPedidos?"checked":""}>Acesso pra mexer em Pedidos/OC</label></div></div>
    <div class="fg"><label>Ponto de sincronização da baixada <span class="opt">(veio transferido, ou precisa "zerar e recomeçar" um histórico bagunçado — deixe em branco no caso comum)</span></label><div class="row2"><div><label class="opt">Contar a partir de</label><input type="date" id="f_chegadaobra" value="${esc(f.dataChegadaObra)}"></div><div><label class="opt">Saldo nesse dia (dias)</label><input type="number" step="0.5" id="f_saldoinicial" value="${esc(f.saldoBaixadaInicial)}" placeholder="ex.: 5"></div></div><p class="hint" style="margin-top:6px">Preenchendo, a contagem passa a valer <b>a partir dessa data</b> (não mais da admissão original), somando o saldo informado, sem precisar esperar os 60 dias de carência de novo. Use isso tanto pra quem veio de outra obra quanto pra sincronizar alguém cujo histórico anterior não estava confiável — a partir daí, os registros feitos aqui no sistema já contam certinho sozinhos.</p></div>
    <div class="row2"><div class="fg"><label>Saldo manual (dias) <span class="opt">(sobrepõe o cálculo, se preenchido)</span></label><input type="number" step="0.5" id="f_baix_val" value="${esc(f.baixadaAjusteValor)}" placeholder="deixe vazio p/ usar cálculo automático"></div><div class="fg"><label>Data de atualização do manual</label><input type="date" id="f_baix_data" value="${esc(f.baixadaAjusteData)}"></div></div>
    <div class="sub">Dados de PIX <span style="text-transform:none;font-weight:400;color:var(--muted)">(para reembolso — não aparece p/ as áreas)</span></div><div class="row3"><div class="fg"><label>Tipo de chave</label><select id="f_pixt"><option value="">—</option>${["CPF","Telefone","E-mail","Aleatória"].map(x=>`<option ${f.pixTipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Chave PIX</label><input id="f_pixk" value="${esc(f.pixChave)}"></div><div class="fg"><label>Banco</label><input id="f_pixb" value="${esc(f.pixBanco)}"></div></div><div class="fg"><label>Observações</label><textarea id="f_obs" rows="2">${esc(f.obs)}</textarea></div>
@@ -547,7 +563,7 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="row2"><div class="fg"><label>Direção</label><select id="f_transf_dir"><option value="">— não registrar agora —</option><option value="Chegando">Chegando de outra obra</option><option value="Saindo">Indo para outra obra</option></select></div><div class="fg"><label>Data da transferência</label><input type="date" id="f_transf_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Obra de origem</label><input id="f_transf_origem" placeholder="ex.: GM.MG.00071"></div><div class="fg"><label>Obra de destino</label><input id="f_transf_destino" placeholder="ex.: GM.MG.00083 (aqui)"></div></div>
    </div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delFunc('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFunc('${id||""}')">Salvar</button></div>`);}
-function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:$("#f_podeautorizarpin").checked,acessoReembolso:$("#f_acessoreembolso").checked,acessoRecrutamento:$("#f_acessorecrutamento").checked,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
+function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:$("#f_podeautorizarpin").checked,acessoReembolso:$("#f_acessoreembolso").checked,acessoRecrutamento:$("#f_acessorecrutamento").checked,acessoAlmoxarifado:$("#f_acessoalmoxarifado").checked,acessoPedidos:$("#f_acessopedidos").checked,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
   const transfDir=$("#f_transf_dir")?.value;
   if(transfDir){
     const transfData=$("#f_transf_data").value||iso(today());
@@ -687,7 +703,23 @@ function statusDoDia(fid,dataStr){
   if(fa){const t=fa.tipo||"Falta";const cls=t==="Presença"?"t-green":t==="Falta"?"t-red":t==="Treinamento"?"t-steel":"t-amber";return{tipo:t,cls,id:fa.id,motivo:fa.motivo,horaEntrada:fa.horaEntrada,horaSaida:fa.horaSaida};}
   return{tipo:"Sem registro",cls:"t-red"};
 }
-function confirmarSenhaSalvar(){if(!SENHA_SALVAR_ATIVA)return true;if(senhaSalvarValida())return true;const val=prompt("Senha pra confirmar esta ação (fica liberada por "+SENHA_SALVAR_MIN+" min):");if(val===null)return false;if(!senhaOk(val,SENHA_SALVAR)){toast("Senha incorreta — ação cancelada.");return false;}_senhaSalvarValidaAte=Date.now()+SENHA_SALVAR_MIN*60000;return true;}
+function confirmarSenhaSalvar(){
+  if(!SENHA_SALVAR_ATIVA)return true;
+  if(_usuarioLogadoId)return true;
+  const val=prompt("Você precisa se identificar pra fazer isso. Se souber a senha mestra, digita aqui (senão, cancela e clica em \"Identificar-se\"):");
+  if(val===null)return false;
+  if(val!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");abrirLoginUsuario();return false;}
+  return true;
+}
+function confirmarPermissaoArea(campo,nomeArea){
+  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  if(f&&usuarioLogadoPodeAutorizarPin())return true;
+  if(f&&f[campo])return true;
+  const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão liberada pra "+nomeArea+". Senha mestra pra liberar mesmo assim:");
+  if(pass===null)return false;
+  if(pass!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");return false;}
+  return true;
+}
 function marcarPresenca(fid,data){DB.faltas.push({id:uid(),func:fid,data,tipo:"Presença",motivo:""});save("faltas");renderChamada();toast("Presença registrada.");}
 function marcarTodosPresentes(){if(!confirmarSenhaSalvar())return;const data=_chamadaData;let n=0;DB.func.filter(f=>ativo(f)&&f.regimePonto!=="NaoBate"&&dataChegadaNestaObra(f.id).data&&dataChegadaNestaObra(f.id).data<=data).forEach(f=>{const s=statusDoDia(f.id,data);if(s.tipo==="Sem registro"){DB.faltas.push({id:uid(),func:f.id,data,tipo:"Presença",motivo:""});n++;}});if(n){save("faltas");renderChamada();toast(n+" presença(s) registrada(s).");}else{toast("Ninguém sem registro nessa data.");}}
 function exportChamadaExcel(){
@@ -2018,6 +2050,7 @@ function verPedido(id){
 }
 function liberarExcecao(id){
   if(!confirmarSenhaSalvar())return;
+  if(!confirmarPermissaoArea("acessoPedidos","Pedidos"))return;
   const obs=prompt("Observação da liberação (opcional):","");
   const p=DB.compras_pedidos.find(x=>x.id===id);
   p.excecaoLiberada=true;p.excecaoLiberadaData=iso(today());p.excecaoLiberadaObs=obs||"";
