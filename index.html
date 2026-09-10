@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.9";
+const APP_VERSAO="v2026-09-05.10";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -617,12 +617,13 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <p class="hint">Acessos e permissões dessa pessoa agora ficam todos em "⚙ Gerenciar permissões" (rodapé do menu).</p>
    <div class="fg"><label>Ponto de sincronização da baixada <span class="opt">(veio transferido, ou precisa "zerar e recomeçar" um histórico bagunçado — deixe em branco no caso comum)</span></label><div class="row2"><div><label class="opt">Contar a partir de</label><input type="date" id="f_chegadaobra" value="${esc(f.dataChegadaObra)}"></div><div><label class="opt">Saldo nesse dia (dias)</label><input type="number" step="0.5" id="f_saldoinicial" value="${esc(f.saldoBaixadaInicial)}" placeholder="ex.: 5"></div></div><p class="hint" style="margin-top:6px">Preenchendo, a contagem passa a valer <b>a partir dessa data</b> (não mais da admissão original), somando o saldo informado, sem precisar esperar os 60 dias de carência de novo. Use isso tanto pra quem veio de outra obra quanto pra sincronizar alguém cujo histórico anterior não estava confiável — a partir daí, os registros feitos aqui no sistema já contam certinho sozinhos.</p></div>
    <div class="row2"><div class="fg"><label>Saldo manual (dias) <span class="opt">(sobrepõe o cálculo, se preenchido)</span></label><input type="number" step="0.5" id="f_baix_val" value="${esc(f.baixadaAjusteValor)}" placeholder="deixe vazio p/ usar cálculo automático"></div><div class="fg"><label>Data de atualização do manual</label><input type="date" id="f_baix_data" value="${esc(f.baixadaAjusteData)}"></div></div>
+   <div class="sub">Vale Combustível <span style="text-transform:none;font-weight:400;color:var(--muted)">(linha e valores fixos do endereço — pra gerar o recibo mensal automático)</span></div><div class="row3"><div class="fg"><label>Linha(s) do ônibus</label><input id="f_vclinha" value="${esc(f.valeCombustivelLinha)}" placeholder="ex.: 208 / 3050 / 3910"></div><div class="fg"><label>Valor passagem ida (R$)</label><input type="number" step="0.01" id="f_vcida" value="${esc(f.valeCombustivelIda)}"></div><div class="fg"><label>Valor passagem volta (R$)</label><input type="number" step="0.01" id="f_vcvolta" value="${esc(f.valeCombustivelVolta)}"></div></div>
    <div class="sub">Dados de PIX <span style="text-transform:none;font-weight:400;color:var(--muted)">(para reembolso — não aparece p/ as áreas)</span></div><div class="row3"><div class="fg"><label>Tipo de chave</label><select id="f_pixt"><option value="">—</option>${["CPF","Telefone","E-mail","Aleatória"].map(x=>`<option ${f.pixTipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Chave PIX</label><input id="f_pixk" value="${esc(f.pixChave)}"></div><div class="fg"><label>Banco</label><input id="f_pixb" value="${esc(f.pixBanco)}"></div></div><div class="fg"><label>Observações</label><textarea id="f_obs" rows="2">${esc(f.obs)}</textarea></div>
    <div class="sub">Transferência de obra <span style="text-transform:none;font-weight:400;color:var(--muted)">(opcional — registra chegada ou saída de outra obra)</span></div>
    <div class="row2"><div class="fg"><label>Direção</label><select id="f_transf_dir"><option value="">— não registrar agora —</option><option value="Chegando">Chegando de outra obra</option><option value="Saindo">Indo para outra obra</option></select></div><div class="fg"><label>Data da transferência</label><input type="date" id="f_transf_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Obra de origem</label><input id="f_transf_origem" placeholder="ex.: GM.MG.00071"></div><div class="fg"><label>Obra de destino</label><input id="f_transf_destino" placeholder="ex.: GM.MG.00083 (aqui)"></div></div>
    </div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delFunc('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFunc('${id||""}')">Salvar</button></div>`);}
-function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:prev?prev.podeAutorizarPin:false,acessoReembolso:prev?prev.acessoReembolso:false,acessoRecrutamento:prev?prev.acessoRecrutamento:false,acessoAlmoxarifado:prev?prev.acessoAlmoxarifado:false,acessoPedidos:prev?prev.acessoPedidos:false,permissoes:prev?prev.permissoes:undefined,perfilSoLeitura:prev?prev.perfilSoLeitura:false,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
+function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:prev?prev.podeAutorizarPin:false,acessoReembolso:prev?prev.acessoReembolso:false,acessoRecrutamento:prev?prev.acessoRecrutamento:false,acessoAlmoxarifado:prev?prev.acessoAlmoxarifado:false,acessoPedidos:prev?prev.acessoPedidos:false,permissoes:prev?prev.permissoes:undefined,perfilSoLeitura:prev?prev.perfilSoLeitura:false,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),valeCombustivelLinha:$("#f_vclinha").value.trim(),valeCombustivelIda:$("#f_vcida").value,valeCombustivelVolta:$("#f_vcvolta").value,obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
   const transfDir=$("#f_transf_dir")?.value;
   if(transfDir){
     const transfData=$("#f_transf_data").value||iso(today());
@@ -1095,7 +1096,7 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <p class="hint" style="margin-bottom:10px">— ou —</p>
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
-const TIPOS_REEMB=["Reembolso - Passagem","Reembolso - Alimentação","Reembolso - Deslocamento","Reembolso - Outro","Férias","Demissão","PAF","Quebra de obra","Adiantamento"];
+const TIPOS_REEMB=["Vale Combustível","Reembolso - Passagem","Reembolso - Alimentação","Reembolso - Deslocamento","Reembolso - Outro","Férias","Demissão","PAF","Quebra de obra","Adiantamento"];
 let _reembFiltroFunc="",_reembFiltroDe="",_reembFiltroAte="",_reembFiltroTipo="",_reembFiltroLancadoPor="",_reembFiltroStatus="";
 function vReemb(){
   if(!_reembUnlocked){
@@ -1103,7 +1104,7 @@ function vReemb(){
     return;
   }
   const lancadores=[...new Set(DB.reemb.map(r=>r.lancadoPor).filter(Boolean))].sort();
-  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div>
+  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirGeradorValeCombustivel()">🚌 Gerar Vale Combustível do mês</button><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div></div>
    <div class="toolbar">
      <select id="rf_func" onchange="_reembFiltroFunc=this.value;renderReembTbl()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_reembFiltroFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select>
      <select id="rf_tipo" onchange="_reembFiltroTipo=this.value;renderReembTbl()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_reembFiltroTipo===t?"selected":""}>${t}</option>`).join("")}</select>
@@ -1132,7 +1133,7 @@ function renderReembTbl(){
   const tot=list.reduce((s,r)=>s+(+r.valor||0),0);
   const statsEl=$("#rf_stats");if(statsEl)statsEl.innerHTML=`<div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total (nesse filtro)</div></div><div class="stat amber"><div class="n">${list.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes (nesse filtro)</div></div><div class="stat steel"><div class="n">${list.length}</div><div class="l">Lançamentos (nesse filtro)</div></div>`;
   const el=$("#rf_tbl");if(!el)return;
-  el.innerHTML=list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${list.map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento encontrado${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?" com esse filtro":""}.</p>${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?"":'<button class="btn btn-a" onclick="formReemb()">Novo lançamento</button>'}</div>`;
+  el.innerHTML=list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${list.map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button>${r.vcLinha?`<button class="btn btn-g btn-sm" onclick="imprimirReciboVale('${r.id}')">🖨 Recibo</button>`:""}</td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento encontrado${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?" com esse filtro":""}.</p>${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?"":'<button class="btn btn-a" onclick="formReemb()">Novo lançamento</button>'}</div>`;
 }
 function desbloquearReemb(){
   const v=$("#area_restrita_senha").value;
@@ -1142,6 +1143,100 @@ function formaPagamentoTxt(r){
   if(r.formaPag==="Fluig")return `Fluig${r.fluigNumero?" nº "+esc(r.fluigNumero):""}${r.fluigLink?` · <a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel)">abrir</a>`:""}`;
   if(r.formaPag)return esc(r.formaPag);
   return `<span style="color:var(--amber-d)">não definida</span>`;
+}
+function abrirGeradorValeCombustivel(){
+  const configurados=porNome(DB.func.filter(f=>ativo(f)&&f.valeCombustivelLinha&&f.valeCombustivelIda&&f.valeCombustivelVolta));
+  if(!configurados.length){toast("Nenhum funcionário tem linha/valores de Vale Combustível cadastrados ainda (Funcionários → Editar → seção Vale Combustível).");return;}
+  const hoje=new Date();
+  const mesRef=hoje.toISOString().slice(0,7);
+  openModal(`<div class="modal-h"><h3>🚌 Gerar Vale Combustível do mês</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="row2"><div class="fg"><label>Mês de referência</label><input type="month" id="vc_mes" value="${mesRef}"></div><div class="fg"><label>Dias úteis do mês (aplica em todo mundo — pode ajustar linha a linha)</label><input type="number" id="vc_diaspadrao" value="21" onchange="aplicarDiasPadraoVC()"></div></div>
+   <p class="hint" style="margin-bottom:10px">Desmarca quem não deve receber esse mês. Ajusta os dias individualmente se alguém tiver período diferente.</p>
+   <div class="tblwrap" style="max-height:50vh;overflow-y:auto"><table class="tbl"><thead><tr><th></th><th>Nome</th><th>Linha</th><th>Ida</th><th>Volta</th><th>Dias úteis</th><th>Total</th></tr></thead><tbody id="vc_linhas">${
+     configurados.map(f=>`<tr data-fid="${f.id}"><td><input type="checkbox" class="vc_check" checked></td><td>${esc(f.nome)}</td><td>${esc(f.valeCombustivelLinha)}</td><td>R$ ${(+f.valeCombustivelIda).toFixed(2)}</td><td>R$ ${(+f.valeCombustivelVolta).toFixed(2)}</td><td><input type="number" class="vc_dias" value="21" style="width:70px" onchange="atualizarTotalVC(this)"></td><td class="vc_total">R$ ${((+f.valeCombustivelIda+(+f.valeCombustivelVolta))*21).toFixed(2)}</td></tr>`).join("")
+   }</tbody></table></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="gerarValeCombustivel()">Gerar lançamentos</button></div>`);
+}
+function aplicarDiasPadraoVC(){
+  const dias=$("#vc_diaspadrao").value;
+  document.querySelectorAll("#vc_linhas .vc_dias").forEach(inp=>{inp.value=dias;atualizarTotalVC(inp);});
+}
+function atualizarTotalVC(inp){
+  const tr=inp.closest("tr");
+  const ida=+tr.children[3].textContent.replace("R$ ","");
+  const volta=+tr.children[4].textContent.replace("R$ ","");
+  const dias=+inp.value||0;
+  tr.querySelector(".vc_total").textContent="R$ "+((ida+volta)*dias).toFixed(2);
+}
+function gerarValeCombustivel(){
+  if(!confirmarSenhaSalvar())return;
+  const mesRef=$("#vc_mes").value;
+  if(!mesRef){toast("Escolhe o mês.");return;}
+  const [ano,mes]=mesRef.split("-");
+  const periodoDe=mesRef+"-01";
+  const ultimoDia=new Date(+ano,+mes,0).getDate();
+  const periodoAte=mesRef+"-"+String(ultimoDia).padStart(2,"0");
+  let n=0;
+  document.querySelectorAll("#vc_linhas tr").forEach(tr=>{
+    if(!tr.querySelector(".vc_check").checked)return;
+    const fid=tr.dataset.fid;
+    const f=DB.func.find(x=>x.id===fid);
+    const dias=+tr.querySelector(".vc_dias").value||0;
+    if(!dias)return;
+    const ida=+f.valeCombustivelIda,volta=+f.valeCombustivelVolta;
+    const total=(ida+volta)*dias;
+    DB.reemb.push({id:uid(),func:fid,data:periodoAte,tipo:"Vale Combustível",valor:total.toFixed(2),status:"Pendente",lancadoPor:nomeUsuarioLogado(),
+      vcLinha:f.valeCombustivelLinha,vcDias:dias,vcIda:ida,vcVolta:volta,vcPeriodoDe:periodoDe,vcPeriodoAte:periodoAte});
+    n++;
+  });
+  save("reemb");closeModal();render();toast(n+" lançamento(s) de Vale Combustível gerado(s).");
+}
+function imprimirReciboVale(id){
+  const r=DB.reemb.find(x=>x.id===id);
+  const f=DB.func.find(x=>x.id===r.func);
+  if(!r||!f)return;
+  const dias=r.vcDias||0,ida=+r.vcIda||0,volta=+r.vcVolta||0,linha=r.vcLinha||"";
+  const idaTotal=ida*dias,voltaTotal=volta*dias,total=+r.valor||(idaTotal+voltaTotal);
+  const mesNome=r.vcPeriodoDe?new Date(r.vcPeriodoDe+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"}):"";
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo — ${esc(f.nome)}</title>
+   <style>
+     body{font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#222;padding:30px;max-width:750px;margin:0 auto}
+     table{width:100%;border-collapse:collapse;margin-bottom:14px}
+     td,th{border:1px solid #999;padding:6px 10px;text-align:left;vertical-align:top}
+     .lbl{background:#f0f0f0;font-weight:700;width:220px}
+     h1{font-size:16px;margin:0 0 4px}
+     h2{font-size:12px;margin:0 0 16px;font-weight:400;color:#555}
+     .obs{font-size:11.5px;color:#333;line-height:1.5}
+     .assinatura{margin-top:50px;text-align:center}
+     .assinatura .linha{border-top:1px solid #333;width:320px;margin:0 auto 4px}
+     @media print{body{padding:0}}
+   </style></head><body>
+   <h1>▶ priner — PEDIDO DE PAGAMENTO</h1>
+   <h2>TRANSPORTE – REEMBOLSO DE DESPESAS · Reembolso de Despesas</h2>
+   <table>
+     <tr><td class="lbl">NOME DO COLABORADOR</td><td>${esc(f.nome)}</td></tr>
+     <tr><td class="lbl">CPF</td><td>${esc(f.cpf||"—")}</td></tr>
+     <tr><td class="lbl">MATRÍCULA</td><td>${esc(f.matricula||"—")}</td></tr>
+     <tr><td class="lbl">CARGO / FUNÇÃO</td><td>${esc(f.funcao||"—")}</td></tr>
+     <tr><td class="lbl">OBRA / PROJETO</td><td>GM.MG.00083 – VALE</td></tr>
+     <tr><td class="lbl">PERÍODO DE REFERÊNCIA</td><td>${fmt(r.vcPeriodoDe)} a ${fmt(r.vcPeriodoAte)} (${dias} dias úteis)</td></tr>
+     <tr><td class="lbl">MOTIVO</td><td>Vale Combustível (linha ${esc(linha)}) – ${dias} dias úteis</td></tr>
+     <tr><td class="lbl">FORMA DE PAGAMENTO</td><td>PIX – GMAIA S.A – CNPJ 05.346.072/0001-09</td></tr>
+   </table>
+   <table><tr><td>Eu, <b>${esc(f.nome)}</b>, CPF ${esc(f.cpf||"—")}, solicito o pagamento/adiantamento, sob intermediação de Vitor Castro Martins – Supervisor Administrativo – PRINER S.A, a ser efetuado via PIX pela GMAIA S.A (CNPJ 05.346.072/0001-09), da quantia de <b>R$ ${total.toFixed(2).replace(".",",")}</b>, referente ao reembolso de despesas de Vale Combustível (linha ${esc(linha)}), no período de ${fmt(r.vcPeriodoDe)} a ${fmt(r.vcPeriodoAte)} (${dias} dias úteis).</td></tr></table>
+   <p style="font-weight:700;margin-bottom:6px">DESPESAS</p>
+   <table>
+     <tr><th>DESCRIÇÃO</th><th>QUANTIDADE</th><th>VALOR UNITÁRIO</th><th>VALOR TOTAL</th></tr>
+     <tr><td>Passagem Ida (linha ${esc(linha)})</td><td>${dias}</td><td>R$ ${ida.toFixed(2).replace(".",",")}</td><td>R$ ${idaTotal.toFixed(2).replace(".",",")}</td></tr>
+     <tr><td>Passagem Volta (linha ${esc(linha)})</td><td>${dias}</td><td>R$ ${volta.toFixed(2).replace(".",",")}</td><td>R$ ${voltaTotal.toFixed(2).replace(".",",")}</td></tr>
+     <tr><td colspan="3" style="text-align:right;font-weight:700">TOTAL</td><td style="font-weight:700">R$ ${total.toFixed(2).replace(".",",")}</td></tr>
+   </table>
+   <table><tr><td class="obs"><b>OBSERVAÇÕES</b><br>Vale Combustível mensal: valor de referência = ida + volta da linha ${esc(linha)} (endereço do funcionário) x ${dias} dias úteis de ${mesNome}. Ida: ${dias} x R$ ${ida.toFixed(2).replace(".",",")} = R$ ${idaTotal.toFixed(2).replace(".",",")}. Volta: ${dias} x R$ ${volta.toFixed(2).replace(".",",")} = R$ ${voltaTotal.toFixed(2).replace(".",",")}. Total: R$ ${total.toFixed(2).replace(".",",")}. Pagamento via reembolso de sistema (PIX pela GMAIA S.A / PRINER S.A – CNPJ 05.346.072/0001-09), até a chegada do cartão VR/vale-transporte do colaborador. Assinatura do colaborador substitui o comprovante de PIX (pagamento antecipado, referente a período futuro).</td></tr></table>
+   <div class="assinatura"><div class="linha"></div>${esc(f.nome)}<br>Assinatura do Colaborador – CPF ${esc(f.cpf||"—")}<br><br><i>Priner S.A.</i></div>
+   <script>window.print();<\/script>
+   </body></html>`);
+  w.document.close();
 }
 function formReemb(id){if(!DB.func.length){toast("Cadastre um funcionário.");return;}const r=id?DB.reemb.find(x=>x.id===id):{status:"Pendente",tipo:"Reembolso - Passagem",formaPag:"Caixa - Vitor"};openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><select id="r_f" onchange="mostraPix()">${porNome(DB.func).map(f=>`<option value="${f.id}" ${f.id===r.func?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div><div id="r_pixinfo"></div><div class="row3"><div class="fg"><label>Data *</label><input type="date" id="r_d" value="${esc(r.data)}"></div><div class="fg"><label>Tipo</label><select id="r_t">${TIPOS_REEMB.map(x=>`<option ${r.tipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="r_v" value="${esc(r.valor)}"></div></div>
    <div class="sub">Pagamento</div>
