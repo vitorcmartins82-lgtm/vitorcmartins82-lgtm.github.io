@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.10";
+const APP_VERSAO="v2026-09-05.11";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -1104,7 +1104,7 @@ function vReemb(){
     return;
   }
   const lancadores=[...new Set(DB.reemb.map(r=>r.lancadoPor).filter(Boolean))].sort();
-  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirGeradorValeCombustivel()">🚌 Gerar Vale Combustível do mês</button><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirImportarValeCombustivel()">📋 Importar dados (colar do Excel)</button><button class="btn btn-g" onclick="abrirGeradorValeCombustivel()">🚌 Gerar Vale Combustível do mês</button><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div></div>
    <div class="toolbar">
      <select id="rf_func" onchange="_reembFiltroFunc=this.value;renderReembTbl()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_reembFiltroFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select>
      <select id="rf_tipo" onchange="_reembFiltroTipo=this.value;renderReembTbl()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_reembFiltroTipo===t?"selected":""}>${t}</option>`).join("")}</select>
@@ -1143,6 +1143,56 @@ function formaPagamentoTxt(r){
   if(r.formaPag==="Fluig")return `Fluig${r.fluigNumero?" nº "+esc(r.fluigNumero):""}${r.fluigLink?` · <a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel)">abrir</a>`:""}`;
   if(r.formaPag)return esc(r.formaPag);
   return `<span style="color:var(--amber-d)">não definida</span>`;
+}
+function abrirImportarValeCombustivel(){
+  openModal(`<div class="modal-h"><h3>📋 Importar dados de Vale Combustível</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Copia a tabela do Excel (com o cabeçalho: NOME, FUNÇÃO, CPF, LINHA, PASSAGEM IDA, PASSAGEM VOLTA...) e cola aqui embaixo. O sistema casa por CPF (ou nome, se não achar CPF) e já preenche linha/ida/volta de cada um.</p>
+   <textarea id="ivc_texto" rows="10" style="width:100%;font-family:monospace;font-size:12px;padding:8px;border:1px solid #dcdfe3;border-radius:8px" placeholder="Cola aqui a tabela copiada do Excel..."></textarea>
+   <div id="ivc_preview" style="margin-top:14px"></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="preverImportacaoVale()">Conferir</button></div>`);
+}
+function preverImportacaoVale(){
+  const texto=$("#ivc_texto").value.trim();
+  if(!texto){toast("Cola a tabela primeiro.");return;}
+  const linhas=texto.split("\n").map(l=>l.split("\t")).filter(l=>l.length>1&&l.some(c=>c.trim()));
+  if(linhas.length<2){toast("Não consegui separar em colunas — confere se colou direto do Excel (com Tab entre as colunas).");return;}
+  const header=linhas[0].map(h=>normalizaNome(h.trim()));
+  const idx=nomeCol=>header.findIndex(h=>h.includes(nomeCol));
+  const iNome=idx("NOME"),iCpf=idx("CPF"),iLinha=idx("LINHA"),iIda=idx("PASSAGEM IDA")>=0?idx("PASSAGEM IDA"):idx("IDA"),iVolta=idx("PASSAGEM VOLTA")>=0?idx("PASSAGEM VOLTA"):idx("VOLTA");
+  if(iNome<0||iLinha<0||iIda<0||iVolta<0){toast("Não achei as colunas certas (preciso de NOME, LINHA, PASSAGEM IDA, PASSAGEM VOLTA).");return;}
+  const paraNumero=v=>{if(!v)return 0;return +String(v).replace("R$","").replace(/\s/g,"").replace(/\./g,"").replace(",",".")||0;};
+  const linhaVazia=linhas.every?null:null;
+  const resultados=linhas.slice(1).map(cols=>{
+    const nomeRaw=(cols[iNome]||"").trim();
+    if(!nomeRaw)return null;
+    const cpfRaw=iCpf>=0?(cols[iCpf]||"").replace(/\D/g,""):"";
+    const linha=(cols[iLinha]||"").trim();
+    const ida=paraNumero(cols[iIda]);
+    const volta=paraNumero(cols[iVolta]);
+    if(!linha&&!ida&&!volta)return null;
+    let match=null;
+    if(cpfRaw)match=DB.func.find(f=>f.cpf&&f.cpf.replace(/\D/g,"")===cpfRaw);
+    if(!match)match=DB.func.find(f=>normalizaNome(f.nome)===normalizaNome(nomeRaw));
+    return{nomeRaw,cpfRaw,linha,ida,volta,fid:match?match.id:null,fNome:match?match.nome:null};
+  }).filter(Boolean);
+  window._ivcPendente=resultados;
+  const achados=resultados.filter(r=>r.fid);
+  const naoAchados=resultados.filter(r=>!r.fid);
+  $("#ivc_preview").innerHTML=`
+   <div class="grid stats"><div class="stat green"><div class="n">${achados.length}</div><div class="l">Vão ser atualizados</div></div><div class="stat red"><div class="n">${naoAchados.length}</div><div class="l">Não encontrados no cadastro</div></div></div>
+   ${achados.length?`<div class="tblwrap" style="max-height:30vh;overflow-y:auto"><table class="tbl"><thead><tr><th>Cadastro</th><th>Linha</th><th>Ida</th><th>Volta</th></tr></thead><tbody>${achados.map(r=>`<tr><td>${esc(r.fNome)}</td><td>${esc(r.linha)}</td><td>R$ ${r.ida.toFixed(2)}</td><td>R$ ${r.volta.toFixed(2)}</td></tr>`).join("")}</tbody></table></div>`:""}
+   ${naoAchados.length?`<p class="hint" style="color:var(--red);margin-top:10px">Não achei no cadastro (confere nome/CPF): ${naoAchados.map(r=>esc(r.nomeRaw)).join(", ")}</p>`:""}
+   ${achados.length?`<button class="btn btn-a" style="margin-top:14px" onclick="confirmarImportacaoVale()">Aplicar em ${achados.length} funcionário(s)</button>`:""}
+  `;
+}
+function confirmarImportacaoVale(){
+  if(!confirmarSenhaSalvar())return;
+  const resultados=(window._ivcPendente||[]).filter(r=>r.fid);
+  resultados.forEach(r=>{
+    const f=DB.func.find(x=>x.id===r.fid);
+    f.valeCombustivelLinha=r.linha;f.valeCombustivelIda=r.ida;f.valeCombustivelVolta=r.volta;
+  });
+  save("func");window._ivcPendente=null;closeModal();toast(resultados.length+" funcionário(s) atualizado(s) com dados de Vale Combustível.");
 }
 function abrirGeradorValeCombustivel(){
   const configurados=porNome(DB.func.filter(f=>ativo(f)&&f.valeCombustivelLinha&&f.valeCombustivelIda&&f.valeCombustivelVolta));
