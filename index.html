@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.12";
+const APP_VERSAO="v2026-09-05.13";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3293,8 +3293,8 @@ function renderMedicoesContrato(contratoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const meds=(c.medicoes||[]).slice().sort((a,b)=>(b.mesReferencia||"").localeCompare(a.mesReferencia||""));
   const cls={"Aguardando fatura ou medição":"t-grey","Medição aprovada":"t-amber","BM assinado":"t-steel","Faturamento enviado para pagamento (Central de Notas)":"t-green"};
-  el.innerHTML=meds.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Status</th><th>Fluig</th><th></th></tr></thead><tbody>${
-    meds.map(m=>`<tr><td>${esc(m.mesReferencia)}</td><td><span class="tag ${cls[m.status]||'t-grey'}">${esc(m.status)}</span></td><td>${m.numeroFluig?(m.linkFluig?`<a href="${esc(m.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(m.numeroFluig)} ↗</a>`:esc(m.numeroFluig)):"—"}</td><td><button class="btn btn-g btn-sm" onclick="formMedicao('${contratoId}','${m.id}')">Editar</button></td></tr>`).join("")
+  el.innerHTML=meds.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Status</th><th>Valor lançado</th><th>Dia</th><th>Fluig</th><th></th></tr></thead><tbody>${
+    meds.map(m=>`<tr><td>${esc(m.mesReferencia)}</td><td><span class="tag ${cls[m.status]||'t-grey'}">${esc(m.status)}</span></td><td class="num">${m.valorLancado?"R$ "+(+m.valorLancado).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${m.dataLancamento?fmt(m.dataLancamento):"—"}</td><td>${m.numeroFluig?(m.linkFluig?`<a href="${esc(m.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(m.numeroFluig)} ↗</a>`:esc(m.numeroFluig)):"—"}</td><td><button class="btn btn-g btn-sm" onclick="formMedicao('${contratoId}','${m.id}')">Editar</button></td></tr>`).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhuma medição lançada ainda.</p>`;
 }
 function formMedicao(contratoId,medicaoId){
@@ -3302,7 +3302,8 @@ function formMedicao(contratoId,medicaoId){
   const m=medicaoId?(c.medicoes||[]).find(x=>x.id===medicaoId):{mesReferencia:iso(today()).slice(0,7),status:"Aguardando fatura ou medição"};
   openModal(`<div class="modal-h"><h3>${medicaoId?"Editar":"Nova"} medição/lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="row2"><div class="fg"><label>Mês de referência *</label><input type="month" id="md_mes" value="${esc(m.mesReferencia)}"></div><div class="fg"><label>Status *</label><select id="md_status">${STATUS_MEDICAO.map(s=>`<option ${m.status===s?"selected":""}>${s}</option>`).join("")}</select></div></div>
-   <div class="row2"><div class="fg"><label>Nº do Fluig <span class="opt">(opcional)</span></label><input id="md_fluig" value="${esc(m.numeroFluig)}"></div><div class="fg"><label>Link do Fluig</label><input id="md_fluiglink" value="${esc(m.linkFluig)}" placeholder="https://..."></div></div>
+   <div class="row2"><div class="fg"><label>Valor lançado (R$) <span class="opt">(opcional)</span></label><input type="number" step="0.01" id="md_valor" value="${esc(m.valorLancado)}"></div><div class="fg"><label>Dia do lançamento <span class="opt">(quando foi lançado na Central de Notas)</span></label><input type="date" id="md_data" value="${esc(m.dataLancamento)}"></div></div>
+   <div class="row2"><div class="fg"><label>Nº do Fluig <span class="opt">(opcional — pode vir depois)</span></label><input id="md_fluig" value="${esc(m.numeroFluig)}"></div><div class="fg"><label>Link do Fluig</label><input id="md_fluiglink" value="${esc(m.linkFluig)}" placeholder="https://..."></div></div>
    <div class="fg"><label>Observações</label><input id="md_obs" value="${esc(m.obs)}"></div></div>
    <div class="modal-f">${medicaoId?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delMedicao('${contratoId}','${medicaoId}')">Excluir</button>`:""}<button class="btn btn-g" onclick="formContrato('${contratoId}')">Cancelar</button><button class="btn btn-a" onclick="salvarMedicao('${contratoId}','${medicaoId||""}')">Salvar</button></div>`);
 }
@@ -3313,7 +3314,7 @@ function salvarMedicao(contratoId,medicaoId){
   c.medicoes=c.medicoes||[];
   let linkFluig=$("#md_fluiglink").value.trim();
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:medicaoId||uid(),mesReferencia,status:$("#md_status").value,numeroFluig:$("#md_fluig").value.trim(),linkFluig,obs:$("#md_obs").value.trim()};
+  const o={id:medicaoId||uid(),mesReferencia,status:$("#md_status").value,valorLancado:$("#md_valor").value,dataLancamento:$("#md_data").value,numeroFluig:$("#md_fluig").value.trim(),linkFluig,obs:$("#md_obs").value.trim()};
   if(medicaoId){const i=c.medicoes.findIndex(x=>x.id===medicaoId);c.medicoes[i]=o;}else c.medicoes.push(o);
   save("compras_contratos");formContrato(contratoId);toast("Medição salva.");
 }
