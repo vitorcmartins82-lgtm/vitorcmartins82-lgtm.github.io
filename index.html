@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.15";
+const APP_VERSAO="v2026-09-05.16";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3165,7 +3165,8 @@ function itensControleLancamentos(mes){
     (c.custosExtras||[]).forEach(ce=>{
       if(ce.periodicidade&&ce.periodicidade!=="Esporádico"){
         const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mes);
-        itens.push({tipo:"custoExtra",contratoId:c.id,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(ce.fornecedor?" ("+esc(ce.fornecedor)+")":""),lancado:!!lanc,valor:lanc?lanc.valor:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:lanc?"Lançado":"Sem lançamento ainda"});
+        const localNome=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
+        itens.push({tipo:"custoExtra",contratoId:c.id,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+(ce.fornecedor?" ("+esc(ce.fornecedor)+")":""),lancado:!!lanc,valor:lanc?lanc.valor:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:lanc?"Lançado":"Sem lançamento ainda"});
       }
     });
   });
@@ -3277,25 +3278,37 @@ function renderCustosExtrasContrato(contratoId){
   const el=$("#ct_custoslist");if(!el)return;
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const custos=(c.custosExtras||[]);
-  el.innerHTML=custos.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Tipo</th><th>Fornecedor</th><th>Periodicidade</th><th>Valor médio</th><th>Mês atual</th><th></th></tr></thead><tbody>${
-    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);return `<tr><td>${esc(ce.tipo)}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${lanc?'<span class="tag t-green">✓ lançado</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
+  el.innerHTML=custos.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Tipo</th><th>Imóvel</th><th>Fornecedor</th><th>Periodicidade</th><th>Valor médio</th><th>Mês atual</th><th></th></tr></thead><tbody>${
+    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);const local=ce.localId?DB.locais.find(l=>l.id===ce.localId):null;return `<tr><td>${esc(ce.tipo)}</td><td>${local?esc(local.nome):'<span class="tag t-red" style="font-size:10px">sem imóvel</span>'}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${lanc?'<span class="tag t-green">✓ lançado</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhum custo extra cadastrado ainda.</p>`;
 }
 function formCustoExtra(contratoId,custoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const ce=custoId?(c.custosExtras||[]).find(x=>x.id===custoId):{tipo:TIPOS_CUSTO_EXTRA[0],periodicidade:"Mensal"};
+  const locais=porNome(DB.locais);
   openModal(`<div class="modal-h"><h3>${custoId?"Editar":"Novo"} custo extra</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="row2"><div class="fg"><label>Tipo *</label><select id="ce_tipo">${TIPOS_CUSTO_EXTRA.map(t=>`<option ${ce.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Fornecedor / identificação</label><input id="ce_forn" value="${esc(ce.fornecedor)}" placeholder="ex.: CEMIG, prédio X..."></div></div>
+   <div class="row2"><div class="fg"><label>Tipo *</label><select id="ce_tipo" onchange="atualizarAvisoImovelCustoExtra()">${TIPOS_CUSTO_EXTRA.map(t=>`<option ${ce.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Fornecedor / identificação</label><input id="ce_forn" value="${esc(ce.fornecedor)}" placeholder="ex.: CEMIG, prédio X..."></div></div>
+   <div class="fg"><label>Imóvel de origem <span class="opt" id="ce_imovel_opt">(de qual endereço é essa conta — obrigatório pra Energia/Água/Internet)</span></label><select id="ce_local">${locais.length?`<option value="">— escolhe o imóvel/local —</option>`+locais.map(l=>`<option value="${l.id}" ${ce.localId===l.id?"selected":""}>${esc(l.nome)}${l.endereco?" — "+esc(l.endereco):""}</option>`).join(""):'<option value="">Nenhum local cadastrado ainda — cadastra em "Locais / Rota"</option>'}</select></div>
    <div class="row2"><div class="fg"><label>Periodicidade</label><select id="ce_periodicidade">${PERIODICIDADES_FATURAMENTO.map(p=>`<option ${ce.periodicidade===p?"selected":""}>${p}</option>`).join("")}</select></div><div class="fg"><label>Valor médio (R$, opcional)</label><input type="number" step="0.01" id="ce_valor" value="${esc(ce.valor)}"></div></div>
    ${custoId?`<div class="sub">Lançamentos mensais</div><div id="ce_lanclist"></div><div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Mês</label><input type="month" id="ce_lanc_mes" value="${iso(today()).slice(0,7)}"></div><div class="fg" style="margin-bottom:0"><label class="opt">Valor pago (opcional)</label><input type="number" step="0.01" id="ce_lanc_valor"></div><div></div></div><button class="btn btn-g btn-sm" style="margin-top:8px" onclick="lancarCustoExtraMes('${contratoId}','${custoId}')">＋ Marcar mês como lançado</button>`:'<p class="hint">Salve o custo extra primeiro — depois você marca os lançamentos mês a mês.</p>'}
    </div>
    <div class="modal-f">${custoId?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delCustoExtra('${contratoId}','${custoId}')">Excluir</button>`:""}<button class="btn btn-g" onclick="formContrato('${contratoId}')">Voltar</button><button class="btn btn-a" onclick="salvarCustoExtra('${contratoId}','${custoId||""}')">Salvar</button></div>`);
   if(custoId)renderLancamentosCustoExtra(contratoId,custoId);
+  atualizarAvisoImovelCustoExtra();
+}
+function atualizarAvisoImovelCustoExtra(){
+  const tipo=$("#ce_tipo")?.value;const opt=$("#ce_imovel_opt");if(!opt)return;
+  const precisaImovel=["Energia (CEMIG)","Água (COPASA)","Internet"].includes(tipo);
+  opt.style.color=precisaImovel?"var(--red)":"var(--muted)";
+  opt.textContent=precisaImovel?"(de qual endereço é essa conta — obrigatório pra esse tipo)":"(de qual endereço é essa conta, se aplicável)";
 }
 function salvarCustoExtra(contratoId,custoId){
+  const tipo=$("#ce_tipo").value;
+  const localId=$("#ce_local").value;
+  if(["Energia (CEMIG)","Água (COPASA)","Internet"].includes(tipo)&&!localId){toast("Escolhe o imóvel de origem — obrigatório pra "+tipo+".");return;}
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   c.custosExtras=c.custosExtras||[];
-  const o={id:custoId||uid(),tipo:$("#ce_tipo").value,fornecedor:$("#ce_forn").value.trim(),periodicidade:$("#ce_periodicidade").value,valor:$("#ce_valor").value,lancamentos:custoId?((c.custosExtras.find(x=>x.id===custoId)||{}).lancamentos||[]):[]};
+  const o={id:custoId||uid(),tipo,fornecedor:$("#ce_forn").value.trim(),localId,periodicidade:$("#ce_periodicidade").value,valor:$("#ce_valor").value,lancamentos:custoId?((c.custosExtras.find(x=>x.id===custoId)||{}).lancamentos||[]):[]};
   if(custoId){const i=c.custosExtras.findIndex(x=>x.id===custoId);c.custosExtras[i]=o;}else c.custosExtras.push(o);
   save("compras_contratos");
   if(!custoId){formCustoExtra(contratoId,o.id);}else{formContrato(contratoId);}
