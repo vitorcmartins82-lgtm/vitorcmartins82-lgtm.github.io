@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.17";
+const APP_VERSAO="v2026-09-05.18";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3160,38 +3160,45 @@ function itensControleLancamentos(mes){
     if(c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico"){
       const medDoMes=(c.medicoes||[]).find(m=>m.mesReferencia===mes);
       const lancado=medDoMes&&medDoMes.status==="Faturamento enviado para pagamento (Central de Notas)";
-      itens.push({tipo:"medicao",contratoId:c.id,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
+      itens.push({tipo:"medicao",contratoId:c.id,contratoNum:c.numero,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",vencimento:medDoMes?medDoMes.dataVencimento:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
     }
     (c.custosExtras||[]).forEach(ce=>{
       if(ce.periodicidade&&ce.periodicidade!=="Esporádico"){
         const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mes);
         const localNome=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
-        itens.push({tipo:"custoExtra",contratoId:c.id,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+(ce.fornecedor?" ("+esc(ce.fornecedor)+")":""),lancado:!!lanc,valor:lanc?lanc.valor:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:lanc?"Lançado":"Sem lançamento ainda"});
+        itens.push({tipo:"custoExtra",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+(ce.fornecedor?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
       }
     });
   });
   return itens;
 }
-let _cmMes="",_cmStatusFiltro="";
+let _cmMes="",_cmStatusFiltro="",_cmContratoFiltro="";
 function vContasMensais(){
   if(!_cmMes)_cmMes=iso(today()).slice(0,7);
   const mes=_cmMes;
-  const todos=itensControleLancamentos(mes).filter(i=>i.tipo==="custoExtra");
+  let todos=itensControleLancamentos(mes);
+  if(_cmContratoFiltro)todos=todos.filter(i=>i.contratoId===_cmContratoFiltro);
   const aLancar=todos.filter(i=>!i.lancado),lancados=todos.filter(i=>i.lancado);
   let lista=todos;
   if(_cmStatusFiltro==="aLancar")lista=aLancar;
   else if(_cmStatusFiltro==="lancado")lista=lancados;
-  main.innerHTML=`<div class="head"><div><h1>💡 Contas Mensais</h1><p>Energia, água, internet e outras contas recorrentes vinculadas aos contratos — pra nunca esquecer de lançar.</p></div></div>
+  lista=lista.slice().sort((a,b)=>(a.vencimento||"9999").localeCompare(b.vencimento||"9999"));
+  const totalPrevisto=todos.reduce((s,i)=>s+(+i.valor||0),0);
+  const totalLancado=lancados.reduce((s,i)=>s+(+i.valor||0),0);
+  const contratosComPeriodicidade=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"&&((c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico")||(c.custosExtras||[]).some(ce=>ce.periodicidade&&ce.periodicidade!=="Esporádico"))));
+  main.innerHTML=`<div class="head"><div><h1>💡 Contas Mensais</h1><p>Medição principal + energia, água, internet e outras contas recorrentes de todos os contratos — resumo pra planejar e acompanhar.</p></div></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">R$ ${totalPrevisto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total previsto (nesse filtro)</div></div><div class="stat green"><div class="n">R$ ${totalLancado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Já lançado (nesse filtro)</div></div></div>
    <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Mês</span><input type="month" id="cm_mes_input" value="${mes}" onchange="_cmMes=this.value;render()">
+     <select id="cm_contrato" onchange="_cmContratoFiltro=this.value;render()"><option value="">Todos os contratos</option>${contratosComPeriodicidade.map(c=>`<option value="${c.id}" ${_cmContratoFiltro===c.id?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select>
      <button class="btn ${!_cmStatusFiltro?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='';render()">Todos <span class="tag t-grey">${todos.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='aLancar'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='aLancar';render()">A lançar <span class="tag ${aLancar.length?'t-amber':'t-grey'}">${aLancar.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='lancado';render()">Lançado <span class="tag t-green">${lancados.length}</span></button>
    </div>
-   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Dia lançamento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map((i,idx)=>`<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':'t-amber'}">${i.lancado?"✓ Lançado":"A lançar"}</span></td><td>${i.dia?fmt(i.dia):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idx},'${mes}')">${i.lancado?"Editar":"Lançar"}</button></td></tr>`).join("")
-   }</tbody></table></div>`:`<div class="empty"><p>Nenhuma conta recorrente configurada ainda. Cadastre em Contratos → editar contrato → Custos extras.</p></div>`}
+   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':(i.valor?'t-steel':'t-amber')}">${i.lancado?"✓ Lançado":i.valor?"Valor previsto":"A lançar"}</span></td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idxReal},'${mes}')">${i.lancado?"Editar":"Preencher"}</button></td></tr>`;}).join("")
+   }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}
    </div>`;
-  window._ctlItensAtuais=lista;
+  window._ctlItensAtuais=todos;
 }
 function renderControleLancamentos(){
   const el=$("#ctl_panel");if(!el)return;
@@ -3207,42 +3214,44 @@ function renderControleLancamentos(){
      <button class="btn ${_ctlStatusFiltro==='aLancar'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='aLancar';renderControleLancamentos()">A lançar <span class="tag ${aLancar.length?'t-amber':'t-grey'}">${aLancar.length}</span></button>
      <button class="btn ${_ctlStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='lancado';renderControleLancamentos()">Lançado <span class="tag t-green">${lancados.length}</span></button>
    </div>
-   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Dia lançamento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map((i,idx)=>`<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':'t-amber'}">${i.lancado?"✓ Lançado":"A lançar"}</span></td><td>${i.dia?fmt(i.dia):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idx},'${mes}')">${i.lancado?"Editar":"Lançar"}</button></td></tr>`).join("")
+   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':(i.valor?'t-steel':'t-amber')}">${i.lancado?"✓ Lançado":i.valor?"Valor previsto":"A lançar"}</span></td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idxReal},'${mes}')">${i.lancado?"Editar":"Preencher"}</button></td></tr>`;}).join("")
    }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}`;
-  window._ctlItensAtuais=lista;
+  window._ctlItensAtuais=todos;
 }
 function formLancamentoRapido(idx,mes){
   const item=window._ctlItensAtuais[idx];
   if(!item)return;
-  openModal(`<div class="modal-h"><h3>${item.lancado?"Editar":"Lançar"} — ${item.label}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <p class="hint" style="margin-bottom:14px">Mês de referência: <b>${mes}</b></p>
-   <div class="row2"><div class="fg"><label>Dia do lançamento</label><input type="date" id="lr_dia" value="${esc(item.dia)}"></div><div class="fg"><label>Valor (R$)</label><input type="number" step="0.01" id="lr_valor" value="${esc(item.valor)}"></div></div>
-   <div class="row2"><div class="fg"><label>Nº do Fluig <span class="opt">(opcional — pode vir depois)</span></label><input id="lr_fluig" value="${esc(item.fluig)}"></div><div class="fg"><label>Link do Fluig</label><input id="lr_fluiglink" value="${esc(item.fluigLink)}" placeholder="https://..."></div></div>
+  openModal(`<div class="modal-h"><h3>${item.label}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:14px">Mês de referência: <b>${mes}</b> — pode preencher o valor previsto pra acompanhar o custo do mês, mesmo sem ter lançado ainda de verdade.</p>
+   <div class="row2"><div class="fg"><label>Valor (R$) <span class="opt">(previsto ou real, o que você tiver)</span></label><input type="number" step="0.01" id="lr_valor" value="${esc(item.valor)}"></div><div class="fg"><label>Data de vencimento</label><input type="date" id="lr_vencimento" value="${esc(item.vencimento)}"></div></div>
+   <div class="fg"><label><input type="checkbox" id="lr_lancado" style="width:auto;margin-right:6px" ${item.lancado?"checked":""}>Já foi lançado de verdade (enviado pra pagamento)</label></div>
+   <div class="row2"><div class="fg"><label>Dia do lançamento <span class="opt">(quando foi processado de fato)</span></label><input type="date" id="lr_dia" value="${esc(item.dia)}"></div><div class="fg"><label>Nº do Fluig <span class="opt">(opcional — pode vir depois)</span></label><input id="lr_fluig" value="${esc(item.fluig)}"></div></div>
+   <div class="fg"><label>Link do Fluig</label><input id="lr_fluiglink" value="${esc(item.fluigLink)}" placeholder="https://..."></div>
    <div class="fg"><label>Dados complementares / observação</label><input id="lr_obs" value="${esc(item.obs)}"></div>
-   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarLancamentoRapido(${idx},'${mes}')">${item.lancado?"Salvar":"Marcar como lançado"}</button></div>`);
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarLancamentoRapido(${idx},'${mes}')">Salvar</button></div>`);
 }
 function salvarLancamentoRapido(idx,mes){
   const item=window._ctlItensAtuais[idx];
   if(!item)return;
   let linkFluig=$("#lr_fluiglink").value.trim();
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const dia=$("#lr_dia").value,valor=$("#lr_valor").value,fluig=$("#lr_fluig").value.trim(),obs=$("#lr_obs").value.trim();
+  const dia=$("#lr_dia").value,valor=$("#lr_valor").value,vencimento=$("#lr_vencimento").value,fluig=$("#lr_fluig").value.trim(),obs=$("#lr_obs").value.trim(),lancadoAgora=$("#lr_lancado").checked;
   const c=DB.compras_contratos.find(x=>x.id===item.contratoId);
   if(item.tipo==="medicao"){
     c.medicoes=c.medicoes||[];
     let m=c.medicoes.find(x=>x.mesReferencia===mes);
-    if(!m){m={id:uid(),mesReferencia:mes,status:"Faturamento enviado para pagamento (Central de Notas)"};c.medicoes.push(m);}
-    else m.status="Faturamento enviado para pagamento (Central de Notas)";
-    m.dataLancamento=dia;m.valorLancado=valor;m.numeroFluig=fluig;m.linkFluig=linkFluig;m.obs=obs;
+    if(!m){m={id:uid(),mesReferencia:mes,status:"Aguardando fatura ou medição"};c.medicoes.push(m);}
+    if(lancadoAgora)m.status="Faturamento enviado para pagamento (Central de Notas)";
+    m.dataLancamento=dia;m.valorLancado=valor;m.dataVencimento=vencimento;m.numeroFluig=fluig;m.linkFluig=linkFluig;m.obs=obs;
   }else{
     const ce=(c.custosExtras||[]).find(x=>x.id===item.ceId);
     ce.lancamentos=ce.lancamentos||[];
     let l=ce.lancamentos.find(x=>x.mesReferencia===mes);
     if(!l){l={mesReferencia:mes};ce.lancamentos.push(l);}
-    l.dia=dia;l.valor=valor;l.fluig=fluig;l.fluigLink=linkFluig;
+    l.dia=dia;l.valor=valor;l.vencimento=vencimento;l.fluig=fluig;l.fluigLink=linkFluig;l.lancado=lancadoAgora;
   }
-  save("compras_contratos");closeModal();render();toast("Lançamento salvo.");
+  save("compras_contratos");closeModal();render();toast("Salvo.");
 }
 const PERIODICIDADES_FATURAMENTO=["Mensal","Quinzenal","Trimestral","Esporádico"];
 const TIPOS_CUSTO_EXTRA=["Energia (CEMIG)","Água (COPASA)","Internet","Condomínio","Gás","IPTU","Seguro","Outro"];
@@ -3300,7 +3309,7 @@ function renderCustosExtrasContrato(contratoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const custos=(c.custosExtras||[]);
   el.innerHTML=custos.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Tipo</th><th>Imóvel</th><th>Fornecedor</th><th>Periodicidade</th><th>Valor médio</th><th>Mês atual</th><th></th></tr></thead><tbody>${
-    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);const local=ce.localId?DB.locais.find(l=>l.id===ce.localId):null;return `<tr><td>${esc(ce.tipo)}</td><td>${local?esc(local.nome):'<span class="tag t-red" style="font-size:10px">sem imóvel</span>'}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${lanc?'<span class="tag t-green">✓ lançado</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
+    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);const local=ce.localId?DB.locais.find(l=>l.id===ce.localId):null;return `<tr><td>${esc(ce.tipo)}</td><td>${local?esc(local.nome):'<span class="tag t-red" style="font-size:10px">sem imóvel</span>'}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${(lanc&&lanc.lancado)?'<span class="tag t-green">✓ lançado</span>':lanc?'<span class="tag t-steel">valor previsto</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhum custo extra cadastrado ainda.</p>`;
 }
 function formCustoExtra(contratoId,custoId){
@@ -3357,7 +3366,7 @@ function lancarCustoExtraMes(contratoId,custoId){
   const ce=(c.custosExtras||[]).find(x=>x.id===custoId);
   ce.lancamentos=ce.lancamentos||[];
   if(ce.lancamentos.some(l=>l.mesReferencia===mesReferencia)){toast("Esse mês já estava marcado como lançado.");return;}
-  ce.lancamentos.push({mesReferencia,valor:$("#ce_lanc_valor").value});
+  ce.lancamentos.push({mesReferencia,valor:$("#ce_lanc_valor").value,lancado:true});
   save("compras_contratos");
   $("#ce_lanc_valor").value="";
   renderLancamentosCustoExtra(contratoId,custoId);
