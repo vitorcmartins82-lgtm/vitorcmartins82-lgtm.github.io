@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.18";
+const APP_VERSAO="v2026-09-05.19";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3173,6 +3173,28 @@ function itensControleLancamentos(mes){
   return itens;
 }
 let _cmMes="",_cmStatusFiltro="",_cmContratoFiltro="";
+function formNovaContaMensal(){
+  const contratos=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"));
+  if(!contratos.length){toast("Nenhum contrato ativo cadastrado ainda.");return;}
+  const locais=porNome(DB.locais);
+  openModal(`<div class="modal-h"><h3>＋ Nova conta mensal</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="fg"><label>Contrato *</label><select id="ncm_contrato">${contratos.map(c=>`<option value="${c.id}">${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select></div>
+   <div class="row2"><div class="fg"><label>Tipo *</label><select id="ce_tipo" onchange="atualizarAvisoImovelCustoExtra()">${TIPOS_CUSTO_EXTRA.map(t=>`<option>${t}</option>`).join("")}</select></div><div class="fg"><label>Fornecedor / identificação</label><input id="ce_forn" placeholder="ex.: CEMIG, prédio X..."></div></div>
+   <div class="fg"><label>Imóvel de origem <span class="opt" id="ce_imovel_opt">(de qual endereço é essa conta — obrigatório pra Energia/Água/Internet)</span></label><select id="ce_local">${locais.length?`<option value="">— escolhe o imóvel/local —</option>`+locais.map(l=>`<option value="${l.id}">${esc(l.nome)}${l.endereco?" — "+esc(l.endereco):""}</option>`).join(""):'<option value="">Nenhum local cadastrado ainda — cadastra em "Locais / Rota"</option>'}</select></div>
+   <div class="row2"><div class="fg"><label>Periodicidade</label><select id="ce_periodicidade">${PERIODICIDADES_FATURAMENTO.map(p=>`<option ${p==="Mensal"?"selected":""}>${p}</option>`).join("")}</select></div><div class="fg"><label>Valor médio (R$, opcional)</label><input type="number" step="0.01" id="ce_valor"></div></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarNovaContaMensal()">Salvar</button></div>`);
+  atualizarAvisoImovelCustoExtra();
+}
+function salvarNovaContaMensal(){
+  const contratoId=$("#ncm_contrato").value;
+  const tipo=$("#ce_tipo").value;
+  const localId=$("#ce_local").value;
+  if(["Energia (CEMIG)","Água (COPASA)","Internet"].includes(tipo)&&!localId){toast("Escolhe o imóvel de origem — obrigatório pra "+tipo+".");return;}
+  const c=DB.compras_contratos.find(x=>x.id===contratoId);
+  c.custosExtras=c.custosExtras||[];
+  c.custosExtras.push({id:uid(),tipo,fornecedor:$("#ce_forn").value.trim(),localId,periodicidade:$("#ce_periodicidade").value,valor:$("#ce_valor").value,lancamentos:[]});
+  save("compras_contratos");closeModal();render();toast("Conta mensal criada. Já aparece na lista pra lançar.");
+}
 function vContasMensais(){
   if(!_cmMes)_cmMes=iso(today()).slice(0,7);
   const mes=_cmMes;
@@ -3186,7 +3208,7 @@ function vContasMensais(){
   const totalPrevisto=todos.reduce((s,i)=>s+(+i.valor||0),0);
   const totalLancado=lancados.reduce((s,i)=>s+(+i.valor||0),0);
   const contratosComPeriodicidade=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"&&((c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico")||(c.custosExtras||[]).some(ce=>ce.periodicidade&&ce.periodicidade!=="Esporádico"))));
-  main.innerHTML=`<div class="head"><div><h1>💡 Contas Mensais</h1><p>Medição principal + energia, água, internet e outras contas recorrentes de todos os contratos — resumo pra planejar e acompanhar.</p></div></div>
+  main.innerHTML=`<div class="head"><div><h1>💡 Contas Mensais</h1><p>Medição principal + energia, água, internet e outras contas recorrentes de todos os contratos — resumo pra planejar e acompanhar.</p></div><button class="btn btn-a" onclick="formNovaContaMensal()">＋ Nova conta mensal</button></div>
    <div class="grid stats"><div class="stat steel"><div class="n">R$ ${totalPrevisto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total previsto (nesse filtro)</div></div><div class="stat green"><div class="n">R$ ${totalLancado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Já lançado (nesse filtro)</div></div></div>
    <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Mês</span><input type="month" id="cm_mes_input" value="${mes}" onchange="_cmMes=this.value;render()">
      <select id="cm_contrato" onchange="_cmContratoFiltro=this.value;render()"><option value="">Todos os contratos</option>${contratosComPeriodicidade.map(c=>`<option value="${c.id}" ${_cmContratoFiltro===c.id?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select>
