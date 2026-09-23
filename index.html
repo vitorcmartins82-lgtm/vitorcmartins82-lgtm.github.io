@@ -414,7 +414,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.20";
+const APP_VERSAO="v2026-09-05.21";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -554,7 +554,7 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
+function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];ativos.forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
@@ -703,6 +703,135 @@ function salvarMov(id){
 }
 function delMov(id){if(!confirm("Excluir esta movimentação?"))return;DB.mov=DB.mov.filter(x=>x.id!==id);save("mov");closeModal();render();toast("Excluída.");}
 let _baixBusca="",_baixOrdem="saldo";
+function diasUteisNoMes(anoMes){
+  const [ano,mes]=anoMes.split("-").map(Number);
+  const ultimoDia=new Date(ano,mes,0).getDate();
+  let n=0;
+  for(let d=1;d<=ultimoDia;d++){const dow=new Date(ano,mes-1,d).getDay();if(dow>=1&&dow<=5)n++;}
+  return n;
+}
+function diasDoMes(anoMes){
+  const [ano,mes]=anoMes.split("-").map(Number);
+  const ultimoDia=new Date(ano,mes,0).getDate();
+  const dias=[];for(let d=1;d<=ultimoDia;d++)dias.push(anoMes+"-"+String(d).padStart(2,"0"));
+  return dias;
+}
+function baixadaCobrindo(fid,dataStr){
+  return DB.mov.find(m=>m.func===fid&&m.tipo==="Baixada"&&m.entrada&&m.entrada<=dataStr&&m.saida&&m.saida>=dataStr);
+}
+function calcularAlojadoFDS(fid,anoMes){
+  const f=DB.func.find(x=>x.id===fid);
+  const qualificaAuto=f&&["Carro da empresa","Passagem por conta da empresa"].includes(f.fdsModo);
+  const dias=diasDoMes(anoMes);
+  let diasCafe=0,diasAlmoco=0,diasJantar=0;
+  dias.forEach(d=>{
+    const dow=pd(d).getDay();
+    const fimDeSemana=dow===0||dow===6;
+    const feriadoSemana=!fimDeSemana&&ehFeriado(d);
+    const especial=fimDeSemana||feriadoSemana;
+    const bx=qualificaAuto?baixadaCobrindo(fid,d):null;
+    const away=!!bx;
+    const diaDeVolta=bx&&bx.saida===d;
+    if(especial&&!away){diasCafe++;diasAlmoco++;}
+    if(!away||diaDeVolta)diasJantar++;
+  });
+  return{diasCafe,diasAlmoco,diasJantar};
+}
+function vaAjuste(mes,fid){
+  DB.cfg.valeAlimentacaoAjustes=DB.cfg.valeAlimentacaoAjustes||{};
+  return DB.cfg.valeAlimentacaoAjustes[mes+"|"+fid]||{};
+}
+function salvarVaAjuste(mes,fid,campo,valor){
+  DB.cfg.valeAlimentacaoAjustes=DB.cfg.valeAlimentacaoAjustes||{};
+  const chave=mes+"|"+fid;
+  DB.cfg.valeAlimentacaoAjustes[chave]=DB.cfg.valeAlimentacaoAjustes[chave]||{};
+  DB.cfg.valeAlimentacaoAjustes[chave][campo]=valor;
+  save("cfg");
+}
+let _vaMes="";
+const VA_VALOR_CAFE=8,VA_VALOR_ALMOCO=28,VA_VALOR_JANTAR=28;
+function vValeAlimentacao(){
+  if(!_vaMes)_vaMes=iso(today()).slice(0,7);
+  const mes=_vaMes;
+  const diasUteis=diasUteisNoMes(mes);
+  const todosAtivos=porNome(DB.func.filter(ativo));
+  const alojados=porNome(DB.func.filter(f=>ativo(f)&&(estadiaAtual(f.id)||{}).tipo==="Alojamento"));
+
+  const linhaObra=f=>{
+    const aj=vaAjuste(mes,f.id);
+    const qtdCafe=aj.qtdCafe!==undefined?aj.qtdCafe:diasUteis;
+    const retro=+aj.retroativo||0,desc=+aj.desconto||0;
+    const cafe=qtdCafe*VA_VALOR_CAFE;
+    const total=cafe+retro-desc;
+    return{f,qtdCafe,retro,desc,cafe,total,obs:aj.obs||""};
+  };
+  const linhaAlojado=f=>{
+    const calc=calcularAlojadoFDS(f.id,mes);
+    const aj=vaAjuste(mes,f.id);
+    const qtdCafe=aj.qtdCafe!==undefined?aj.qtdCafe:calc.diasCafe;
+    const qtdAlmoco=aj.qtdAlmoco!==undefined?aj.qtdAlmoco:calc.diasAlmoco;
+    const qtdJantar=aj.qtdJantar!==undefined?aj.qtdJantar:calc.diasJantar;
+    const retro=+aj.retroativo||0,desc=+aj.desconto||0;
+    const cafe=qtdCafe*VA_VALOR_CAFE,almoco=qtdAlmoco*VA_VALOR_ALMOCO,jantar=qtdJantar*VA_VALOR_JANTAR;
+    const total=cafe+almoco+jantar+retro-desc;
+    return{f,qtdCafe,qtdAlmoco,qtdJantar,retro,desc,cafe,almoco,jantar,total,obs:aj.obs||""};
+  };
+  window._vaLinhasObra=todosAtivos.map(linhaObra);
+  window._vaLinhasAlojados=alojados.map(linhaAlojado);
+  const totalObra=window._vaLinhasObra.reduce((s,l)=>s+l.total,0);
+  const totalAlojados=window._vaLinhasAlojados.reduce((s,l)=>s+l.total,0);
+
+  main.innerHTML=`<div class="head"><div><h1>🍽 Vale Alimentação</h1><p>Café da manhã (todos) + café/almoço/jantar de fim de semana dos alojados — calculado automático, revisável antes de exportar pra sede.</p></div><div class="acts"><button class="btn btn-a" onclick="exportarValeAlimentacao()">⭳ Exportar Excel (formato SODEXO)</button></div></div>
+   <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center"><span class="hint">Mês de referência</span><input type="month" id="va_mes_input" value="${mes}" onchange="_vaMes=this.value;render()"><span class="hint">Dias úteis do mês: <b>${diasUteis}</b></span></div></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">R$ ${totalObra.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total café Seg-Sex (todos)</div></div><div class="stat amber"><div class="n">R$ ${totalAlojados.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total fim de semana (alojados)</div></div></div>
+   <div class="panel"><h2><span class="t">☕ Café da manhã (Seg a Sex) — todos os colaboradores</span></h2><div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Nome</th><th>Qtd dias café</th><th>Retroativo</th><th>Desconto</th><th>Café (R$)</th><th>Total</th><th>Observ.</th></tr></thead><tbody>${
+     window._vaLinhasObra.map((l,idx)=>`<tr><td>${esc(l.f.nome)}</td><td><input type="number" value="${l.qtdCafe}" style="width:60px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num">R$ ${l.cafe.toFixed(2)}</td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td><td><input value="${esc(l.obs)}" style="width:120px" onchange="salvarVaAjuste('${mes}','${l.f.id}','obs',this.value)"></td></tr>`).join("")
+   }</tbody></table></div></div>
+   <div class="panel"><h2><span class="t">🏠 Fim de semana — alojados</span></h2><p class="hint" style="padding:0 18px 10px">Calculado automático a partir da Baixada + Transporte Fim de Semana. Ajusta manualmente quando precisar — o ajuste fica salvo.</p><div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Nome</th><th>Volta FDS</th><th>Qtd café</th><th>Qtd almoço</th><th>Qtd jantar</th><th>Retroativo</th><th>Desconto</th><th>Total</th></tr></thead><tbody>${
+     window._vaLinhasAlojados.map(l=>`<tr><td>${esc(l.f.nome)}${l.f.fdsModo?`<br><small style="color:var(--muted)">${esc(l.f.fdsModo)}</small>`:''}</td><td>${esc(l.f.fdsIntervalo||"—")}</td><td><input type="number" value="${l.qtdCafe}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td><input type="number" value="${l.qtdAlmoco}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdAlmoco',this.value);render()"></td><td><input type="number" value="${l.qtdJantar}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdJantar',this.value);render()"></td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td></tr>`).join("")
+   }</tbody></table></div></div>`;
+}
+function exportarValeAlimentacao(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const mes=_vaMes;
+  const dataRef=new Date(mes+"-01T00:00:00");
+  const wb=XLSX.utils.book_new();
+
+  const linhasObra=[
+    ["GMAIA","PREENCHER SOMENTE AS COLUNAS EM VERDE / LER A ABA DE ORIENTAÇÕES",null,null,null,null,null,null,null,null,"CAFÉ DA MANHA ",VA_VALOR_CAFE],
+    ["PRODUTO: IFOODALIMENTAÇÃO",null,null,null,null,null,null,null,null,null,"ALMOÇO",VA_VALOR_ALMOCO],
+    ["Disponibilização ",null,null,null,null,null,null,null,null,null,null,null],
+    [dataRef,null,null,null,null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null,null,null,null,null],
+    ['UN - INFRA - EXEC VALE - REC ESTR \n" ',null,null,null,null,null,null,null,null,null,null,null],
+    ["NOME","CPF ","NASCIMENTO\n (dd/mm/aaaa)","MATRICULA","RETROATIVO         (PREENCHER)","DESCONTO    ","QUANTIDADE                DIAS CAFÉ DA MANHA     (PREENCHER)","CAFÉ DA MANHÃ (SEG A SEXTA)","QUANTIDADE                DIAS ALMOÇO (PREENCHER)","ALMOÇO               (SEG A SEXTA)","TOTAL DA RECARGA","OBSERV."],
+    [null,"Não colocar ponto ou traço.",null,null,null,"(PREENCHER VALOR EM R$)",null,VA_VALOR_CAFE,null,VA_VALOR_ALMOCO,null,null]
+  ];
+  window._vaLinhasObra.forEach(l=>{
+    linhasObra.push([l.f.nome,l.f.cpf||"",l.f.nascimento?new Date(l.f.nascimento+"T00:00:00"):"",l.f.matricula||"",l.retro||"",l.desc||"",l.qtdCafe,l.cafe,"",0,l.total,l.obs||""]);
+  });
+  const wsObra=XLSX.utils.aoa_to_sheet(linhasObra);
+  XLSX.utils.book_append_sheet(wb,wsObra,"OBRA - SEG A SEX");
+
+  const linhasAlojados=[
+    ["GMAIA","NESTA ABA MANTER SOMENTE FUNCIONARIOS ALOJADOS  /  PREENCHER SOMENTE AS COLUNAS EM VERDE / LER A ABA DE ORIENTAÇÕES  /  LEMBRAR DE DESCONTAR DO ALOJADO SE NECESSARIO OS DIAS QUE ELE ESTAVA EM CASA",null,null,null,null,null,null,null,null,"CAFÉ DA MANHA ",VA_VALOR_CAFE,null,null,null,null,null],
+    ["PRODUTO: ifood ALIMENTAÇÃO",null,null,null,null,null,null,null,null,null,"ALMOÇO",VA_VALOR_ALMOCO,null,null,null,null,null],
+    ["Disponibilização ",null,null,null,null,null,null,null,null,null,"JANTAR",VA_VALOR_JANTAR,null,null,null,null,null],
+    [dataRef,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+    ['UN - INFRA - EXEC VALE - REC ESTR \n" ',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],
+    ["NOME","CPF ","NASCIMENTO\n (dd/mm/aaaa)","MATRICULA","Volta aos FDS p/ casa\nSIM/NÃO/LOCAL","RETROATIVO         (PREENCHER)","DESCONTO    ","QUANTIDADE                DIAS CAFÉ DA MANHA     (PREENCHER)","CAFÉ DA MANHÃ(FINAL DE SEMANA)","QUANTIDADE                DIAS ALMOÇO   (PREENCHER)","ALMOÇO  ","QUANTIDADE                DIAS JANTA   (PREENCHER)","JANTAR","TOTAL DA RECARGA","OBSERV.",null,null],
+    [null,"Não colocar ponto ou traço.",null,null,null,null,"(PREENCHER VALOR EM R$)",null,VA_VALOR_CAFE,null,VA_VALOR_ALMOCO,null,VA_VALOR_JANTAR,null,null,null,null]
+  ];
+  window._vaLinhasAlojados.forEach(l=>{
+    linhasAlojados.push([l.f.nome,l.f.cpf||"",l.f.nascimento?new Date(l.f.nascimento+"T00:00:00"):"",l.f.matricula||"",l.f.fdsIntervalo==="Não vai pra casa"?"NÃO":(l.f.fdsIntervalo?"sim":"NÃO"),l.retro||"",l.desc||"",l.qtdCafe,l.cafe,l.qtdAlmoco,l.almoco,l.qtdJantar,l.jantar,l.total,l.obs||"",null,null]);
+  });
+  const wsAlojados=XLSX.utils.aoa_to_sheet(linhasAlojados);
+  XLSX.utils.book_append_sheet(wb,wsAlojados,"ALOJADOS");
+
+  XLSX.writeFile(wb,"VALE_ALIMENTACAO_SODEXO_GMAIA_"+mes+".xlsx");
+  toast("Excel exportado — confere os valores antes de enviar pra sede.");
+}
 function vTransporteFds(){
   const alojados=porNome(DB.func.filter(f=>ativo(f)&&(estadiaAtual(f.id)||{}).tipo==="Alojamento"));
   main.innerHTML=`<div class="head"><div><h1>🚌 Transporte Fim de Semana</h1><p>Controle de quem é alojado e como volta pra casa: carro da empresa, passagem paga pela empresa, ou reembolso.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirImportarTransporteFds()">📋 Importar dados (colar do Excel)</button></div></div>
