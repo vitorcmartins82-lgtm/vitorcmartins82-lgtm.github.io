@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.24";
+const APP_VERSAO="v2026-09-05.25";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -793,14 +793,11 @@ function vValeAlimentacao(){
     const calcQtd=calcularCafeSemana(f.id,mes);
     const aj=vaAjuste(mes,f.id);
     const admissaoNoMes=f.admissao&&f.admissao.startsWith(mes);
-    const diasPix=admissaoNoMes?(aj.diasPix!==undefined?+aj.diasPix:10):0;
-    const qtdCafeCalc=Math.max(0,calcQtd-diasPix);
-    const qtdCafe=(aj.qtdCafe!==undefined&&aj.qtdCafe!=="")?aj.qtdCafe:qtdCafeCalc;
+    const qtdCafe=(aj.qtdCafe!==undefined&&aj.qtdCafe!=="")?aj.qtdCafe:calcQtd;
     const retro=+aj.retroativo||0,desc=+aj.desconto||0;
     const cafe=qtdCafe*valorCafe;
     const total=cafe+retro-desc;
-    const obsPadrao=admissaoNoMes?`Admissão dia ${f.admissao.split("-")[2]} — ${diasPix} dia(s) já pagos via PIX (Caixa Sup./Eng.) antes do cartão chegar, não contados aqui pra não duplicar`:"";
-    return{f,qtdCafe,retro,desc,cafe,total,obs:aj.obs!==undefined&&aj.obs!==""?aj.obs:obsPadrao,admissaoNoMes,diasPix};
+    return{f,qtdCafe,retro,desc,cafe,total,obs:aj.obs||"",admissaoNoMes};
   };
   const linhaAlojado=f=>{
     const calc=calcularAlojadoFDS(f.id,mes);
@@ -811,7 +808,8 @@ function vValeAlimentacao(){
     const retro=+aj.retroativo||0,desc=+aj.desconto||0;
     const cafe=qtdCafe*valorCafe,almoco=qtdAlmoco*valorAlmoco,jantar=qtdJantar*valorJantar;
     const total=cafe+almoco+jantar+retro-desc;
-    return{f,qtdCafe,qtdAlmoco,qtdJantar,retro,desc,cafe,almoco,jantar,total,obs:aj.obs||""};
+    const admissaoNoMes=f.admissao&&f.admissao.startsWith(mes);
+    return{f,qtdCafe,qtdAlmoco,qtdJantar,retro,desc,cafe,almoco,jantar,total,obs:aj.obs||"",admissaoNoMes};
   };
   window._vaLinhasObra=todosAtivos.map(linhaObra);
   window._vaLinhasAlojados=alojados.map(linhaAlojado);
@@ -825,11 +823,15 @@ function vValeAlimentacao(){
      <span class="hint">Jantar R$</span><input type="number" step="0.01" id="va_valorjantar" value="${valorJantar}" style="width:70px" onchange="salvarValoresValeAlimentacao()">
    </div></div>
    <div class="grid stats"><div class="stat steel"><div class="n">R$ ${totalObra.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total café Seg-Sex (todos)</div></div><div class="stat amber"><div class="n">R$ ${totalAlojados.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total fim de semana (alojados)</div></div></div>
-   <div class="panel"><h2><span class="t">☕ Café da manhã (Seg a Sex) — todos os colaboradores</span></h2><p class="hint" style="padding:0 18px 10px">Desconta automático dias de baixada e férias. Quem foi admitido nesse mês (linha amarela) já vem com os dias pagos via PIX descontados, pra não pagar em duplicidade quando o cartão chegar.</p><div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Nome</th><th>Qtd dias café</th><th>Dias já pagos via PIX</th><th>Retroativo</th><th>Desconto</th><th>Café (R$)</th><th>Total</th><th>Observ.</th></tr></thead><tbody>${
-     window._vaLinhasObra.map((l,idx)=>`<tr>${l.admissaoNoMes?'<td style="border-left:3px solid var(--amber)">':'<td>'}${esc(l.f.nome)}</td><td><input type="number" value="${l.qtdCafe}" style="width:60px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td>${l.admissaoNoMes?`<input type="number" value="${l.diasPix}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','diasPix',this.value);salvarVaAjuste('${mes}','${l.f.id}','qtdCafe','');render()" title="Muda esse número pra recalcular automático — o campo de quantidade acima é sobrescrito">`:'<span class="hint">—</span>'}</td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num">R$ ${l.cafe.toFixed(2)}</td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td><td><input value="${esc(l.obs)}" style="width:160px" onchange="salvarVaAjuste('${mes}','${l.f.id}','obs',this.value)"></td></tr>`).join("")
+   ${window._vaLinhasObra.some(l=>l.admissaoNoMes)?`<div class="panel" style="border:2px solid var(--amber);background:#fdf8ee"><div style="padding:14px 18px"><b style="color:var(--amber-d)">⚠ Lembrete — admissões desse mês, cuidado com pagamento em duplicidade</b>
+     <p class="hint" style="margin:6px 0 10px">Nos primeiros ~10 dias (até o cartão chegar), a pessoa recebe via PIX (Caixa Sup./Eng.): <b>dia de semana</b> normalmente café + jantar, <b>fim de semana</b> café + almoço + jantar. Confere quanto foi pago em cada caso, lança o <b>valor</b> no campo Desconto (tanto na tabela de café quanto na de fim de semana, se for alojado), explicando no campo de Observação — e <b>lembre de avisar o financeiro/RH sobre o que já foi pago via PIX</b>, pra não sair duplicado quando o cartão chegar.</p>
+     <ul style="margin:0;padding-left:20px">${window._vaLinhasObra.filter(l=>l.admissaoNoMes).map(l=>`<li>${esc(l.f.nome)} — admissão dia ${l.f.admissao.split("-")[2]}</li>`).join("")}</ul>
+   </div></div>`:''}
+   <div class="panel"><h2><span class="t">☕ Café da manhã (Seg a Sex) — todos os colaboradores</span></h2><p class="hint" style="padding:0 18px 10px">Desconta automático dias de baixada e férias.</p><div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Nome</th><th>Qtd dias café</th><th>Retroativo</th><th>Desconto</th><th>Café (R$)</th><th>Total</th><th>Observ.</th></tr></thead><tbody>${
+     window._vaLinhasObra.map((l,idx)=>`<tr>${l.admissaoNoMes?'<td style="border-left:3px solid var(--amber)">':'<td>'}${esc(l.f.nome)}</td><td><input type="number" value="${l.qtdCafe}" style="width:60px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num">R$ ${l.cafe.toFixed(2)}</td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td><td><input value="${esc(l.obs)}" style="width:160px" placeholder="${l.admissaoNoMes?'ex.: X dias café+jantar pagos via PIX = R$Y':''}" onchange="salvarVaAjuste('${mes}','${l.f.id}','obs',this.value)"></td></tr>`).join("")
    }</tbody></table></div></div>
    <div class="panel"><h2><span class="t">🏠 Fim de semana — alojados</span></h2><p class="hint" style="padding:0 18px 10px">Calculado automático a partir da Baixada e Férias (descontam sempre) + Transporte Fim de Semana. Ajusta manualmente quando precisar — o ajuste fica salvo.</p><div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Nome</th><th>Volta FDS</th><th>Qtd café</th><th>Qtd almoço</th><th>Qtd jantar</th><th>Retroativo</th><th>Desconto</th><th>Total</th></tr></thead><tbody>${
-     window._vaLinhasAlojados.map(l=>`<tr><td>${esc(l.f.nome)}${l.f.fdsModo?`<br><small style="color:var(--muted)">${esc(l.f.fdsModo)}</small>`:''}</td><td>${esc(l.f.fdsIntervalo||"—")}</td><td><input type="number" value="${l.qtdCafe}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td><input type="number" value="${l.qtdAlmoco}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdAlmoco',this.value);render()"></td><td><input type="number" value="${l.qtdJantar}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdJantar',this.value);render()"></td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td></tr>`).join("")
+     window._vaLinhasAlojados.map(l=>`<tr>${l.admissaoNoMes?'<td style="border-left:3px solid var(--amber)">':'<td>'}${esc(l.f.nome)}${l.f.fdsModo?`<br><small style="color:var(--muted)">${esc(l.f.fdsModo)}</small>`:''}</td><td>${esc(l.f.fdsIntervalo||"—")}</td><td><input type="number" value="${l.qtdCafe}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdCafe',this.value);render()"></td><td><input type="number" value="${l.qtdAlmoco}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdAlmoco',this.value);render()"></td><td><input type="number" value="${l.qtdJantar}" style="width:55px" onchange="salvarVaAjuste('${mes}','${l.f.id}','qtdJantar',this.value);render()"></td><td><input type="number" step="0.01" value="${l.retro||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','retroativo',this.value);render()"></td><td><input type="number" step="0.01" value="${l.desc||''}" style="width:80px" onchange="salvarVaAjuste('${mes}','${l.f.id}','desconto',this.value);render()"></td><td class="num"><b>R$ ${l.total.toFixed(2)}</b></td></tr>`).join("")
    }</tbody></table></div></div>`;
 }
 function exportarValeAlimentacao(){
