@@ -316,7 +316,7 @@ function saldoBaixada(fid){
   const dataLiberacao=emCarencia?iso(new Date(today().getTime()+diasParaLiberar*MS)):"";
   const acumulavel=usaChegada?efetivo:Math.max(0,efetivo-c.baixadaCarencia);
   const inicial=usaChegada?(+f.saldoBaixadaInicial||0):0;
-  const bruto=Math.max(0,inicial+(acumulavel/30)*c.baixadaMes-descFaltas);
+  const bruto=Math.max(0,inicial+(acumulavel/30)*c.baixadaMes-usadas-descFaltas);
   const saldoCalc=Math.max(0,bruto);
   const manual=f.baixadaAjusteValor!==undefined&&f.baixadaAjusteValor!==null&&f.baixadaAjusteValor!=="";
   const semDireito=f.direitoBaixada==="Não";
@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.23";
+const APP_VERSAO="v2026-09-05.24";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
