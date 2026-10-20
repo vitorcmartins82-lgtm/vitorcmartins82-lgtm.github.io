@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-09-05.25";
+const APP_VERSAO="v2026-10-02.1";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -504,8 +504,17 @@ function renderDetalhePermissoes(){
    ${SECOES_PERMISSAO.map(linhaSecao).join("")}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
    <p class="hint" style="margin-top:14px">🔒 Reembolsos e Recrutamento não entram nessa lista — essas duas áreas só abrem com a senha mestra, direto na tela delas (não dependem de liberação por pessoa).</p>
+   <div style="padding:14px 0;border-top:1px solid #eef0ec;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><div><b style="font-size:14.5px">Aprovador de pedidos de compra</b><br><small style="color:var(--muted)">Pode aprovar pedidos (aparece na lista de "Aprovado por" com senha própria)</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','aprovadorPedidos',this.checked)" ${f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id))?"checked":""} style="width:22px;height:22px"></div>
+     ${(f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id)))?`<div class="fg" style="margin:10px 0 0"><label>Senha de aprovação desta pessoa</label><input type="text" value="${esc(senhaAprovacaoDe(f))}" placeholder="defina uma senha (só números, ex.: 4 dígitos)" onchange="salvarSenhaAprovacao('${f.id}',this.value)"></div>`:''}
+   </div>
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre — igual o Vitor</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
    </div>`;
+}
+function salvarSenhaAprovacao(fid,valor){
+  const f=DB.func.find(x=>x.id===fid);
+  f.senhaAprovacao=(valor||"").trim();
+  if(f.aprovadorPedidos===undefined)f.aprovadorPedidos=true;
+  save("func");toast("Senha de aprovação salva.");
 }
 function mudarPermissao(fid,secaoChave,nivel){
   const f=DB.func.find(x=>x.id===fid);
@@ -2240,7 +2249,22 @@ function delSetor(id){if(!confirm("Excluir este setor?"))return;DB.compras_setor
 /* ============ COMPRAS: pedidos ============ */
 let _pedFiltroSetor="",_pedFiltroStatus="",_pedFiltroForn="",_pedFiltroBusca="";
 const TIPOS_PEDIDO=["Material","Serviço","Locação","EPI/Segurança","Manutenção","Outro"];
-const ENGENHEIROS_APROVADORES=["Arthur Ferreira","João Paulo Fernandes Soares"];
+function aprovadoresPedidos(){
+  /* Quem aprova: funcionários ativos marcados como "Aprovador de pedidos" (Gerenciar permissões).
+     Arthur Ferreira segue como aprovador legado enquanto não for configurado. */
+  return DB.func.filter(f=>{
+    if(!ativo(f))return false;
+    if(f.aprovadorPedidos===true)return true;
+    const n=normalizaNome(f.nome);
+    return f.aprovadorPedidos===undefined&&n.includes("ARTHUR")&&n.includes("FERREIRA");
+  }).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));
+}
+function senhaAprovacaoDe(f){
+  if(f.senhaAprovacao)return f.senhaAprovacao;
+  const n=normalizaNome(f.nome);
+  if(f.aprovadorPedidos===undefined&&n.includes("ARTHUR")&&n.includes("FERREIRA"))return"1906";
+  return"";
+}
 function resumoItensPedido(p){
   if(p.itensLista&&p.itensLista.length)return p.itensLista.map(it=>(it.quantidade?it.quantidade+"x ":"")+it.nome).join(", ");
   return p.itens||"";
@@ -2640,18 +2664,21 @@ function avancarStatus(id){
   }
   toast("Status atualizado.");
 }
-const SENHAS_ENGENHEIROS={"Arthur Ferreira":"1906","João Paulo Fernandes Soares":"2407"};
 function formAprovacaoEngenheiro(id){
   openModal(`<div class="modal-h"><h3>Aprovação do engenheiro</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="fg"><label>Aprovado por *</label><select id="ap_eng"><option value="">—</option>${ENGENHEIROS_APROVADORES.map(e=>`<option>${e}</option>`).join("")}</select></div>
+   <div class="fg"><label>Aprovado por *</label><select id="ap_eng"><option value="">—</option>${aprovadoresPedidos().map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select></div>
    <div class="fg"><label>Senha pessoal *</label><input type="password" id="ap_senha" placeholder="Sua senha de aprovação" onkeydown="if(event.key==='Enter')confirmarAprovacaoEngenheiro('${id}')"></div>
    </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="confirmarAprovacaoEngenheiro('${id}')">Aprovar</button></div>`);
 }
 function confirmarAprovacaoEngenheiro(id){
-  const eng=$("#ap_eng").value;
-  if(!eng){toast("Selecione quem está aprovando.");return;}
+  const engId=$("#ap_eng").value;
+  if(!engId){toast("Selecione quem está aprovando.");return;}
+  const engF=DB.func.find(x=>x.id===engId);
+  const eng=engF?engF.nome:"";
   const senha=$("#ap_senha").value;
-  if(!senhaOk(senha,SENHAS_ENGENHEIROS[eng])){toast("Senha incorreta para "+eng+".");return;}
+  const esperada=engF?senhaAprovacaoDe(engF):"";
+  if(!esperada&&(senha||"").trim()!==SENHA_MESTRA){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
+  if(!senhaOk(senha,esperada)){toast("Senha incorreta para "+eng+".");return;}
   const p=DB.compras_pedidos.find(x=>x.id===id);
   p.status="Aprovado pelo engenheiro";p.aprovadoPor=eng;p.aprovadoData=iso(today());
   (p.statusHistorico=p.statusHistorico||[]).push({status:"Aprovado pelo engenheiro",data:iso(today())});
