@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.1";
+const APP_VERSAO="v2026-10-02.2";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3425,19 +3425,32 @@ function vContratos(){
    }</tbody></table>`:`<div class="empty"><div class="big">📄</div><p>Nenhum contrato encontrado.</p><button class="btn btn-a" onclick="formContrato()">Cadastrar o primeiro</button></div>`}</div></div>`;
   renderControleLancamentos();
 }
+function tagStatusLanc(i){
+  if(i.semLanc)return `<span class="tag t-grey">${esc(i.semLanc)}</span>`;
+  return `<span class="tag ${i.lancado?'t-green':(i.valor?'t-steel':'t-amber')}">${i.lancado?"✓ Lançado":i.valor?"Valor previsto":"A lançar"}</span>`;
+}
+function botoesLanc(i,idx,mes){
+  const principal=i.semLanc?"":`<button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idx},'${mes}')">${i.lancado?"Editar":"Preencher"}</button> `;
+  return principal+`<button class="btn btn-g btn-sm" onclick="abrirCadastroItem(${idx})" title="Editar ou excluir o cadastro (inclui marcar como sem lançamento)">⚙ Cadastro</button>`;
+}
+function abrirCadastroItem(idx){
+  const it=window._ctlItensAtuais[idx];if(!it)return;
+  window._cadastroDeLista=true;
+  if(it.tipo==="custoExtra")formCustoExtra(it.contratoId,it.ceId);else formContrato(it.contratoId);
+}
 function itensControleLancamentos(mes){
   const itens=[];
   DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo").forEach(c=>{
     if(c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico"){
       const medDoMes=(c.medicoes||[]).find(m=>m.mesReferencia===mes);
       const lancado=medDoMes&&medDoMes.status==="Faturamento enviado para pagamento (Central de Notas)";
-      itens.push({tipo:"medicao",contratoId:c.id,contratoNum:c.numero,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",vencimento:medDoMes?medDoMes.dataVencimento:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
+      itens.push({tipo:"medicao",semLanc:c.semLancamento||"",contratoId:c.id,contratoNum:c.numero,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",vencimento:medDoMes?medDoMes.dataVencimento:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
     }
     (c.custosExtras||[]).forEach(ce=>{
       if(ce.periodicidade&&ce.periodicidade!=="Esporádico"){
         const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mes);
         const localNome=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
-        itens.push({tipo:"custoExtra",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+(ce.fornecedor?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
+        itens.push({tipo:"custoExtra",semLanc:ce.semLancamento||"",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+((ce.fornecedor&&!normalizaNome(ce.tipo).includes(normalizaNome(ce.fornecedor)))?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
       }
     });
   });
@@ -3471,10 +3484,11 @@ function vContasMensais(){
   const mes=_cmMes;
   let todos=itensControleLancamentos(mes);
   if(_cmContratoFiltro)todos=todos.filter(i=>i.contratoId===_cmContratoFiltro);
-  const aLancar=todos.filter(i=>!i.lancado),lancados=todos.filter(i=>i.lancado);
+  const semLancL=todos.filter(i=>i.semLanc),aLancar=todos.filter(i=>!i.lancado&&!i.semLanc),lancados=todos.filter(i=>i.lancado&&!i.semLanc);
   let lista=todos;
   if(_cmStatusFiltro==="aLancar")lista=aLancar;
   else if(_cmStatusFiltro==="lancado")lista=lancados;
+  else if(_cmStatusFiltro==="semLanc")lista=semLancL;
   lista=lista.slice().sort((a,b)=>(a.vencimento||"9999").localeCompare(b.vencimento||"9999"));
   const totalPrevisto=todos.reduce((s,i)=>s+(+i.valor||0),0);
   const totalLancado=lancados.reduce((s,i)=>s+(+i.valor||0),0);
@@ -3486,9 +3500,10 @@ function vContasMensais(){
      <button class="btn ${!_cmStatusFiltro?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='';render()">Todos <span class="tag t-grey">${todos.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='aLancar'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='aLancar';render()">A lançar <span class="tag ${aLancar.length?'t-amber':'t-grey'}">${aLancar.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='lancado';render()">Lançado <span class="tag t-green">${lancados.length}</span></button>
+     <button class="btn ${_cmStatusFiltro==='semLanc'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='semLanc';render()">Sem lançamento <span class="tag t-grey">${semLancL.length}</span></button>
    </div>
    ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':(i.valor?'t-steel':'t-amber')}">${i.lancado?"✓ Lançado":i.valor?"Valor previsto":"A lançar"}</span></td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idxReal},'${mes}')">${i.lancado?"Editar":"Preencher"}</button></td></tr>`;}).join("")
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
    }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}
    </div>`;
   window._ctlItensAtuais=todos;
@@ -3497,18 +3512,20 @@ function renderControleLancamentos(){
   const el=$("#ctl_panel");if(!el)return;
   const mes=_ctlMes||iso(today()).slice(0,7);
   const todos=itensControleLancamentos(mes);
-  const aLancar=todos.filter(i=>!i.lancado),lancados=todos.filter(i=>i.lancado);
+  const semLancL=todos.filter(i=>i.semLanc),aLancar=todos.filter(i=>!i.lancado&&!i.semLanc),lancados=todos.filter(i=>i.lancado&&!i.semLanc);
   let lista=todos;
   if(_ctlStatusFiltro==="aLancar")lista=aLancar;
   else if(_ctlStatusFiltro==="lancado")lista=lancados;
+  else if(_ctlStatusFiltro==="semLanc")lista=semLancL;
   el.innerHTML=`<h2><span class="t">📅 Controle de lançamentos</span></h2>
    <div style="padding:0 18px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Mês</span><input type="month" id="ctl_mes_input" value="${mes}" onchange="_ctlMes=this.value;renderControleLancamentos()">
      <button class="btn ${!_ctlStatusFiltro?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='';renderControleLancamentos()">Todos <span class="tag t-grey">${todos.length}</span></button>
      <button class="btn ${_ctlStatusFiltro==='aLancar'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='aLancar';renderControleLancamentos()">A lançar <span class="tag ${aLancar.length?'t-amber':'t-grey'}">${aLancar.length}</span></button>
      <button class="btn ${_ctlStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='lancado';renderControleLancamentos()">Lançado <span class="tag t-green">${lancados.length}</span></button>
+     <button class="btn ${_ctlStatusFiltro==='semLanc'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='semLanc';renderControleLancamentos()">Sem lançamento <span class="tag t-grey">${semLancL.length}</span></button>
    </div>
    ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td><span class="tag ${i.lancado?'t-green':(i.valor?'t-steel':'t-amber')}">${i.lancado?"✓ Lançado":i.valor?"Valor previsto":"A lançar"}</span></td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td><button class="btn ${i.lancado?'btn-g':'btn-a'} btn-sm" onclick="formLancamentoRapido(${idxReal},'${mes}')">${i.lancado?"Editar":"Preencher"}</button></td></tr>`;}).join("")
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
    }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}`;
   window._ctlItensAtuais=todos;
 }
@@ -3554,6 +3571,7 @@ function formContrato(id){
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} contrato</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="row2"><div class="fg"><label>Número *</label><input id="ct_num" value="${esc(c.numero)}"></div><div class="fg"><label>Fornecedor *</label><input id="ct_forn" list="ct_fornlist" value="${esc(c.fornecedor)}"><datalist id="ct_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div>
    <div class="row2"><div class="fg"><label>CNPJ/CPF</label><input id="ct_cnpj" value="${esc(c.cnpj)}"></div><div class="fg"><label>Status</label><select id="ct_status"><option ${c.statusContrato==="Ativo"?"selected":""}>Ativo</option><option ${c.statusContrato==="Inativo"?"selected":""}>Inativo</option></select></div></div>
+   <div class="fg"><label>Lançamento mensal <span class="opt">(se não é usado, tira da lista de "A lançar")</span></label><select id="ct_semlanc"><option value="">Em uso — lançar todo mês</option><option ${c.semLancamento==="Contrato sem lançamento"?"selected":""}>Contrato sem lançamento</option><option ${c.semLancamento==="Ainda não está sendo utilizado"?"selected":""}>Ainda não está sendo utilizado</option></select></div>
    <div class="row2"><div class="fg"><label>Segmento <span class="opt">(pra organizar e ver gastos associados)</span></label><input id="ct_seg" list="ct_seglist" value="${esc(c.segmento)}" placeholder="ex.: Alojamento, Veículos..." oninput="document.getElementById('ct_caucaowrap').style.display=this.value==='Alojamento'?'block':'none'"><datalist id="ct_seglist">${SEGMENTOS_CONTRATO.map(s=>`<option value="${s}">`).join("")}</datalist></div><div class="fg"><label>Objeto / descrição</label><input id="ct_obj" value="${esc(c.objeto)}"></div></div>
    <div class="row2"><div class="fg"><label>Valor total (R$)</label><input type="number" step="0.01" id="ct_valor" value="${esc(c.valorTotal)}"></div><div class="fg"><label>Periodicidade de faturamento</label><select id="ct_periodicidade">${PERIODICIDADES_FATURAMENTO.map(p=>`<option ${c.periodicidadeFaturamento===p?"selected":""}>${p}</option>`).join("")}</select></div></div>
    <div class="row2"><div class="fg"><label>Data de assinatura</label><input type="date" id="ct_assin" value="${esc(c.dataAssinatura)}"></div><div class="fg"><label>Responsável</label><input id="ct_resp" value="${esc(c.responsavel)}"></div></div>
@@ -3613,6 +3631,7 @@ function formCustoExtra(contratoId,custoId){
    <div class="row2"><div class="fg"><label>Tipo *</label><select id="ce_tipo" onchange="atualizarAvisoImovelCustoExtra()">${TIPOS_CUSTO_EXTRA.map(t=>`<option ${ce.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Fornecedor / identificação</label><input id="ce_forn" value="${esc(ce.fornecedor)}" placeholder="ex.: CEMIG, prédio X..."></div></div>
    <div class="fg"><label>Imóvel de origem <span class="opt" id="ce_imovel_opt">(de qual endereço é essa conta — obrigatório pra Energia/Água/Internet)</span></label><select id="ce_local">${locais.length?`<option value="">— escolhe o imóvel/local —</option>`+locais.map(l=>`<option value="${l.id}" ${ce.localId===l.id?"selected":""}>${esc(l.nome)}${l.endereco?" — "+esc(l.endereco):""}</option>`).join(""):'<option value="">Nenhum local cadastrado ainda — cadastra em "Locais / Rota"</option>'}</select></div>
    <div class="row2"><div class="fg"><label>Periodicidade</label><select id="ce_periodicidade">${PERIODICIDADES_FATURAMENTO.map(p=>`<option ${ce.periodicidade===p?"selected":""}>${p}</option>`).join("")}</select></div><div class="fg"><label>Valor médio (R$, opcional)</label><input type="number" step="0.01" id="ce_valor" value="${esc(ce.valor)}"></div></div>
+   <div class="fg"><label>Lançamento mensal <span class="opt">(se não é usado, tira da lista de "A lançar")</span></label><select id="ce_semlanc"><option value="">Em uso — lançar todo mês</option><option ${ce.semLancamento==="Conta sem lançamento"?"selected":""}>Conta sem lançamento</option><option ${ce.semLancamento==="Ainda não está sendo utilizado"?"selected":""}>Ainda não está sendo utilizado</option></select></div>
    ${custoId?`<div class="sub">Lançamentos mensais</div><div id="ce_lanclist"></div><div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Mês</label><input type="month" id="ce_lanc_mes" value="${iso(today()).slice(0,7)}"></div><div class="fg" style="margin-bottom:0"><label class="opt">Valor pago (opcional)</label><input type="number" step="0.01" id="ce_lanc_valor"></div><div></div></div><button class="btn btn-g btn-sm" style="margin-top:8px" onclick="lancarCustoExtraMes('${contratoId}','${custoId}')">＋ Marcar mês como lançado</button>`:'<p class="hint">Salve o custo extra primeiro — depois você marca os lançamentos mês a mês.</p>'}
    </div>
    <div class="modal-f">${custoId?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delCustoExtra('${contratoId}','${custoId}')">Excluir</button>`:""}<button class="btn btn-g" onclick="formContrato('${contratoId}')">Voltar</button><button class="btn btn-a" onclick="salvarCustoExtra('${contratoId}','${custoId||""}')">Salvar</button></div>`);
@@ -3631,17 +3650,20 @@ function salvarCustoExtra(contratoId,custoId){
   if(["Energia (CEMIG)","Água (COPASA)","Internet"].includes(tipo)&&!localId){toast("Escolhe o imóvel de origem — obrigatório pra "+tipo+".");return;}
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   c.custosExtras=c.custosExtras||[];
-  const o={id:custoId||uid(),tipo,fornecedor:$("#ce_forn").value.trim(),localId,periodicidade:$("#ce_periodicidade").value,valor:$("#ce_valor").value,lancamentos:custoId?((c.custosExtras.find(x=>x.id===custoId)||{}).lancamentos||[]):[]};
+  const o={...(custoId?(c.custosExtras.find(x=>x.id===custoId)||{}):{}),id:custoId||uid(),tipo,fornecedor:$("#ce_forn").value.trim(),localId,periodicidade:$("#ce_periodicidade").value,valor:$("#ce_valor").value,semLancamento:$("#ce_semlanc").value,lancamentos:custoId?((c.custosExtras.find(x=>x.id===custoId)||{}).lancamentos||[]):[]};
   if(custoId){const i=c.custosExtras.findIndex(x=>x.id===custoId);c.custosExtras[i]=o;}else c.custosExtras.push(o);
   save("compras_contratos");
-  if(!custoId){formCustoExtra(contratoId,o.id);}else{formContrato(contratoId);}
+  if(window._cadastroDeLista){window._cadastroDeLista=false;closeModal();render();}
+  else if(!custoId){formCustoExtra(contratoId,o.id);}else{formContrato(contratoId);}
   toast("Custo extra salvo.");
 }
 function delCustoExtra(contratoId,custoId){
   if(!confirm("Excluir esse custo extra?"))return;
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   c.custosExtras=(c.custosExtras||[]).filter(x=>x.id!==custoId);
-  save("compras_contratos");formContrato(contratoId);toast("Excluído.");
+  save("compras_contratos");
+  if(window._cadastroDeLista){window._cadastroDeLista=false;closeModal();render();}else formContrato(contratoId);
+  toast("Excluído.");
 }
 function renderLancamentosCustoExtra(contratoId,custoId){
   const el=$("#ce_lanclist");if(!el)return;
@@ -3714,7 +3736,8 @@ function salvarContrato(id){
   const numero=$("#ct_num").value.trim(),fornecedor=$("#ct_forn").value.trim();
   if(!numero||!fornecedor){toast("Informe número e fornecedor.");return;}
   const custosExtrasExistentes=id?((DB.compras_contratos.find(x=>x.id===id)||{}).custosExtras||[]):[];
-  const o={id:id||uid(),numero,fornecedor,cnpj:$("#ct_cnpj").value.trim(),statusContrato:$("#ct_status").value,segmento:$("#ct_seg").value.trim(),objeto:$("#ct_obj").value.trim(),valorTotal:$("#ct_valor").value,periodicidadeFaturamento:$("#ct_periodicidade").value,caucaoValor:$("#ct_caucao_valor")?.value||"",caucaoDevolvida:$("#ct_caucao_dev")?.value||"Não",dataAssinatura:$("#ct_assin").value,vigenciaInicio:$("#ct_vigini").value,vigenciaFim:$("#ct_vigfim").value,responsavel:$("#ct_resp").value.trim(),itensContrato:_itensContratoTemp.slice(),custosExtras:custosExtrasExistentes,anexos:_anexosTemp.slice(),obs:$("#ct_obs").value.trim()};
+  const prevCt=id?(DB.compras_contratos.find(x=>x.id===id)||{}):{};
+  const o={...prevCt,id:id||uid(),semLancamento:$("#ct_semlanc").value,numero,fornecedor,cnpj:$("#ct_cnpj").value.trim(),statusContrato:$("#ct_status").value,segmento:$("#ct_seg").value.trim(),objeto:$("#ct_obj").value.trim(),valorTotal:$("#ct_valor").value,periodicidadeFaturamento:$("#ct_periodicidade").value,caucaoValor:$("#ct_caucao_valor")?.value||"",caucaoDevolvida:$("#ct_caucao_dev")?.value||"Não",dataAssinatura:$("#ct_assin").value,vigenciaInicio:$("#ct_vigini").value,vigenciaFim:$("#ct_vigfim").value,responsavel:$("#ct_resp").value.trim(),itensContrato:_itensContratoTemp.slice(),custosExtras:custosExtrasExistentes,anexos:_anexosTemp.slice(),obs:$("#ct_obs").value.trim()};
   if(id){const i=DB.compras_contratos.findIndex(x=>x.id===id);DB.compras_contratos[i]=o;}else DB.compras_contratos.push(o);
   save("compras_contratos");closeModal();render();toast("Contrato salvo.");
 }
