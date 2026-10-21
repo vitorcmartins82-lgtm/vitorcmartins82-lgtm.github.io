@@ -414,7 +414,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.2";
+const APP_VERSAO="v2026-10-02.3";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -563,7 +563,7 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
+function render(){({painel:vPainel,func:vFunc,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();}
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];ativos.forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
@@ -3450,11 +3450,82 @@ function itensControleLancamentos(mes){
       if(ce.periodicidade&&ce.periodicidade!=="Esporádico"){
         const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mes);
         const localNome=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
-        itens.push({tipo:"custoExtra",semLanc:ce.semLancamento||"",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+((ce.fornecedor&&!normalizaNome(ce.tipo).includes(normalizaNome(ce.fornecedor)))?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
+        itens.push({tipo:"custoExtra",semLanc:ce.semLancamento||"",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+((ce.fornecedor&&!normalizaNome(ce.tipo).includes(normalizaNome(ce.fornecedor)))?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado!==false),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado!==false)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
       }
     });
   });
   return itens;
+}
+let _ccDe="",_ccAte="",_ccSeg="",_ccStatus="";
+function mesesEntre(de,ate){
+  const out=[];if(!de||!ate||de>ate)return out;
+  let [y,m]=de.split("-").map(Number);const [y2,m2]=ate.split("-").map(Number);
+  while((y<y2||(y===y2&&m<=m2))&&out.length<60){out.push(y+"-"+String(m).padStart(2,"0"));m++;if(m>12){m=1;y++;}}
+  return out;
+}
+function lancamentosContratos(){
+  const rows=[];
+  DB.compras_contratos.forEach(c=>{
+    (c.medicoes||[]).forEach(m=>{
+      if(m.valorLancado===undefined||m.valorLancado==="")return;
+      rows.push({mes:m.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:"Medição",imovel:"",valor:+m.valorLancado||0,lancado:m.status==="Faturamento enviado para pagamento (Central de Notas)",vencimento:m.dataVencimento||"",dia:m.dataLancamento||"",fluig:m.numeroFluig||""});
+    });
+    (c.custosExtras||[]).forEach(ce=>{
+      const loc=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
+      (ce.lancamentos||[]).forEach(l=>{
+        if(l.valor===undefined||l.valor==="")return;
+        rows.push({mes:l.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:ce.fornecedor||c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:ce.tipo,imovel:loc||"",valor:+l.valor||0,lancado:l.lancado!==false,vencimento:l.vencimento||"",dia:l.dia||"",fluig:l.fluig||""});
+      });
+    });
+  });
+  return rows;
+}
+function dadosCustosContratos(){
+  const hoje=iso(today()).slice(0,7);
+  if(!_ccAte)_ccAte=hoje;
+  if(!_ccDe){const d=new Date(+_ccAte.slice(0,4),+_ccAte.slice(5,7)-6,1);_ccDe=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+  const meses=mesesEntre(_ccDe,_ccAte);
+  let rows=lancamentosContratos().filter(r=>r.mes>=_ccDe&&r.mes<=_ccAte);
+  if(_ccSeg)rows=rows.filter(r=>r.segmento===_ccSeg);
+  if(_ccStatus==="lancado")rows=rows.filter(r=>r.lancado);
+  else if(_ccStatus==="previsto")rows=rows.filter(r=>!r.lancado);
+  return{meses,rows};
+}
+function vCustosContratos(){
+  const {meses,rows}=dadosCustosContratos();
+  const brlc=v=>"R$ "+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const segs=[...new Set(DB.compras_contratos.map(c=>c.segmento||"Sem segmento"))].sort();
+  const total=rows.reduce((s,r)=>s+r.valor,0),lanc=rows.filter(r=>r.lancado).reduce((s,r)=>s+r.valor,0),prev=total-lanc;
+  const porMes={};meses.forEach(m=>porMes[m]={total:0,lancado:0,previsto:0,n:0});
+  rows.forEach(r=>{const o=porMes[r.mes];o.total+=r.valor;o.n++;if(r.lancado)o.lancado+=r.valor;else o.previsto+=r.valor;});
+  const ctr={};
+  rows.forEach(r=>{const o=ctr[r.contratoId]=ctr[r.contratoId]||{numero:r.numero,fornecedor:r.fornecedor,segmento:r.segmento,meses:{},total:0};o.meses[r.mes]=(o.meses[r.mes]||0)+r.valor;o.total+=r.valor;});
+  const ctrList=Object.values(ctr).sort((a,b)=>b.total-a.total);
+  const seg={};rows.forEach(r=>{seg[r.segmento]=(seg[r.segmento]||0)+r.valor;});
+  main.innerHTML=`<div class="head"><div><h1>📊 Custos de Contratos</h1><p>Total de custo por mês (medições + contas recorrentes), por contrato e por segmento — pronto pra baixar em Excel.</p></div><div class="acts"><button class="btn btn-a" onclick="exportCustosContratos()">⭳ Exportar Excel</button></div></div>
+   <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">De</span><input type="month" value="${_ccDe}" onchange="_ccDe=this.value;render()"><span class="hint">até</span><input type="month" value="${_ccAte}" onchange="_ccAte=this.value;render()">
+     <select onchange="_ccSeg=this.value;render()"><option value="">Todos os segmentos</option>${segs.map(x=>`<option ${_ccSeg===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
+     <select onchange="_ccStatus=this.value;render()"><option value="">Lançado + previsto</option><option value="lancado" ${_ccStatus==="lancado"?"selected":""}>Só lançado</option><option value="previsto" ${_ccStatus==="previsto"?"selected":""}>Só previsto</option></select></div></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">${brlc(total)}</div><div class="l">Custo no período</div></div><div class="stat green"><div class="n">${brlc(lanc)}</div><div class="l">Já lançado</div></div><div class="stat amber"><div class="n">${brlc(prev)}</div><div class="l">Previsto (não lançado)</div></div><div class="stat"><div class="n">${brlc(meses.length?total/meses.length:0)}</div><div class="l">Média por mês</div></div></div>
+   <div class="panel"><h2><span class="t">Por mês</span></h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Mês</th><th>Total</th><th>Lançado</th><th>Previsto</th><th>Lançamentos</th></tr></thead><tbody>${meses.map(m=>{const o=porMes[m];return `<tr><td>${mesLabel(m)}</td><td class="num"><b>${brlc(o.total)}</b></td><td class="num">${brlc(o.lancado)}</td><td class="num">${brlc(o.previsto)}</td><td class="num">${o.n}</td></tr>`;}).join("")}<tr style="font-weight:700"><td>Total</td><td class="num">${brlc(total)}</td><td class="num">${brlc(lanc)}</td><td class="num">${brlc(prev)}</td><td class="num">${rows.length}</td></tr></tbody></table></div></div>
+   <div class="panel"><h2><span class="t">Por contrato × mês</span></h2>${ctrList.length?`<div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Contrato</th><th>Segmento</th>${meses.map(m=>`<th>${mesLabel(m)}</th>`).join("")}<th>Total</th></tr></thead><tbody>${ctrList.map(c=>`<tr><td><b>${esc(c.numero)}</b><br><small style="color:var(--muted)">${esc(c.fornecedor)}</small></td><td>${esc(c.segmento)}</td>${meses.map(m=>`<td class="num">${c.meses[m]?brlc(c.meses[m]):"—"}</td>`).join("")}<td class="num"><b>${brlc(c.total)}</b></td></tr>`).join("")}<tr style="font-weight:700"><td>Total</td><td></td>${meses.map(m=>`<td class="num">${brlc(porMes[m].total)}</td>`).join("")}<td class="num">${brlc(total)}</td></tr></tbody></table></div>`:`<div class="empty"><p>Nenhum valor lançado nesse período. Preencha os valores em Contas Mensais ou dentro do contrato.</p></div>`}</div>
+   <div class="panel"><h2><span class="t">Por segmento</span></h2>${Object.keys(seg).length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>Segmento</th><th>Total</th><th>% do custo</th></tr></thead><tbody>${Object.entries(seg).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${brlc(v)}</td><td class="num">${total?(v/total*100).toFixed(1):0}%</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty"><p>Sem dados.</p></div>`}</div>`;
+}
+function exportCustosContratos(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const {meses,rows}=dadosCustosContratos();
+  const resumo=meses.map(m=>{const r=rows.filter(x=>x.mes===m);const t=r.reduce((s,x)=>s+x.valor,0),l=r.filter(x=>x.lancado).reduce((s,x)=>s+x.valor,0);return{Mês:mesLabel(m),Total:t,Lançado:l,Previsto:t-l,Lançamentos:r.length};});
+  const total=rows.reduce((s,x)=>s+x.valor,0),lanc=rows.filter(x=>x.lancado).reduce((s,x)=>s+x.valor,0);
+  resumo.push({Mês:"TOTAL",Total:total,Lançado:lanc,Previsto:total-lanc,Lançamentos:rows.length});
+  const ctr={};rows.forEach(r=>{const o=ctr[r.contratoId]=ctr[r.contratoId]||{Contrato:r.numero,Fornecedor:r.fornecedor,Segmento:r.segmento,_t:0};o[mesLabel(r.mes)]=(o[mesLabel(r.mes)]||0)+r.valor;o._t+=r.valor;});
+  const matriz=Object.values(ctr).sort((a,b)=>b._t-a._t).map(o=>{const x={Contrato:o.Contrato,Fornecedor:o.Fornecedor,Segmento:o.Segmento};meses.forEach(m=>x[mesLabel(m)]=o[mesLabel(m)]||0);x.Total=o._t;return x;});
+  const seg={};rows.forEach(r=>{seg[r.segmento]=(seg[r.segmento]||0)+r.valor;});
+  const porSeg=Object.entries(seg).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({Segmento:k,Total:v,"% do custo":total?+(v/total*100).toFixed(1):0}));
+  const detalhe=rows.slice().sort((a,b)=>a.mes.localeCompare(b.mes)||a.numero.localeCompare(b.numero)).map(r=>({Mês:mesLabel(r.mes),Contrato:r.numero,Fornecedor:r.fornecedor,Segmento:r.segmento,Tipo:r.tipo,Imóvel:r.imovel,Valor:r.valor,Situação:r.lancado?"Lançado":"Previsto",Vencimento:r.vencimento?fmt(r.vencimento):"",Lançamento:r.dia?fmt(r.dia):"","Nº Fluig":r.fluig}));
+  const wb=XLSX.utils.book_new();
+  const add=(dados,nome)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dados.length?dados:[{"—":"sem dados"}]),nome);
+  add(resumo,"Resumo mensal");add(matriz,"Contrato x mês");add(porSeg,"Por segmento");add(detalhe,"Detalhe");
+  XLSX.writeFile(wb,"custos-contratos-"+_ccDe+"-a-"+_ccAte+".xlsx");toast("Exportado.");
 }
 let _cmMes="",_cmStatusFiltro="",_cmContratoFiltro="";
 function formNovaContaMensal(){
@@ -3620,7 +3691,7 @@ function renderCustosExtrasContrato(contratoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const custos=(c.custosExtras||[]);
   el.innerHTML=custos.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Tipo</th><th>Imóvel</th><th>Fornecedor</th><th>Periodicidade</th><th>Valor médio</th><th>Mês atual</th><th></th></tr></thead><tbody>${
-    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);const local=ce.localId?DB.locais.find(l=>l.id===ce.localId):null;return `<tr><td>${esc(ce.tipo)}</td><td>${local?esc(local.nome):'<span class="tag t-red" style="font-size:10px">sem imóvel</span>'}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${(lanc&&lanc.lancado)?'<span class="tag t-green">✓ lançado</span>':lanc?'<span class="tag t-steel">valor previsto</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
+    custos.map(ce=>{const mesAtual=iso(today()).slice(0,7);const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mesAtual);const local=ce.localId?DB.locais.find(l=>l.id===ce.localId):null;return `<tr><td>${esc(ce.tipo)}</td><td>${local?esc(local.nome):'<span class="tag t-red" style="font-size:10px">sem imóvel</span>'}</td><td>${esc(ce.fornecedor||"—")}</td><td><span class="tag t-grey">${esc(ce.periodicidade||"Mensal")}</span></td><td class="num">${ce.valor?"R$ "+(+ce.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${(lanc&&lanc.lancado!==false)?'<span class="tag t-green">✓ lançado</span>':lanc?'<span class="tag t-steel">valor previsto</span>':'<span class="tag t-amber">pendente</span>'}</td><td><button class="btn btn-g btn-sm" onclick="formCustoExtra('${contratoId}','${ce.id}')">Editar</button></td></tr>`;}).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhum custo extra cadastrado ainda.</p>`;
 }
 function formCustoExtra(contratoId,custoId){
@@ -3916,7 +3987,48 @@ function exportNotasExcel(){
 /* ============ COMPRAS: fornecedores ============ */
 const CATEGORIAS_FORNECEDOR=["Locação","Material","Serviço","Veículos/Transporte","Alojamento","Imobiliária","Container","Energia elétrica","Água","Internet","Condomínio","Almoxarifado/Material","Outro"];
 let _fornFiltroCat="",_fornBusca="";
-function gastoFornecedor(nome){return DB.compras_despesas.filter(d=>d.fornecedor===nome).reduce((s,d)=>s+(+d.valor||0),0);}
+function movimentosFornecedor(nome){
+  const alvo=normalizaNome(nome||"");
+  const mov=[];
+  DB.compras_notas.forEach(n=>{
+    if(normalizaNome(n.fornecedor||"")!==alvo)return;
+    const ped=n.pedido?DB.compras_pedidos.find(p=>p.id===n.pedido):null;
+    const oc=(ped&&n.ordemCompraId)?(ped.ordensCompra||[]).find(o=>o.id===n.ordemCompraId):null;
+    const ct=n.contrato?DB.compras_contratos.find(c=>c.id===n.contrato):null;
+    mov.push({data:n.dataEmissao||"",origem:"Nota fiscal",doc:"NF "+(n.numero||"—"),pedido:ped?resumoItensPedido(ped):"",pedidoData:ped?ped.data:"",oc:oc?(oc.numero||""):"",contrato:ct?ct.numero:"",valor:+n.valor||0,conta:true,obs:""});
+  });
+  DB.compras_despesas.forEach(d=>{
+    if(normalizaNome(d.fornecedor||"")!==alvo)return;
+    const ct=d.contrato?DB.compras_contratos.find(c=>c.id===d.contrato):null;
+    mov.push({data:d.data||"",origem:"Despesa",doc:d.descricao||d.categoria||"—",pedido:"",pedidoData:"",oc:"",contrato:ct?ct.numero:"",valor:+d.valor||0,conta:true,obs:d.categoria||""});
+  });
+  const notaCobre=(c,valor,mes,porMes)=>DB.compras_notas.some(n=>n.contrato===c.id&&(Math.abs((+n.valor||0)-valor)<0.01||(porMes&&mesRef(n.dataEmissao)===mes)));
+  DB.compras_contratos.forEach(c=>{
+    if(normalizaNome(c.fornecedor||"")===alvo){
+      (c.medicoes||[]).forEach(m=>{
+        if(m.valorLancado===undefined||m.valorLancado==="")return;
+        const v=+m.valorLancado||0,lanc=m.status==="Faturamento enviado para pagamento (Central de Notas)";
+        let conta=lanc,obs="";
+        if(!lanc)obs="valor previsto (ainda não lançado)";
+        else if(notaCobre(c,v,m.mesReferencia,true)){conta=false;obs="já contado pela nota fiscal ligada a este contrato";}
+        mov.push({data:m.dataLancamento||(m.mesReferencia?m.mesReferencia+"-01":""),origem:"Contrato (medição)",doc:"Medição "+mesLabel(m.mesReferencia),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
+      });
+    }
+    (c.custosExtras||[]).forEach(ce=>{
+      if(normalizaNome(ce.fornecedor||c.fornecedor||"")!==alvo)return;
+      (ce.lancamentos||[]).forEach(l=>{
+        if(l.valor===undefined||l.valor==="")return;
+        const v=+l.valor||0,lanc=l.lancado!==false;
+        let conta=lanc,obs="";
+        if(!lanc)obs="valor previsto (ainda não lançado)";
+        else if(notaCobre(c,v,l.mesReferencia,false)){conta=false;obs="já contado pela nota fiscal ligada a este contrato";}
+        mov.push({data:l.dia||(l.mesReferencia?l.mesReferencia+"-01":""),origem:"Contrato ("+ce.tipo+")",doc:ce.tipo+" "+mesLabel(l.mesReferencia),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
+      });
+    });
+  });
+  return mov.sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+}
+function gastoFornecedor(nome){return movimentosFornecedor(nome).filter(m=>m.conta).reduce((s,m)=>s+m.valor,0);}
 function gastoDiretoFornecedor(nome){
   return DB.compras_notas.filter(n=>(n.fornecedor||"").toLowerCase()===(nome||"").toLowerCase()).reduce((s,n)=>s+(+n.valor||0),0);
 }
@@ -4014,7 +4126,7 @@ function vFornecedores(){
   const gastoTotal=todos.reduce((s,f)=>s+gastoFornecedor(f.nome),0);
   const ranking=todos.map(f=>({f,g:gastoFornecedor(f.nome)})).sort((a,b)=>b.g-a.g);
   const top=ranking[0];
-  main.innerHTML=`<div class="head"><div><h1>Central de Fornecedores <span class="tag t-steel" style="font-size:13px;vertical-align:middle">${todos.length}</span></h1><p>Todas as empresas que atendem a obra — veículos, alojamentos, contas, materiais.</p></div><div class="acts"><button class="btn btn-g" onclick="formCanhotoPedido()">🖨 Canhoto de Pedido</button><button class="btn btn-g" onclick="exportFornecedoresExcel()">⭳ Exportar Excel</button><button class="btn btn-a" onclick="formFornecedor()">＋ Novo fornecedor</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>Central de Fornecedores <span class="tag t-steel" style="font-size:13px;vertical-align:middle">${todos.length}</span></h1><p>Todas as empresas que atendem a obra — veículos, alojamentos, contas, materiais.</p></div><div class="acts"><button class="btn btn-g" onclick="formCanhotoPedido()">🖨 Canhoto de Pedido</button><button class="btn btn-g" onclick="exportGastosFornecedores()">⭳ Gastos por fornecedor</button><button class="btn btn-g" onclick="exportFornecedoresExcel()">⭳ Exportar Excel</button><button class="btn btn-a" onclick="formFornecedor()">＋ Novo fornecedor</button></div></div>
    <div class="grid stats">
      <div class="stat steel"><div class="n">${todos.length}</div><div class="l">Fornecedores</div></div>
      <div class="stat"><div class="n">${categorias.length}</div><div class="l">Categorias</div></div>
@@ -4042,7 +4154,66 @@ function renderFornecedores(){
       <div class="logi">${forns.map(fo=>{const gasto=gastoFornecedor(fo.nome);const limite=+fo.limiteCompraDireta||0;const gastoDireto=limite?gastoDiretoFornecedor(fo.nome):0;const pctLimite=limite?Math.min(100,gastoDireto/limite*100):0;return `<div class="loc">${fo.logo?`<img src="${fo.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid #eef0ec;background:#fff;float:right;margin-left:8px">`:""}<div class="lt">${esc(fo.categoria||"Sem categoria")}</div><b>${esc(fo.nome)}</b>${fo.cnpj?`<address>CNPJ: ${esc(fo.cnpj)}</address>`:""}${fo.local?`<div class="cap">📍 ${esc(fo.local)}</div>`:""}${fo.itensFornecidos?`<div class="cap" style="color:var(--ink)">${esc(fo.itensFornecidos)}</div>`:""}${fo.contato||fo.telefone||fo.email?`<div class="cap">${esc(fo.contato||"")}${fo.telefone?" · 📱 "+esc(fo.telefone):""}${fo.email?"<br>"+esc(fo.email):""}</div>`:""}${fo.faturamento||fo.precisaOC?`<div class="cap" style="margin-top:4px">${fo.faturamento?`<span class="tag ${fo.faturamento==='Faturado'?'t-steel':'t-green'}">${fo.faturamento==='Faturado'?'Faturado':'Pagto imediato'}</span> `:""}${fo.precisaOC?`<span class="tag ${fo.precisaOC==='Precisa OC'?'t-amber':'t-grey'}">${fo.precisaOC==='Precisa OC'?'Precisa OC':'Compra direta'}</span>`:""}</div>`:""}${limite?`<div class="cap" style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Compra direta: R$ ${gastoDireto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span><span>limite R$ ${limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div><div class="minibar" style="width:100%;height:8px"><i style="width:${pctLimite}%;background:${pctLimite>=100?'var(--red)':pctLimite>=80?'var(--amber)':'var(--green)'}"></i></div>${pctLimite>=100?'<small style="color:var(--red)">🔴 Limite ultrapassado — emitir nota formal com esse fornecedor</small>':pctLimite>=80?'<small style="color:var(--amber-d)">⚠ Perto do limite</small>':''}</div>`:""}<div class="cap" style="margin-top:8px"><b style="color:${gasto>0?'var(--green)':'var(--muted)'}">R$ ${gasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> gasto lançado</div><div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-g btn-sm" onclick="verDespesasFornecedor('${esc(fo.nome).replace(/'/g,"\\'")}')">Ver despesas</button><button class="btn btn-g btn-sm" onclick="formFornecedor('${fo.id}')">Editar</button></div></div>`;}).join("")}</div></div>`;
   }).join("");
 }
-function verDespesasFornecedor(nome){_despFornFiltro=nome;CUR="despesas";buildNav();render();}
+let _gfNome="",_gfDe="",_gfAte="",_gfOrigem="";
+function verDespesasFornecedor(nome){
+  _gfNome=nome;_gfDe="";_gfAte="";_gfOrigem="";
+  openModal(`<div class="modal-h"><h3>Gastos — ${esc(nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><span class="hint">De</span><input type="date" onchange="_gfDe=this.value;renderGastosFornecedor()"><span class="hint">até</span><input type="date" onchange="_gfAte=this.value;renderGastosFornecedor()">
+     <select onchange="_gfOrigem=this.value;renderGastosFornecedor()"><option value="">Todas as origens</option><option>Nota fiscal</option><option>Despesa</option><option>Contrato</option></select>
+     <button class="btn btn-g btn-sm" onclick="exportGastosFornecedor()">⭳ Exportar Excel</button></div>
+   <div id="gf_tabela"></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Fechar</button></div>`);
+  renderGastosFornecedor();
+}
+function gastosFornecedorFiltrados(){
+  let m=movimentosFornecedor(_gfNome);
+  if(_gfDe)m=m.filter(x=>x.data>=_gfDe);
+  if(_gfAte)m=m.filter(x=>x.data<=_gfAte);
+  if(_gfOrigem)m=m.filter(x=>x.origem.startsWith(_gfOrigem));
+  return m;
+}
+function renderGastosFornecedor(){
+  const el=$("#gf_tabela");if(!el)return;
+  const m=gastosFornecedorFiltrados();
+  const total=m.filter(x=>x.conta).reduce((s,x)=>s+x.valor,0);
+  const brlc=v=>"R$ "+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  el.innerHTML=`<p style="margin:0 0 10px"><b style="font-size:18px">${brlc(total)}</b> <span class="hint">no filtro · ${m.filter(x=>x.conta).length} lançamento(s) somado(s)</span></p>`+
+   (m.length?`<div class="tblwrap" style="max-height:50vh;overflow:auto"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Data</th><th>Origem</th><th>Documento</th><th>Nº OC</th><th>Pedido</th><th>Contrato</th><th>Valor</th></tr></thead><tbody>${
+     m.map(x=>`<tr style="${x.conta?'':'opacity:.55'}"><td>${x.data?fmt(x.data):"—"}</td><td><span class="tag t-grey">${esc(x.origem)}</span></td><td>${esc(x.doc)}${x.obs?`<br><small style="color:var(--muted)">${esc(x.obs)}</small>`:''}</td><td>${esc(x.oc||"—")}</td><td><small>${x.pedido?esc(x.pedido):"—"}${x.pedidoData?`<br>pedido de ${fmt(x.pedidoData)}`:''}</small></td><td>${esc(x.contrato||"—")}</td><td class="num">${brlc(x.valor)}</td></tr>`).join("")
+   }</tbody></table></div>`:`<div class="empty"><p>Nenhum gasto encontrado nesse filtro.</p></div>`);
+}
+function exportGastosFornecedor(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const m=gastosFornecedorFiltrados();
+  const linhas=m.map(x=>({Data:x.data?fmt(x.data):"",Origem:x.origem,Documento:x.doc,"Nº OC":x.oc,Pedido:x.pedido,"Data do pedido":x.pedidoData?fmt(x.pedidoData):"",Contrato:x.contrato,Valor:x.valor,"Soma no total":x.conta?"Sim":"Não",Observação:x.obs}));
+  linhas.push({Documento:"TOTAL",Valor:m.filter(x=>x.conta).reduce((s,x)=>s+x.valor,0)});
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(linhas),"Gastos");
+  XLSX.writeFile(wb,"gastos-"+_gfNome.replace(/[^\w]+/g,"_")+"-"+iso(today())+".xlsx");toast("Exportado.");
+}
+function exportGastosFornecedores(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const nomesCad=DB.compras_fornecedores.map(f=>f.nome);
+  const extras=new Set();
+  DB.compras_notas.forEach(n=>{if(n.fornecedor)extras.add(n.fornecedor);});
+  DB.compras_despesas.forEach(d=>{if(d.fornecedor)extras.add(d.fornecedor);});
+  DB.compras_contratos.forEach(c=>{if(c.fornecedor)extras.add(c.fornecedor);});
+  const cadNorm=new Set(nomesCad.map(normalizaNome));
+  const naoCad=[...extras].filter(n=>!cadNorm.has(normalizaNome(n)));
+  const todos=[...nomesCad.map(n=>({nome:n,cat:(DB.compras_fornecedores.find(f=>f.nome===n)||{}).categoria||""})),...naoCad.map(n=>({nome:n,cat:"Não cadastrado"}))];
+  const resumo=[],detalhe=[];
+  todos.forEach(f=>{
+    const m=movimentosFornecedor(f.nome);if(!m.length)return;
+    const soma=pre=>m.filter(x=>x.conta&&x.origem.startsWith(pre)).reduce((s,x)=>s+x.valor,0);
+    const nf=soma("Nota"),dp=soma("Despesa"),ct=soma("Contrato");
+    resumo.push({Fornecedor:f.nome,Categoria:f.cat,"Notas fiscais":nf,Despesas:dp,Contratos:ct,Total:nf+dp+ct});
+    m.forEach(x=>detalhe.push({Fornecedor:f.nome,Data:x.data?fmt(x.data):"",Origem:x.origem,Documento:x.doc,"Nº OC":x.oc,Pedido:x.pedido,Contrato:x.contrato,Valor:x.valor,"Soma no total":x.conta?"Sim":"Não",Observação:x.obs}));
+  });
+  resumo.sort((a,b)=>b.Total-a.Total);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(resumo.length?resumo:[{"—":"sem dados"}]),"Resumo por fornecedor");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detalhe.length?detalhe:[{"—":"sem dados"}]),"Detalhe");
+  XLSX.writeFile(wb,"gastos-por-fornecedor-"+iso(today())+".xlsx");toast("Exportado.");
+}
 let _logoTemp="";
 function processarAnexo(file,maxDim,callback){
   if(file.type.startsWith("image/")){
