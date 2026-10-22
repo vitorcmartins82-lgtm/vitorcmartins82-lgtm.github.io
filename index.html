@@ -448,7 +448,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.4";
+const APP_VERSAO="v2026-10-02.5";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3539,25 +3539,42 @@ function abrirCadastroItem(idx){
   window._cadastroDeLista=true;
   if(it.tipo==="custoExtra")formCustoExtra(it.contratoId,it.ceId);else formContrato(it.contratoId);
 }
+function notaJaUsadaEmLancamento(nota,fornecedor,ign){
+  const nn=nfNormalizaNumero(nota);if(!nn)return null;
+  const fn=normalizaNome(fornecedor||"");let achou=null;
+  DB.compras_contratos.forEach(c=>{
+    (c.medicoes||[]).forEach(m=>{
+      if(achou||!m.numeroNota)return;
+      if(ign&&ign.medId&&ign.medId===m.id)return;
+      if(normalizaNome(c.fornecedor||"")===fn&&nfNormalizaNumero(m.numeroNota)===nn)achou={contrato:c.numero,mes:m.mesReferencia};
+    });
+    (c.custosExtras||[]).forEach(ce=>(ce.lancamentos||[]).forEach(l=>{
+      if(achou||!l.nota)return;
+      if(ign&&ign.ceId&&ign.ceId===ce.id&&ign.mes===l.mesReferencia)return;
+      if(normalizaNome(ce.fornecedor||c.fornecedor||"")===fn&&nfNormalizaNumero(l.nota)===nn)achou={contrato:c.numero,mes:l.mesReferencia};
+    }));
+  });
+  return achou;
+}
 function itensControleLancamentos(mes){
   const itens=[];
   DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo").forEach(c=>{
-    if(c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico"){
+    if((c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico")||(!c.periodicidadeFaturamento&&fornecedorViaContrato(c.fornecedor))){
       const medDoMes=(c.medicoes||[]).find(m=>m.mesReferencia===mes);
       const lancado=medDoMes&&medDoMes.status==="Faturamento enviado para pagamento (Central de Notas)";
-      itens.push({tipo:"medicao",semLanc:c.semLancamento||"",contratoId:c.id,contratoNum:c.numero,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",vencimento:medDoMes?medDoMes.dataVencimento:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
+      itens.push({tipo:"medicao",semLanc:c.semLancamento||"",fornecedor:c.fornecedor,nota:medDoMes?(medDoMes.numeroNota||""):"",contratoId:c.id,contratoNum:c.numero,refId:medDoMes?medDoMes.id:"",label:esc(c.numero)+" — "+esc(c.fornecedor)+" (medição)",lancado,valor:medDoMes?medDoMes.valorLancado:"",vencimento:medDoMes?medDoMes.dataVencimento:"",dia:medDoMes?medDoMes.dataLancamento:"",fluig:medDoMes?medDoMes.numeroFluig:"",fluigLink:medDoMes?medDoMes.linkFluig:"",obs:medDoMes?medDoMes.obs:"",statusTxt:medDoMes?medDoMes.status:"Sem lançamento ainda"});
     }
     (c.custosExtras||[]).forEach(ce=>{
       if(ce.periodicidade&&ce.periodicidade!=="Esporádico"){
         const lanc=(ce.lancamentos||[]).find(l=>l.mesReferencia===mes);
         const localNome=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
-        itens.push({tipo:"custoExtra",semLanc:ce.semLancamento||"",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+((ce.fornecedor&&!normalizaNome(ce.tipo).includes(normalizaNome(ce.fornecedor)))?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado!==false),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado!==false)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
+        itens.push({tipo:"custoExtra",semLanc:ce.semLancamento||"",fornecedor:ce.fornecedor||c.fornecedor,nota:lanc?(lanc.nota||""):"",contratoId:c.id,contratoNum:c.numero,ceId:ce.id,refId:ce.id,label:esc(c.numero)+" — "+esc(ce.tipo)+(localNome?" — "+esc(localNome):"")+((ce.fornecedor&&!normalizaNome(ce.tipo).includes(normalizaNome(ce.fornecedor)))?" ("+esc(ce.fornecedor)+")":""),lancado:!!(lanc&&lanc.lancado!==false),valor:lanc?lanc.valor:"",vencimento:lanc?lanc.vencimento:"",dia:lanc?lanc.dia:"",fluig:lanc?lanc.fluig:"",fluigLink:lanc?lanc.fluigLink:"",obs:"",statusTxt:(lanc&&lanc.lancado!==false)?"Lançado":(lanc&&lanc.valor)?"Valor previsto":"Sem lançamento ainda"});
       }
     });
   });
   return itens;
 }
-let _ccDe="",_ccAte="",_ccSeg="",_ccStatus="";
+let _ccDe="",_ccAte="",_ccSeg="",_ccStatus="",_ccForn="";
 function mesesEntre(de,ate){
   const out=[];if(!de||!ate||de>ate)return out;
   let [y,m]=de.split("-").map(Number);const [y2,m2]=ate.split("-").map(Number);
@@ -3569,13 +3586,13 @@ function lancamentosContratos(){
   DB.compras_contratos.forEach(c=>{
     (c.medicoes||[]).forEach(m=>{
       if(m.valorLancado===undefined||m.valorLancado==="")return;
-      rows.push({mes:m.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:"Medição",imovel:"",valor:+m.valorLancado||0,lancado:m.status==="Faturamento enviado para pagamento (Central de Notas)",vencimento:m.dataVencimento||"",dia:m.dataLancamento||"",fluig:m.numeroFluig||""});
+      rows.push({mes:m.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:"Medição",imovel:"",nota:m.numeroNota||"",valor:+m.valorLancado||0,lancado:m.status==="Faturamento enviado para pagamento (Central de Notas)",vencimento:m.dataVencimento||"",dia:m.dataLancamento||"",fluig:m.numeroFluig||""});
     });
     (c.custosExtras||[]).forEach(ce=>{
       const loc=ce.localId?(DB.locais.find(l=>l.id===ce.localId)||{}).nome:"";
       (ce.lancamentos||[]).forEach(l=>{
         if(l.valor===undefined||l.valor==="")return;
-        rows.push({mes:l.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:ce.fornecedor||c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:ce.tipo,imovel:loc||"",valor:+l.valor||0,lancado:l.lancado!==false,vencimento:l.vencimento||"",dia:l.dia||"",fluig:l.fluig||""});
+        rows.push({mes:l.mesReferencia,contratoId:c.id,numero:c.numero,fornecedor:ce.fornecedor||c.fornecedor,segmento:c.segmento||"Sem segmento",tipo:ce.tipo,imovel:loc||"",nota:l.nota||"",valor:+l.valor||0,lancado:l.lancado!==false,vencimento:l.vencimento||"",dia:l.dia||"",fluig:l.fluig||""});
       });
     });
   });
@@ -3588,6 +3605,7 @@ function dadosCustosContratos(){
   const meses=mesesEntre(_ccDe,_ccAte);
   let rows=lancamentosContratos().filter(r=>r.mes>=_ccDe&&r.mes<=_ccAte);
   if(_ccSeg)rows=rows.filter(r=>r.segmento===_ccSeg);
+  if(_ccForn)rows=rows.filter(r=>normalizaNome(r.fornecedor||"")===normalizaNome(_ccForn));
   if(_ccStatus==="lancado")rows=rows.filter(r=>r.lancado);
   else if(_ccStatus==="previsto")rows=rows.filter(r=>!r.lancado);
   return{meses,rows};
@@ -3606,6 +3624,7 @@ function vCustosContratos(){
   main.innerHTML=`<div class="head"><div><h1>📊 Custos de Contratos</h1><p>Total de custo por mês (medições + contas recorrentes), por contrato e por segmento — pronto pra baixar em Excel.</p></div><div class="acts"><button class="btn btn-a" onclick="exportCustosContratos()">⭳ Exportar Excel</button></div></div>
    <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">De</span><input type="month" value="${_ccDe}" onchange="_ccDe=this.value;render()"><span class="hint">até</span><input type="month" value="${_ccAte}" onchange="_ccAte=this.value;render()">
      <select onchange="_ccSeg=this.value;render()"><option value="">Todos os segmentos</option>${segs.map(x=>`<option ${_ccSeg===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
+     <select onchange="_ccForn=this.value;render()"><option value="">Todos os fornecedores</option>${[...new Set(lancamentosContratos().map(r=>r.fornecedor).filter(Boolean))].sort().map(x=>`<option ${_ccForn===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
      <select onchange="_ccStatus=this.value;render()"><option value="">Lançado + previsto</option><option value="lancado" ${_ccStatus==="lancado"?"selected":""}>Só lançado</option><option value="previsto" ${_ccStatus==="previsto"?"selected":""}>Só previsto</option></select></div></div>
    <div class="grid stats"><div class="stat steel"><div class="n">${brlc(total)}</div><div class="l">Custo no período</div></div><div class="stat green"><div class="n">${brlc(lanc)}</div><div class="l">Já lançado</div></div><div class="stat amber"><div class="n">${brlc(prev)}</div><div class="l">Previsto (não lançado)</div></div><div class="stat"><div class="n">${brlc(meses.length?total/meses.length:0)}</div><div class="l">Média por mês</div></div></div>
    <div class="panel"><h2><span class="t">Por mês</span></h2><div class="tblwrap"><table class="tbl"><thead><tr><th>Mês</th><th>Total</th><th>Lançado</th><th>Previsto</th><th>Lançamentos</th></tr></thead><tbody>${meses.map(m=>{const o=porMes[m];return `<tr><td>${mesLabel(m)}</td><td class="num"><b>${brlc(o.total)}</b></td><td class="num">${brlc(o.lancado)}</td><td class="num">${brlc(o.previsto)}</td><td class="num">${o.n}</td></tr>`;}).join("")}<tr style="font-weight:700"><td>Total</td><td class="num">${brlc(total)}</td><td class="num">${brlc(lanc)}</td><td class="num">${brlc(prev)}</td><td class="num">${rows.length}</td></tr></tbody></table></div></div>
@@ -3622,13 +3641,13 @@ function exportCustosContratos(){
   const matriz=Object.values(ctr).sort((a,b)=>b._t-a._t).map(o=>{const x={Contrato:o.Contrato,Fornecedor:o.Fornecedor,Segmento:o.Segmento};meses.forEach(m=>x[mesLabel(m)]=o[mesLabel(m)]||0);x.Total=o._t;return x;});
   const seg={};rows.forEach(r=>{seg[r.segmento]=(seg[r.segmento]||0)+r.valor;});
   const porSeg=Object.entries(seg).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({Segmento:k,Total:v,"% do custo":total?+(v/total*100).toFixed(1):0}));
-  const detalhe=rows.slice().sort((a,b)=>a.mes.localeCompare(b.mes)||a.numero.localeCompare(b.numero)).map(r=>({Mês:mesLabel(r.mes),Contrato:r.numero,Fornecedor:r.fornecedor,Segmento:r.segmento,Tipo:r.tipo,Imóvel:r.imovel,Valor:r.valor,Situação:r.lancado?"Lançado":"Previsto",Vencimento:r.vencimento?fmt(r.vencimento):"",Lançamento:r.dia?fmt(r.dia):"","Nº Fluig":r.fluig}));
+  const detalhe=rows.slice().sort((a,b)=>a.mes.localeCompare(b.mes)||a.numero.localeCompare(b.numero)).map(r=>({Mês:mesLabel(r.mes),Contrato:r.numero,Fornecedor:r.fornecedor,Segmento:r.segmento,Tipo:r.tipo,Imóvel:r.imovel,"Nº NF/Fatura":r.nota||"",Valor:r.valor,Situação:r.lancado?"Lançado":"Previsto",Vencimento:r.vencimento?fmt(r.vencimento):"",Lançamento:r.dia?fmt(r.dia):"","Nº Fluig":r.fluig}));
   const wb=XLSX.utils.book_new();
   const add=(dados,nome)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dados.length?dados:[{"—":"sem dados"}]),nome);
   add(resumo,"Resumo mensal");add(matriz,"Contrato x mês");add(porSeg,"Por segmento");add(detalhe,"Detalhe");
   XLSX.writeFile(wb,"custos-contratos-"+_ccDe+"-a-"+_ccAte+".xlsx");toast("Exportado.");
 }
-let _cmMes="",_cmStatusFiltro="",_cmContratoFiltro="";
+let _cmMes="",_cmStatusFiltro="",_cmContratoFiltro="",_cmFornFiltro="";
 function formNovaContaMensal(){
   const contratos=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"));
   if(!contratos.length){toast("Nenhum contrato ativo cadastrado ainda.");return;}
@@ -3656,6 +3675,7 @@ function vContasMensais(){
   const mes=_cmMes;
   let todos=itensControleLancamentos(mes);
   if(_cmContratoFiltro)todos=todos.filter(i=>i.contratoId===_cmContratoFiltro);
+  if(_cmFornFiltro)todos=todos.filter(i=>normalizaNome(i.fornecedor||"")===normalizaNome(_cmFornFiltro));
   const semLancL=todos.filter(i=>i.semLanc),aLancar=todos.filter(i=>!i.lancado&&!i.semLanc),lancados=todos.filter(i=>i.lancado&&!i.semLanc);
   let lista=todos;
   if(_cmStatusFiltro==="aLancar")lista=aLancar;
@@ -3664,18 +3684,19 @@ function vContasMensais(){
   lista=lista.slice().sort((a,b)=>(a.vencimento||"9999").localeCompare(b.vencimento||"9999"));
   const totalPrevisto=todos.reduce((s,i)=>s+(+i.valor||0),0);
   const totalLancado=lancados.reduce((s,i)=>s+(+i.valor||0),0);
-  const contratosComPeriodicidade=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"&&((c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico")||(c.custosExtras||[]).some(ce=>ce.periodicidade&&ce.periodicidade!=="Esporádico"))));
+  const contratosComPeriodicidade=porNome(DB.compras_contratos.filter(c=>(c.statusContrato||"Ativo")==="Ativo"&&(fornecedorViaContrato(c.fornecedor)||(c.periodicidadeFaturamento&&c.periodicidadeFaturamento!=="Esporádico")||(c.custosExtras||[]).some(ce=>ce.periodicidade&&ce.periodicidade!=="Esporádico"))));
   main.innerHTML=`<div class="head"><div><h1>💡 Contas Mensais</h1><p>Medição principal + energia, água, internet e outras contas recorrentes de todos os contratos — resumo pra planejar e acompanhar.</p></div><button class="btn btn-a" onclick="formNovaContaMensal()">＋ Nova conta mensal</button></div>
    <div class="grid stats"><div class="stat steel"><div class="n">R$ ${totalPrevisto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Total previsto (nesse filtro)</div></div><div class="stat green"><div class="n">R$ ${totalLancado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Já lançado (nesse filtro)</div></div></div>
    <div class="panel"><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Mês</span><input type="month" id="cm_mes_input" value="${mes}" onchange="_cmMes=this.value;render()">
      <select id="cm_contrato" onchange="_cmContratoFiltro=this.value;render()"><option value="">Todos os contratos</option>${contratosComPeriodicidade.map(c=>`<option value="${c.id}" ${_cmContratoFiltro===c.id?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select>
+     <select id="cm_forn" onchange="_cmFornFiltro=this.value;render()"><option value="">Todos os fornecedores</option>${[...new Set(itensControleLancamentos(mes).map(i=>i.fornecedor).filter(Boolean))].sort().map(x=>`<option ${_cmFornFiltro===x?"selected":""}>${esc(x)}</option>`).join("")}</select>
      <button class="btn ${!_cmStatusFiltro?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='';render()">Todos <span class="tag t-grey">${todos.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='aLancar'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='aLancar';render()">A lançar <span class="tag ${aLancar.length?'t-amber':'t-grey'}">${aLancar.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='lancado';render()">Lançado <span class="tag t-green">${lancados.length}</span></button>
      <button class="btn ${_cmStatusFiltro==='semLanc'?'btn-a':'btn-g'} btn-sm" onclick="_cmStatusFiltro='semLanc';render()">Sem lançamento <span class="tag t-grey">${semLancL.length}</span></button>
    </div>
-   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
+   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Nº NF/Fatura</th><th>Fluig</th><th></th></tr></thead><tbody>${
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.nota?esc(i.nota):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
    }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}
    </div>`;
   window._ctlItensAtuais=todos;
@@ -3696,8 +3717,8 @@ function renderControleLancamentos(){
      <button class="btn ${_ctlStatusFiltro==='lancado'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='lancado';renderControleLancamentos()">Lançado <span class="tag t-green">${lancados.length}</span></button>
      <button class="btn ${_ctlStatusFiltro==='semLanc'?'btn-a':'btn-g'} btn-sm" onclick="_ctlStatusFiltro='semLanc';renderControleLancamentos()">Sem lançamento <span class="tag t-grey">${semLancL.length}</span></button>
    </div>
-   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Fluig</th><th></th></tr></thead><tbody>${
-     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
+   ${lista.length?`<div class="tblwrap"><table class="tbl"><thead><tr><th>O quê</th><th>Status</th><th>Vencimento</th><th>Valor</th><th>Nº NF/Fatura</th><th>Fluig</th><th></th></tr></thead><tbody>${
+     lista.map(i=>{const idxReal=todos.indexOf(i);return `<tr><td>${i.label}</td><td>${tagStatusLanc(i)}</td><td>${i.vencimento?fmt(i.vencimento):"—"}</td><td class="num">${i.valor?"R$ "+(+i.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${i.nota?esc(i.nota):"—"}</td><td>${i.fluig?(i.fluigLink?`<a href="${esc(i.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(i.fluig)} ↗</a>`:esc(i.fluig)):"—"}</td><td>${botoesLanc(i,idxReal,mes)}</td></tr>`;}).join("")
    }</tbody></table></div>`:`<div class="empty"><p>Nada com periodicidade configurada pra esse mês.</p></div>`}`;
   window._ctlItensAtuais=todos;
 }
@@ -3710,6 +3731,7 @@ function formLancamentoRapido(idx,mes){
    <div class="fg"><label><input type="checkbox" id="lr_lancado" style="width:auto;margin-right:6px" ${item.lancado?"checked":""}>Já foi lançado de verdade (enviado pra pagamento)</label></div>
    <div class="row2"><div class="fg"><label>Dia do lançamento <span class="opt">(quando foi processado de fato)</span></label><input type="date" id="lr_dia" value="${esc(item.dia)}"></div><div class="fg"><label>Nº do Fluig <span class="opt">(opcional — pode vir depois)</span></label><input id="lr_fluig" value="${esc(item.fluig)}"></div></div>
    <div class="fg"><label>Link do Fluig</label><input id="lr_fluiglink" value="${esc(item.fluigLink)}" placeholder="https://..."></div>
+   <div class="fg"><label>Nº da nota ou fatura</label><input id="lr_nota" value="${esc(item.nota)}" placeholder="número da NF ou da fatura"></div>
    <div class="fg"><label>Dados complementares / observação</label><input id="lr_obs" value="${esc(item.obs)}"></div>
    </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarLancamentoRapido(${idx},'${mes}')">Salvar</button></div>`);
 }
@@ -3720,18 +3742,24 @@ function salvarLancamentoRapido(idx,mes){
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
   const dia=$("#lr_dia").value,valor=$("#lr_valor").value,vencimento=$("#lr_vencimento").value,fluig=$("#lr_fluig").value.trim(),obs=$("#lr_obs").value.trim(),lancadoAgora=$("#lr_lancado").checked;
   const c=DB.compras_contratos.find(x=>x.id===item.contratoId);
+  const nota=$("#lr_nota").value.trim();
+  if(nota){
+    const exMed=item.tipo==="medicao"?(c.medicoes||[]).find(x=>x.mesReferencia===mes):null;
+    const dupN=notaJaUsadaEmLancamento(nota,item.fornecedor||c.fornecedor,{medId:exMed?exMed.id:null,ceId:item.tipo==="custoExtra"?item.ceId:null,mes});
+    if(dupN){toast("🚫 A nota/fatura "+nota+" desse fornecedor já foi usada em outro lançamento (contrato "+dupN.contrato+", "+mesLabel(dupN.mes)+").");return;}
+  }
   if(item.tipo==="medicao"){
     c.medicoes=c.medicoes||[];
     let m=c.medicoes.find(x=>x.mesReferencia===mes);
     if(!m){m={id:uid(),mesReferencia:mes,status:"Aguardando fatura ou medição"};c.medicoes.push(m);}
     if(lancadoAgora)m.status="Faturamento enviado para pagamento (Central de Notas)";
-    m.dataLancamento=dia;m.valorLancado=valor;m.dataVencimento=vencimento;m.numeroFluig=fluig;m.linkFluig=linkFluig;m.obs=obs;
+    m.dataLancamento=dia;m.valorLancado=valor;m.dataVencimento=vencimento;m.numeroNota=nota;m.numeroFluig=fluig;m.linkFluig=linkFluig;m.obs=obs;
   }else{
     const ce=(c.custosExtras||[]).find(x=>x.id===item.ceId);
     ce.lancamentos=ce.lancamentos||[];
     let l=ce.lancamentos.find(x=>x.mesReferencia===mes);
     if(!l){l={mesReferencia:mes};ce.lancamentos.push(l);}
-    l.dia=dia;l.valor=valor;l.vencimento=vencimento;l.fluig=fluig;l.fluigLink=linkFluig;l.lancado=lancadoAgora;
+    l.dia=dia;l.valor=valor;l.vencimento=vencimento;l.nota=nota;l.fluig=fluig;l.fluigLink=linkFluig;l.lancado=lancadoAgora;
   }
   save("compras_contratos");closeModal();render();toast("Salvo.");
 }
@@ -3744,7 +3772,7 @@ function ctFornAuto(){
   if(f&&f.cnpj&&cj&&!cj.value.trim())cj.value=f.cnpj;
 }
 function formContrato(id){
-  const c=id?DB.compras_contratos.find(x=>x.id===id):{statusContrato:"Ativo",periodicidadeFaturamento:"Mensal"};
+  const c=id?DB.compras_contratos.find(x=>x.id===id):{statusContrato:"Ativo",periodicidadeFaturamento:"Mensal",...(window._ctPrefill||{})};window._ctPrefill=null;
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} contrato</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="row2"><div class="fg"><label>Número *</label><input id="ct_num" value="${esc(c.numero)}"></div><div class="fg"><label>Fornecedor *</label><input id="ct_forn" list="ct_fornlist" value="${esc(c.fornecedor)}" onchange="ctFornAuto()"><datalist id="ct_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div>
    <div class="row2"><div class="fg"><label>CNPJ/CPF</label><input id="ct_cnpj" value="${esc(c.cnpj)}"></div><div class="fg"><label>Status</label><select id="ct_status"><option ${c.statusContrato==="Ativo"?"selected":""}>Ativo</option><option ${c.statusContrato==="Inativo"?"selected":""}>Inativo</option></select></div></div>
@@ -3809,7 +3837,7 @@ function formCustoExtra(contratoId,custoId){
    <div class="fg"><label>Imóvel de origem <span class="opt" id="ce_imovel_opt">(de qual endereço é essa conta — obrigatório pra Energia/Água/Internet)</span></label><select id="ce_local">${locais.length?`<option value="">— escolhe o imóvel/local —</option>`+locais.map(l=>`<option value="${l.id}" ${ce.localId===l.id?"selected":""}>${esc(l.nome)}${l.endereco?" — "+esc(l.endereco):""}</option>`).join(""):'<option value="">Nenhum local cadastrado ainda — cadastra em "Locais / Rota"</option>'}</select></div>
    <div class="row2"><div class="fg"><label>Periodicidade</label><select id="ce_periodicidade">${PERIODICIDADES_FATURAMENTO.map(p=>`<option ${ce.periodicidade===p?"selected":""}>${p}</option>`).join("")}</select></div><div class="fg"><label>Valor médio (R$, opcional)</label><input type="number" step="0.01" id="ce_valor" value="${esc(ce.valor)}"></div></div>
    <div class="fg"><label>Lançamento mensal <span class="opt">(se não é usado, tira da lista de "A lançar")</span></label><select id="ce_semlanc"><option value="">Em uso — lançar todo mês</option><option ${ce.semLancamento==="Conta sem lançamento"?"selected":""}>Conta sem lançamento</option><option ${ce.semLancamento==="Ainda não está sendo utilizado"?"selected":""}>Ainda não está sendo utilizado</option></select></div>
-   ${custoId?`<div class="sub">Lançamentos mensais</div><div id="ce_lanclist"></div><div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Mês</label><input type="month" id="ce_lanc_mes" value="${iso(today()).slice(0,7)}"></div><div class="fg" style="margin-bottom:0"><label class="opt">Valor pago (opcional)</label><input type="number" step="0.01" id="ce_lanc_valor"></div><div></div></div><button class="btn btn-g btn-sm" style="margin-top:8px" onclick="lancarCustoExtraMes('${contratoId}','${custoId}')">＋ Marcar mês como lançado</button>`:'<p class="hint">Salve o custo extra primeiro — depois você marca os lançamentos mês a mês.</p>'}
+   ${custoId?`<div class="sub">Lançamentos mensais</div><div id="ce_lanclist"></div><div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Mês</label><input type="month" id="ce_lanc_mes" value="${iso(today()).slice(0,7)}"></div><div class="fg" style="margin-bottom:0"><label class="opt">Valor pago (opcional)</label><input type="number" step="0.01" id="ce_lanc_valor"></div><div class="fg" style="margin-bottom:0"><label class="opt">Nº nota/fatura</label><input id="ce_lanc_nota"></div></div><button class="btn btn-g btn-sm" style="margin-top:8px" onclick="lancarCustoExtraMes('${contratoId}','${custoId}')">＋ Marcar mês como lançado</button>`:'<p class="hint">Salve o custo extra primeiro — depois você marca os lançamentos mês a mês.</p>'}
    </div>
    <div class="modal-f">${custoId?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delCustoExtra('${contratoId}','${custoId}')">Excluir</button>`:""}<button class="btn btn-g" onclick="formContrato('${contratoId}')">Voltar</button><button class="btn btn-a" onclick="salvarCustoExtra('${contratoId}','${custoId||""}')">Salvar</button></div>`);
   if(custoId)renderLancamentosCustoExtra(contratoId,custoId);
@@ -3847,8 +3875,8 @@ function renderLancamentosCustoExtra(contratoId,custoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const ce=(c.custosExtras||[]).find(x=>x.id===custoId);
   const lancs=(ce.lancamentos||[]).slice().sort((a,b)=>(b.mesReferencia||"").localeCompare(a.mesReferencia||""));
-  el.innerHTML=lancs.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Valor pago</th><th></th></tr></thead><tbody>${
-    lancs.map(l=>`<tr><td>${esc(l.mesReferencia)}</td><td class="num">${l.valor?"R$ "+(+l.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td><button class="btn btn-g btn-sm" onclick="removerLancamentoCustoExtra('${contratoId}','${custoId}','${l.mesReferencia}')">Remover</button></td></tr>`).join("")
+  el.innerHTML=lancs.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Valor pago</th><th>Nº NF/Fatura</th><th></th></tr></thead><tbody>${
+    lancs.map(l=>`<tr><td>${esc(l.mesReferencia)}</td><td class="num">${l.valor?"R$ "+(+l.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${esc(l.nota||"—")}</td><td><button class="btn btn-g btn-sm" onclick="removerLancamentoCustoExtra('${contratoId}','${custoId}','${l.mesReferencia}')">Remover</button></td></tr>`).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhum mês lançado ainda.</p>`;
 }
 function lancarCustoExtraMes(contratoId,custoId){
@@ -3858,7 +3886,12 @@ function lancarCustoExtraMes(contratoId,custoId){
   const ce=(c.custosExtras||[]).find(x=>x.id===custoId);
   ce.lancamentos=ce.lancamentos||[];
   if(ce.lancamentos.some(l=>l.mesReferencia===mesReferencia)){toast("Esse mês já estava marcado como lançado.");return;}
-  ce.lancamentos.push({mesReferencia,valor:$("#ce_lanc_valor").value,lancado:true});
+  const notaCe=($("#ce_lanc_nota")?$("#ce_lanc_nota").value.trim():"");
+  if(notaCe){
+    const dupN=notaJaUsadaEmLancamento(notaCe,ce.fornecedor||c.fornecedor,{});
+    if(dupN){toast("🚫 A nota/fatura "+notaCe+" desse fornecedor já foi usada em outro lançamento (contrato "+dupN.contrato+", "+mesLabel(dupN.mes)+").");return;}
+  }
+  ce.lancamentos.push({mesReferencia,valor:$("#ce_lanc_valor").value,nota:notaCe,lancado:true});
   save("compras_contratos");
   $("#ce_lanc_valor").value="";
   renderLancamentosCustoExtra(contratoId,custoId);
@@ -3878,8 +3911,8 @@ function renderMedicoesContrato(contratoId){
   const c=DB.compras_contratos.find(x=>x.id===contratoId);
   const meds=(c.medicoes||[]).slice().sort((a,b)=>(b.mesReferencia||"").localeCompare(a.mesReferencia||""));
   const cls={"Aguardando fatura ou medição":"t-grey","Medição aprovada":"t-amber","BM assinado":"t-steel","Faturamento enviado para pagamento (Central de Notas)":"t-green"};
-  el.innerHTML=meds.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Status</th><th>Valor lançado</th><th>Dia</th><th>Fluig</th><th></th></tr></thead><tbody>${
-    meds.map(m=>`<tr><td>${esc(m.mesReferencia)}</td><td><span class="tag ${cls[m.status]||'t-grey'}">${esc(m.status)}</span></td><td class="num">${m.valorLancado?"R$ "+(+m.valorLancado).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${m.dataLancamento?fmt(m.dataLancamento):"—"}</td><td>${m.numeroFluig?(m.linkFluig?`<a href="${esc(m.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(m.numeroFluig)} ↗</a>`:esc(m.numeroFluig)):"—"}</td><td><button class="btn btn-g btn-sm" onclick="formMedicao('${contratoId}','${m.id}')">Editar</button></td></tr>`).join("")
+  el.innerHTML=meds.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Mês</th><th>Status</th><th>Valor lançado</th><th>Vencimento</th><th>Nº NF/Fatura</th><th>Dia</th><th>Fluig</th><th></th></tr></thead><tbody>${
+    meds.map(m=>`<tr><td>${esc(m.mesReferencia)}</td><td><span class="tag ${cls[m.status]||'t-grey'}">${esc(m.status)}</span></td><td class="num">${m.valorLancado?"R$ "+(+m.valorLancado).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${m.dataVencimento?fmt(m.dataVencimento):"—"}</td><td>${esc(m.numeroNota||"—")}</td><td>${m.dataLancamento?fmt(m.dataLancamento):"—"}</td><td>${m.numeroFluig?(m.linkFluig?`<a href="${esc(m.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(m.numeroFluig)} ↗</a>`:esc(m.numeroFluig)):"—"}</td><td><button class="btn btn-g btn-sm" onclick="formMedicao('${contratoId}','${m.id}')">Editar</button></td></tr>`).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhuma medição lançada ainda.</p>`;
 }
 function formMedicao(contratoId,medicaoId){
@@ -3889,6 +3922,7 @@ function formMedicao(contratoId,medicaoId){
    <div class="row2"><div class="fg"><label>Mês de referência *</label><input type="month" id="md_mes" value="${esc(m.mesReferencia)}"></div><div class="fg"><label>Status *</label><select id="md_status">${STATUS_MEDICAO.map(s=>`<option ${m.status===s?"selected":""}>${s}</option>`).join("")}</select></div></div>
    <div class="row2"><div class="fg"><label>Valor lançado (R$) <span class="opt">(opcional)</span></label><input type="number" step="0.01" id="md_valor" value="${esc(m.valorLancado)}"></div><div class="fg"><label>Dia do lançamento <span class="opt">(quando foi lançado na Central de Notas)</span></label><input type="date" id="md_data" value="${esc(m.dataLancamento)}"></div></div>
    <div class="row2"><div class="fg"><label>Nº do Fluig <span class="opt">(opcional — pode vir depois)</span></label><input id="md_fluig" value="${esc(m.numeroFluig)}"></div><div class="fg"><label>Link do Fluig</label><input id="md_fluiglink" value="${esc(m.linkFluig)}" placeholder="https://..."></div></div>
+   <div class="row2"><div class="fg"><label>Data de vencimento</label><input type="date" id="md_venc" value="${esc(m.dataVencimento)}"></div><div class="fg"><label>Nº da nota ou fatura</label><input id="md_nota" value="${esc(m.numeroNota)}" placeholder="número da NF ou da fatura"></div></div>
    <div class="fg"><label>Observações</label><input id="md_obs" value="${esc(m.obs)}"></div></div>
    <div class="modal-f">${medicaoId?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delMedicao('${contratoId}','${medicaoId}')">Excluir</button>`:""}<button class="btn btn-g" onclick="formContrato('${contratoId}')">Cancelar</button><button class="btn btn-a" onclick="salvarMedicao('${contratoId}','${medicaoId||""}')">Salvar</button></div>`);
 }
@@ -3899,7 +3933,13 @@ function salvarMedicao(contratoId,medicaoId){
   c.medicoes=c.medicoes||[];
   let linkFluig=$("#md_fluiglink").value.trim();
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:medicaoId||uid(),mesReferencia,status:$("#md_status").value,valorLancado:$("#md_valor").value,dataLancamento:$("#md_data").value,numeroFluig:$("#md_fluig").value.trim(),linkFluig,obs:$("#md_obs").value.trim()};
+  const notaMd=$("#md_nota").value.trim();
+  const prevMd=medicaoId?(c.medicoes.find(x=>x.id===medicaoId)||{}):{};
+  if(notaMd){
+    const dupN=notaJaUsadaEmLancamento(notaMd,c.fornecedor,{medId:medicaoId||null});
+    if(dupN){toast("🚫 A nota/fatura "+notaMd+" desse fornecedor já foi usada em outro lançamento (contrato "+dupN.contrato+", "+mesLabel(dupN.mes)+").");return;}
+  }
+  const o={...prevMd,id:medicaoId||uid(),mesReferencia,status:$("#md_status").value,valorLancado:$("#md_valor").value,dataLancamento:$("#md_data").value,dataVencimento:$("#md_venc").value,numeroNota:notaMd,numeroFluig:$("#md_fluig").value.trim(),linkFluig,obs:$("#md_obs").value.trim()};
   if(medicaoId){const i=c.medicoes.findIndex(x=>x.id===medicaoId);c.medicoes[i]=o;}else c.medicoes.push(o);
   save("compras_contratos");formContrato(contratoId);toast("Medição salva.");
 }
@@ -4108,13 +4148,30 @@ function exportNotasExcel(){
 
 /* ============ COMPRAS: fornecedores ============ */
 const CATEGORIAS_FORNECEDOR=["Locação","Material","Serviço","Veículos/Transporte","Alojamento","Imobiliária","Container","Energia elétrica","Água","Internet","Condomínio","Almoxarifado/Material","Outro"];
-let _fornFiltroCat="",_fornBusca="";
+let _fornFiltroCat="",_fornBusca="",_fornFiltroPag="";
+function fornecedorViaContrato(nome){
+  const alvo=normalizaNome(nome||"");
+  return DB.compras_fornecedores.some(f=>f.faturamento==="Contrato"&&normalizaNome(f.nome)===alvo);
+}
+function tagFormaPagamentoFornecedor(fo){
+  if(!fo.faturamento)return"";
+  if(fo.faturamento==="Contrato")return `<span class="tag t-steel">📄 Faturado via medição de contrato</span> `;
+  return `<span class="tag ${fo.faturamento==='Faturado'?'t-steel':'t-green'}">${fo.faturamento==='Faturado'?'Faturado':'Pagto imediato'}</span> `;
+}
+function novoContratoDoFornecedor(id){
+  const fo=DB.compras_fornecedores.find(x=>x.id===id);if(!fo)return;
+  window._ctPrefill={fornecedor:fo.nome,cnpj:fo.cnpj||""};
+  CUR="contratos";buildNav();render();formContrato();
+}
 function contratosDoFornecedor(fo){
   const alvo=normalizaNome(fo.nome||""),cnpj=(fo.cnpj||"").replace(/\D/g,"");
   return DB.compras_contratos.filter(c=>normalizaNome(c.fornecedor||"")===alvo||(cnpj&&(c.cnpj||"").replace(/\D/g,"")===cnpj));
 }
 function contratosFornecedorHtml(fo){
-  const cts=contratosDoFornecedor(fo);if(!cts.length)return"";
+  const cts=contratosDoFornecedor(fo);
+  if(!cts.length){
+    return fo.faturamento==="Contrato"?`<div class="cap" style="margin-top:8px"><span class="tag t-amber">⚠ via medição de contrato, mas sem contrato cadastrado</span><br><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="novoContratoDoFornecedor('${fo.id}')">＋ Cadastrar contrato</button></div>`:"";
+  }
   return `<div class="cap" style="margin-top:8px"><b>📄 Contratos (${cts.length})</b>${cts.map(c=>{const st=c.statusContrato||"Ativo";return `<div style="margin-top:3px"><a href="#" onclick="formContrato('${c.id}');return false" style="color:var(--steel);font-weight:600">${esc(c.numero)}</a> <span class="tag ${st==='Ativo'?'t-green':'t-grey'}" style="font-size:10px">${st}</span>${c.segmento?` <small>· ${esc(c.segmento)}</small>`:''}${c.objeto?`<br><small style="color:var(--muted)">${esc(String(c.objeto).slice(0,80))}</small>`:''}</div>`;}).join("")}</div>`;
 }
 function importarFornecedoresDosContratos(){
@@ -4160,7 +4217,7 @@ function movimentosFornecedor(nome){
         let conta=lanc,obs="";
         if(!lanc)obs="valor previsto (ainda não lançado)";
         else if(notaCobre(c,v,m.mesReferencia,true)){conta=false;obs="já contado pela nota fiscal ligada a este contrato";}
-        mov.push({data:m.dataLancamento||(m.mesReferencia?m.mesReferencia+"-01":""),origem:"Contrato (medição)",doc:"Medição "+mesLabel(m.mesReferencia),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
+        mov.push({data:m.dataLancamento||(m.mesReferencia?m.mesReferencia+"-01":""),origem:"Contrato (medição)",doc:"Medição "+mesLabel(m.mesReferencia)+(m.numeroNota?" — NF/Fatura "+m.numeroNota:""),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
       });
     }
     (c.custosExtras||[]).forEach(ce=>{
@@ -4171,7 +4228,7 @@ function movimentosFornecedor(nome){
         let conta=lanc,obs="";
         if(!lanc)obs="valor previsto (ainda não lançado)";
         else if(notaCobre(c,v,l.mesReferencia,false)){conta=false;obs="já contado pela nota fiscal ligada a este contrato";}
-        mov.push({data:l.dia||(l.mesReferencia?l.mesReferencia+"-01":""),origem:"Contrato ("+ce.tipo+")",doc:ce.tipo+" "+mesLabel(l.mesReferencia),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
+        mov.push({data:l.dia||(l.mesReferencia?l.mesReferencia+"-01":""),origem:"Contrato ("+ce.tipo+")",doc:ce.tipo+" "+mesLabel(l.mesReferencia)+(l.nota?" — NF/Fatura "+l.nota:""),pedido:"",pedidoData:"",oc:"",contrato:c.numero,valor:v,conta,obs});
       });
     });
   });
@@ -4282,7 +4339,7 @@ function vFornecedores(){
      <div class="stat green"><div class="n">R$ ${gastoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Gasto total lançado</div></div>
      <div class="stat amber"><div class="n" style="font-size:17px;line-height:1.3">${top&&top.g>0?esc(top.f.nome):"—"}</div><div class="l">Maior gasto${top&&top.g>0?" (R$ "+top.g.toLocaleString('pt-BR',{minimumFractionDigits:2})+")":""}</div></div>
    </div>
-   <div class="toolbar"><input type="search" id="forn_busca" placeholder="Buscar por nome, CNPJ, contato..." oninput="_fornBusca=this.value;renderFornecedores()" style="min-width:220px"><select id="forn_cat" onchange="_fornFiltroCat=this.value;renderFornecedores()"><option value="">Todas as categorias</option>${CATEGORIAS_FORNECEDOR.map(c=>`<option value="${c}" ${_fornFiltroCat===c?"selected":""}>${c} (${todos.filter(f=>f.categoria===c).length})</option>`).join("")}</select></div>
+   <div class="toolbar"><input type="search" id="forn_busca" placeholder="Buscar por nome, CNPJ, contato..." oninput="_fornBusca=this.value;renderFornecedores()" style="min-width:220px"><select id="forn_cat" onchange="_fornFiltroCat=this.value;renderFornecedores()"><option value="">Todas as categorias</option>${CATEGORIAS_FORNECEDOR.map(c=>`<option value="${c}" ${_fornFiltroCat===c?"selected":""}>${c} (${todos.filter(f=>f.categoria===c).length})</option>`).join("")}</select><select id="forn_pag" onchange="_fornFiltroPag=this.value;renderFornecedores()"><option value="">Todas as formas de pagamento</option><option value="Contrato" ${_fornFiltroPag==="Contrato"?"selected":""}>📄 Faturado via medição de contrato (${todos.filter(f=>f.faturamento==="Contrato").length})</option><option value="TemContrato" ${_fornFiltroPag==="TemContrato"?"selected":""}>Tem contrato cadastrado (${todos.filter(f=>contratosDoFornecedor(f).length>0).length})</option><option value="Faturado" ${_fornFiltroPag==="Faturado"?"selected":""}>Faturado (a prazo)</option><option value="Imediato" ${_fornFiltroPag==="Imediato"?"selected":""}>Pagamento imediato</option></select></div>
    <div id="forn_grupos"></div>`;
   $("#forn_busca").value=_fornBusca;
   renderFornecedores();
@@ -4292,6 +4349,8 @@ function renderFornecedores(){
   let list=DB.compras_fornecedores.slice();
   if(_fornBusca){const q=_fornBusca.toLowerCase();list=list.filter(f=>[f.nome,f.cnpj,f.contato,f.email].some(v=>(v||"").toLowerCase().includes(q)));}
   if(_fornFiltroCat)list=list.filter(f=>f.categoria===_fornFiltroCat);
+  if(_fornFiltroPag==="TemContrato")list=list.filter(f=>contratosDoFornecedor(f).length>0);
+  else if(_fornFiltroPag)list=list.filter(f=>f.faturamento===_fornFiltroPag);
   if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🏢</div><p>Nenhum fornecedor encontrado.</p><button class="btn btn-a" onclick="formFornecedor()">Cadastrar o primeiro</button></div>`;return;}
   const porCat={};
   list.forEach(f=>{const cat=f.categoria||"Sem categoria";(porCat[cat]=porCat[cat]||[]).push(f);});
@@ -4300,7 +4359,7 @@ function renderFornecedores(){
     const forns=porNome(porCat[cat]);
     const gastoCat=forns.reduce((s,f)=>s+gastoFornecedor(f.nome),0);
     return `<div class="panel"><h2><span class="t">${esc(cat)} <span class="tag ${corCategoria(cat)}">${forns.length}</span></span>${gastoCat>0?`<span class="tag t-green">R$ ${gastoCat.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:""}</h2>
-      <div class="logi">${forns.map(fo=>{const gasto=gastoFornecedor(fo.nome);const limite=+fo.limiteCompraDireta||0;const gastoDireto=limite?gastoDiretoFornecedor(fo.nome):0;const pctLimite=limite?Math.min(100,gastoDireto/limite*100):0;return `<div class="loc">${fo.logo?`<img src="${fo.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid #eef0ec;background:#fff;float:right;margin-left:8px">`:""}<div class="lt">${esc(fo.categoria||"Sem categoria")}</div><b>${esc(fo.nome)}</b>${fo.cnpj?`<address>CNPJ: ${esc(fo.cnpj)}</address>`:""}${fo.local?`<div class="cap">📍 ${esc(fo.local)}</div>`:""}${fo.itensFornecidos?`<div class="cap" style="color:var(--ink)">${esc(fo.itensFornecidos)}</div>`:""}${fo.contato||fo.telefone||fo.email?`<div class="cap">${esc(fo.contato||"")}${fo.telefone?" · 📱 "+esc(fo.telefone):""}${fo.email?"<br>"+esc(fo.email):""}</div>`:""}${fo.faturamento||fo.precisaOC?`<div class="cap" style="margin-top:4px">${fo.faturamento?`<span class="tag ${fo.faturamento==='Faturado'?'t-steel':'t-green'}">${fo.faturamento==='Faturado'?'Faturado':'Pagto imediato'}</span> `:""}${fo.precisaOC?`<span class="tag ${fo.precisaOC==='Precisa OC'?'t-amber':'t-grey'}">${fo.precisaOC==='Precisa OC'?'Precisa OC':'Compra direta'}</span>`:""}</div>`:""}${limite?`<div class="cap" style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Compra direta: R$ ${gastoDireto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span><span>limite R$ ${limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div><div class="minibar" style="width:100%;height:8px"><i style="width:${pctLimite}%;background:${pctLimite>=100?'var(--red)':pctLimite>=80?'var(--amber)':'var(--green)'}"></i></div>${pctLimite>=100?'<small style="color:var(--red)">🔴 Limite ultrapassado — emitir nota formal com esse fornecedor</small>':pctLimite>=80?'<small style="color:var(--amber-d)">⚠ Perto do limite</small>':''}</div>`:""}<div class="cap" style="margin-top:8px"><b style="color:${gasto>0?'var(--green)':'var(--muted)'}">R$ ${gasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> gasto lançado</div>${contratosFornecedorHtml(fo)}<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-g btn-sm" onclick="verDespesasFornecedor('${esc(fo.nome).replace(/'/g,"\\'")}')">Ver despesas</button><button class="btn btn-g btn-sm" onclick="formFornecedor('${fo.id}')">Editar</button></div></div>`;}).join("")}</div></div>`;
+      <div class="logi">${forns.map(fo=>{const gasto=gastoFornecedor(fo.nome);const limite=+fo.limiteCompraDireta||0;const gastoDireto=limite?gastoDiretoFornecedor(fo.nome):0;const pctLimite=limite?Math.min(100,gastoDireto/limite*100):0;return `<div class="loc">${fo.logo?`<img src="${fo.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid #eef0ec;background:#fff;float:right;margin-left:8px">`:""}<div class="lt">${esc(fo.categoria||"Sem categoria")}</div><b>${esc(fo.nome)}</b>${fo.cnpj?`<address>CNPJ: ${esc(fo.cnpj)}</address>`:""}${fo.local?`<div class="cap">📍 ${esc(fo.local)}</div>`:""}${fo.itensFornecidos?`<div class="cap" style="color:var(--ink)">${esc(fo.itensFornecidos)}</div>`:""}${fo.contato||fo.telefone||fo.email?`<div class="cap">${esc(fo.contato||"")}${fo.telefone?" · 📱 "+esc(fo.telefone):""}${fo.email?"<br>"+esc(fo.email):""}</div>`:""}${fo.faturamento||fo.precisaOC?`<div class="cap" style="margin-top:4px">${tagFormaPagamentoFornecedor(fo)}${fo.precisaOC?`<span class="tag ${fo.precisaOC==='Precisa OC'?'t-amber':'t-grey'}">${fo.precisaOC==='Precisa OC'?'Precisa OC':'Compra direta'}</span>`:""}</div>`:""}${limite?`<div class="cap" style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px"><span>Compra direta: R$ ${gastoDireto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span><span>limite R$ ${limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div><div class="minibar" style="width:100%;height:8px"><i style="width:${pctLimite}%;background:${pctLimite>=100?'var(--red)':pctLimite>=80?'var(--amber)':'var(--green)'}"></i></div>${pctLimite>=100?'<small style="color:var(--red)">🔴 Limite ultrapassado — emitir nota formal com esse fornecedor</small>':pctLimite>=80?'<small style="color:var(--amber-d)">⚠ Perto do limite</small>':''}</div>`:""}<div class="cap" style="margin-top:8px"><b style="color:${gasto>0?'var(--green)':'var(--muted)'}">R$ ${gasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b> gasto lançado</div>${contratosFornecedorHtml(fo)}<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-g btn-sm" onclick="verDespesasFornecedor('${esc(fo.nome).replace(/'/g,"\\'")}')">Ver despesas</button><button class="btn btn-g btn-sm" onclick="formFornecedor('${fo.id}')">Editar</button></div></div>`;}).join("")}</div></div>`;
   }).join("");
 }
 let _gfNome="",_gfDe="",_gfAte="",_gfOrigem="";
@@ -4432,7 +4491,7 @@ function formFornecedor(id){
    <div class="row2"><div class="fg"><label>Categoria / tipo</label><input id="fo_cat" list="fo_catlist" value="${esc(fo.categoria)}" placeholder="Locação, Material, Serviço..."><datalist id="fo_catlist">${CATEGORIAS_FORNECEDOR.map(c=>`<option value="${c}">`).join("")}</datalist></div><div class="fg"><label>Local / Endereço</label><input id="fo_local" value="${esc(fo.local)}" placeholder="cidade / endereço"></div></div>
    <div class="fg"><label>O que esse fornecedor fornece <span class="opt">(lista simples)</span></label><textarea id="fo_itens" rows="3" placeholder="ex.: 2 micro-ônibus, transporte de funcionários">${esc(fo.itensFornecidos)}</textarea></div>
    <div class="sub">Compra</div>
-   <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="fo_fatura"><option value="Faturado" ${fo.faturamento==="Faturado"?"selected":""}>Faturado (a prazo)</option><option value="Imediato" ${fo.faturamento==="Imediato"?"selected":""}>Pagamento imediato</option></select></div><div class="fg"><label>Ordem de compra</label><select id="fo_oc"><option value="Precisa OC" ${fo.precisaOC==="Precisa OC"?"selected":""}>Precisa gerar OC</option><option value="Compra direta" ${fo.precisaOC==="Compra direta"?"selected":""}>Compra direta / imediata</option></select></div></div>
+   <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="fo_fatura"><option value="Faturado" ${fo.faturamento==="Faturado"?"selected":""}>Faturado (a prazo)</option><option value="Imediato" ${fo.faturamento==="Imediato"?"selected":""}>Pagamento imediato</option><option value="Contrato" ${fo.faturamento==="Contrato"?"selected":""}>Faturado via medição de contrato</option></select></div><div class="fg"><label>Ordem de compra</label><select id="fo_oc"><option value="Precisa OC" ${fo.precisaOC==="Precisa OC"?"selected":""}>Precisa gerar OC</option><option value="Compra direta" ${fo.precisaOC==="Compra direta"?"selected":""}>Compra direta / imediata</option></select></div></div>
    <div class="fg"><label>Limite de compra direta acumulada (R$) <span class="opt">(opcional — avisa quando o total gasto com esse fornecedor sem nota formal se aproximar/passar disso)</span></label><input type="number" step="0.01" id="fo_limite" value="${esc(fo.limiteCompraDireta)}" placeholder="ex.: 5000"></div>
    <div class="sub">Contato</div>
    <div class="row3"><div class="fg"><label>Nome do contato</label><input id="fo_contato" value="${esc(fo.contato)}"></div><div class="fg"><label>Telefone / WhatsApp</label><input id="fo_tel" value="${esc(fo.telefone)}" placeholder="(00) 00000-0000"></div><div class="fg"><label>E-mail</label><input id="fo_email" value="${esc(fo.email)}"></div></div>
