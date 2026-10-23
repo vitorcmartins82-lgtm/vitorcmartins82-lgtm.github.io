@@ -472,7 +472,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.6";
+const APP_VERSAO="v2026-10-02.7";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -2161,6 +2161,20 @@ function delMobilizacao(id){if(!confirm("Excluir este registro?"))return;DB.mobi
 const DIAS_SEMANA=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
 const STATUS_FLUXO=["Solicitado","Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada","Finalizado"];
 const MAPA_STATUS_ANTIGO={"Ordem de compra gerada":"Pedido feito","Chegou na obra":"Pedido feito","Enviado para pagamento":"Nota fiscal gerada","Pago":"Finalizado"};
+function fluxoNovoAPartirDe(){return DB.cfg.fluxoNovoAPartirDe||"2026-08-18";}
+function pedidoAntigo(p){return !p.fluxoNovo&&!!p.data&&p.data<fluxoNovoAPartirDe();}
+function pedidoEncerrado(p){return p.status==="Finalizado"||pedidoAntigo(p);}
+function reabrirPedidoAntigo(id){
+  if(!confirmarSenhaSalvar())return;
+  const p=DB.compras_pedidos.find(x=>x.id===id);if(!p)return;
+  if(!confirm("Reabrir esse pedido no fluxo novo? Ele volta a gerar alerta de nota fiscal e a seguir as etapas."))return;
+  p.fluxoNovo=true;
+  if(p.status==="Finalizado"){
+    const volta=(p.statusAntesDeFinalizar&&p.statusAntesDeFinalizar!=="Finalizado")?p.statusAntesDeFinalizar:"Nota fiscal gerada";
+    p.status=volta;(p.statusHistorico=p.statusHistorico||[]).push({status:volta,data:iso(today())});
+  }
+  save("compras_pedidos");closeModal();render();toast("Pedido reaberto no fluxo novo.");
+}
 function migrarFluxoPedidos(){
   let mudou=false;
   DB.compras_pedidos.forEach(p=>{
@@ -2191,9 +2205,9 @@ function prazoNotaPedido(p){
   const d=dataPedidoFeito(p);if(!d)return"";
   return iso(new Date(pd(d).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS));
 }
-function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!DB.compras_notas.some(n=>n.pedido===p.id));}
+function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!pedidoAntigo(p)&&!DB.compras_notas.some(n=>n.pedido===p.id));}
 function tagNotaPendente(p){
-  if(p.status!=="Pedido feito"||DB.compras_notas.some(n=>n.pedido===p.id))return"";
+  if(p.status!=="Pedido feito"||pedidoAntigo(p)||DB.compras_notas.some(n=>n.pedido===p.id))return"";
   const prazo=prazoNotaPedido(p);
   if(prazo&&pd(prazo)<today())return `<span class="tag t-red">🚨 nota fiscal atrasada ${diasEntre(pd(prazo),today())}d</span>`;
   return `<span class="tag t-amber">⚠ nota sem lançamento${prazo?" — até "+fmt(prazo):""}</span>`;
@@ -2217,7 +2231,7 @@ function notaStatus(n){
   return{txt:"Pendente",cls:"t-grey"};
 }
 function diasParado(p){const h=p.statusHistorico||[];if(!h.length)return 0;const ultima=h[h.length-1].data;return diasEntre(pd(ultima),today());}
-function pedidosAbertos(){return DB.compras_pedidos.filter(p=>p.status!=="Finalizado");}
+function pedidosAbertos(){return DB.compras_pedidos.filter(p=>!pedidoEncerrado(p));}
 function itemEstoqueNome(id){const it=DB.compras_estoque.find(x=>x.id===id);return it?it.nome:"—";}
 function mesRef(s){return s?s.slice(0,7):"";}
 function mesAnterior(m){const p=m.split("-");let y=+p[0],mo=+p[1]-1;if(mo<1){mo=12;y--;}return y+"-"+String(mo).padStart(2,"0");}
@@ -2241,6 +2255,7 @@ function vPainelCompras(){
   const ocsVencidasSemNota=[];
   const ocsSemNotaFiscalNoPrazo=[];
   DB.compras_pedidos.forEach(p=>{
+    if(pedidoEncerrado(p))return;
     const temNota=DB.compras_notas.some(n=>n.pedido===p.id);
     if(temNota)return;
     (p.ordensCompra||[]).forEach(oc=>{
@@ -2377,25 +2392,25 @@ function vPedidos(){
   main.innerHTML=`<div class="head"><div><h1>Pedidos de compra <span id="ped_total" class="tag t-steel" style="font-size:13px;vertical-align:middle"></span></h1><p>Fluxo: ${STATUS_FLUXO.join(" → ")}</p></div><div class="acts"><button class="btn btn-g" onclick="formFinalizarPedidosAntigos()">✔ Finalizar pedidos antigos</button><button class="btn btn-g" onclick="formLancamentoDireto()">🖇 Lançar direto (compra por fora)</button><button class="btn btn-a" onclick="formPedido()">＋ Novo pedido</button></div></div>
    <div class="toolbar"><input type="search" id="pf_busca" placeholder="Buscar por item/descrição..." value="${esc(_pedFiltroBusca)}" oninput="_pedFiltroBusca=this.value;renderPedidosTbl()"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${_pedFiltroSetor===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><select id="pf_forn" onchange="_pedFiltroForn=this.value;renderPedidosTbl()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_pedFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="pf_status" onchange="_pedFiltroStatus=this.value;renderPedidosTbl()"><option value="">Todas as etapas</option>${STATUS_FLUXO.map(s=>`<option value="${s}" ${_pedFiltroStatus===s?"selected":""}>${s}</option>`).join("")}</select></div>
    <div class="toolbar">
-     <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento <span class="tag t-grey">${DB.compras_pedidos.filter(p=>p.status!=="Finalizado").length}</span></button>
-     <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✔ Finalizados <span class="tag t-green">${DB.compras_pedidos.filter(p=>p.status==="Finalizado").length}</span> (ver)</button>
+     <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento <span class="tag t-grey">${DB.compras_pedidos.filter(p=>!pedidoEncerrado(p)).length}</span></button>
+     <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✔ Finalizados e anteriores <span class="tag t-green">${DB.compras_pedidos.filter(p=>pedidoEncerrado(p)).length}</span></button>
      ${(_pedFiltroSetor||_pedFiltroForn||_pedFiltroStatus||_pedFiltroBusca)?`<button class="btn btn-g btn-sm" onclick="_pedFiltroSetor='';_pedFiltroForn='';_pedFiltroStatus='';_pedFiltroBusca='';render()">Limpar filtro</button>`:''}
      <button class="btn btn-g btn-sm" onclick="exportPedidosExcel()">⭳ Exportar Excel</button></div>
    <div id="ped_tbl"></div>`;
   renderPedidosTbl();
 }
 let _pedMostrarPagos=false;
-function pedidosAntesDe(corte){return DB.compras_pedidos.filter(p=>p.status!=="Finalizado"&&p.data&&p.data<corte);}
+function pedidosAntesDe(corte){return DB.compras_pedidos.filter(p=>p.status!=="Finalizado"&&!p.fluxoNovo&&p.data&&p.data<corte);}
 function finalizarPedidosAnterioresA(corte){
   const l=pedidosAntesDe(corte);
-  l.forEach(p=>{p.status="Finalizado";p.finalizadoEmLote=corte;(p.statusHistorico=p.statusHistorico||[]).push({status:"Finalizado",data:iso(today())});});
+  l.forEach(p=>{p.statusAntesDeFinalizar=p.status;p.status="Finalizado";p.finalizadoEmLote=corte;(p.statusHistorico=p.statusHistorico||[]).push({status:"Finalizado",data:iso(today())});});
   return l.length;
 }
 function formFinalizarPedidosAntigos(){
   const ano=iso(today()).slice(0,4);
   openModal(`<div class="modal-h"><h3>Finalizar pedidos antigos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <p class="hint" style="margin-bottom:12px">Marca como <b>Finalizado</b> todos os pedidos com data <b>anterior</b> à data de corte. Use pra encerrar o que ficou do fluxo antigo.</p>
-   <div class="fg"><label>Finalizar pedidos anteriores a</label><input type="date" id="fp_corte" value="${ano}-08-18" onchange="previewFinalizarPedidos()"></div>
+   <p class="hint" style="margin-bottom:12px">Todo pedido com data <b>anterior</b> à data de corte passa a ser do <b>fluxo antigo</b>: sai de "Em andamento", não gera alerta de nota e vai pra aba <b>Finalizados e anteriores</b>. A partir da data, vale o fluxo novo.</p>
+   <div class="fg"><label>Finalizar pedidos anteriores a</label><input type="date" id="fp_corte" value="${fluxoNovoAPartirDe()}" onchange="previewFinalizarPedidos()"></div>
    <div id="fp_preview"></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="aplicarFinalizarPedidos()">Finalizar esses pedidos</button></div>`);
   previewFinalizarPedidos();
 }
@@ -2410,6 +2425,7 @@ async function aplicarFinalizarPedidos(){
   const l=pedidosAntesDe(corte);
   if(!l.length){toast("Nada pra finalizar.");return;}
   if(!confirm("Finalizar "+l.length+" pedido(s) anteriores a "+fmt(corte)+"? Dá pra reabrir um por um depois, voltando a etapa.")){return;}
+  DB.cfg.fluxoNovoAPartirDe=corte;save("cfg");
   const n=finalizarPedidosAnterioresA(corte);
   const ok=await saveEsperando("compras_pedidos");
   closeModal();render();
@@ -2420,7 +2436,7 @@ function renderPedidosTbl(){
   if(_pedFiltroSetor)list=list.filter(p=>p.setor===_pedFiltroSetor);
   if(_pedFiltroForn)list=list.filter(p=>(p.ordensCompra||[]).some(oc=>oc.fornecedor===_pedFiltroForn));
   if(_pedFiltroStatus)list=list.filter(p=>p.status===_pedFiltroStatus);
-  list=list.filter(p=>_pedMostrarPagos?p.status==="Finalizado":p.status!=="Finalizado");
+  list=list.filter(p=>_pedMostrarPagos?pedidoEncerrado(p):!pedidoEncerrado(p));
   if(_pedFiltroBusca){const q=_pedFiltroBusca.toLowerCase();list=list.filter(p=>(resumoItensPedidoCurto(p)||"").toLowerCase().includes(q));}
   list.sort((a,b)=>{const ua=(a.nivelUrgencia==="Urgente"||(a.foraDoDia&&!a.excecaoLiberada))&&a.status==="Solicitado",ub=(b.nivelUrgencia==="Urgente"||(b.foraDoDia&&!b.excecaoLiberada))&&b.status==="Solicitado";if(!_pedMostrarPagos&&ua!==ub)return ua?-1:1;return (a.data||"").localeCompare(b.data||"");});
   const el=$("#ped_tbl");if(!el)return;
@@ -2433,7 +2449,7 @@ function renderPedidosTbl(){
     return `<div class="panel" style="${destaque?'border-left:4px solid var(--red)':''}"><div style="padding:14px 18px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">
         <div><b>${esc(funcNome(p.solicitante))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora do dia — precisa liberação</span>':''}</div>
-        <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado&&!pedidoEncerrado(p)?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}${pedidoAntigo(p)?'<span class="tag t-grey">fluxo antigo</span>':''}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
       </div>
       <p class="hint" style="margin:0 0 10px">${resumoItensPedidoCurto(p)||"—"}</p>
       <div class="step" style="margin-bottom:${ocs.length?'8px':'0'}">${STATUS_FLUXO.map((s,i)=>`<span class="s ${i<idx?'done':i===idx?'cur':''}">${s}</span>${i<STATUS_FLUXO.length-1?'<span class="arrow">→</span>':''}`).join("")}</div>
@@ -2526,7 +2542,7 @@ function salvarPedido(id){
     save("compras_pedidos");closeModal();render();toast("Pedido atualizado.");
     return;
   }
-  const o={id:uid(),solicitante:_pedSolicitante,setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
+  const o={id:uid(),fluxoNovo:true,solicitante:_pedSolicitante,setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
   DB.compras_pedidos.push(o);save("compras_pedidos");closeModal();render();toast("Pedido criado.");
 }
 const TIPOS_AQUISICAO=["Compra","Aluguel"];
@@ -2578,7 +2594,7 @@ function salvarLancamentoDireto(){
 function concluirSalvarLancamentoDireto(d){
   let linkFluig=d.fluiglink;
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:uid(),solicitante:"",lancamentoDireto:true,lancadoPor:d.lancadoPor,setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[],valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:d.temNota?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
+  const o={id:uid(),fluxoNovo:true,solicitante:"",lancamentoDireto:true,lancadoPor:d.lancadoPor,setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[],valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:d.temNota?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
   const ocId=uid();
   o.ordensCompra=[{id:ocId,numero:d.ocnum,numeroFluig:d.fluignum,linkFluig,origemCompra:d.origem,fornecedor:d.fornecedor,tipoAquisicao:d.tipoaq,duracaoAluguel:"",prazoEstimado:"",dataCriacao:d.data,prazoNotaFiscal:iso(new Date(pd(d.data).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS)),itensIncluidos:[],obs:""}];
   if(d.temNota)o.statusHistorico.push({status:"Nota fiscal gerada",data:d.data});
@@ -2709,6 +2725,7 @@ function imprimirPedidoOrcamento(id){
 }
 function avisoNotaPedido(p){
   let h="";
+  if(pedidoAntigo(p))return `<div class="alert" style="background:#f3f4f2;border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--muted)"></span><div class="txt"><b>Pedido do fluxo antigo</b><small>Feito antes de ${fmt(fluxoNovoAPartirDe())} — não segue o fluxo novo e não gera alerta de nota.</small></div></div><button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="reabrirPedidoAntigo('${p.id}')">Reabrir no fluxo novo</button> `;
   if(p.status==="Pedido feito"&&!DB.compras_notas.some(n=>n.pedido===p.id)){
     const prazo=prazoNotaPedido(p),atrasado=prazo&&pd(prazo)<today();
     h+=`<div class="alert" style="background:${atrasado?'var(--red-l)':'#fdf8ee'};border-radius:8px;margin-bottom:14px"><span class="dot" style="background:${atrasado?'var(--red)':'var(--amber)'}"></span><div class="txt"><b>${atrasado?"🚨 Nota fiscal atrasada":"⚠ Nota fiscal sem lançamento"}</b><small>Pedido feito em ${fmt(dataPedidoFeito(p))}${prazo?" · prazo da nota até "+fmt(prazo):""}. Lance a nota em Notas Fiscais.</small></div></div><button class="btn btn-a btn-sm" style="margin-bottom:14px" onclick="closeModal();lancarNotaDoPedido('${p.id}')">Lançar a nota deste pedido</button> `;
@@ -3009,6 +3026,7 @@ function estagioOC(pedidoId,oc,temUmaSoOC){
 function linhasLancamentos(){
   const linhas=[];
   DB.compras_pedidos.forEach(p=>{
+    if(pedidoAntigo(p)&&!DB.compras_notas.some(n=>n.pedido===p.id))return;
     const ocs=p.ordensCompra||[];
     if(!ocs.length){
       if(["Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada"].includes(p.status)){
