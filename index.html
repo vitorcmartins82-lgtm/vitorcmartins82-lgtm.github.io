@@ -178,7 +178,7 @@ function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
     e.stopImmediatePropagation();e.preventDefault();
     const executar=()=>{try{(new Function(onclickAttr))();}catch(err){console.error("Erro ao executar ação:",err);toast("Erro ao executar a ação — tenta de novo.");}};
     if(!_usuarioLogadoId){
-      toast("Você precisa se identificar (CPF + PIN) antes de salvar ou editar — mesmo a senha mestra exige isso, pra sempre ficar registrado quem fez.");
+      toast("Você precisa se identificar (CPF) antes de salvar ou editar — assim fica registrado quem fez. Depois de se identificar, repita a ação.");
       abrirLoginUsuario();
       return;
     }
@@ -212,8 +212,8 @@ const LOGO_PRINER="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATQAAABfCAYAAAB
 const LOGO_VALE="data:image/png;base64,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";
 function supaHeaders(extra){return Object.assign({"apikey":SUPA.key,"Content-Type":"application/json"},extra||{});}
 let _pendingWrites=0;
-async function dbUpsert(table,obj){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:String(obj.id),data:obj})});if(!res.ok){console.error("Supabase upsert falhou",table,res.status,await res.text());_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase upsert falhou",table,e);_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
-async function dbDelete(table,id){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:supaHeaders()});if(!res.ok){console.error("Supabase delete falhou",table,res.status);_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase delete falhou",table,e);_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
+async function dbUpsert(table,obj){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:String(obj.id),data:obj})});if(!res.ok){console.error("Supabase upsert falhou",table,res.status,await res.text());_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase upsert falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
+async function dbDelete(table,id){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:supaHeaders()});if(!res.ok){console.error("Supabase delete falhou",table,res.status);_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase delete falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
 async function dbFetchTable(table){
   let all=[],offset=0;const pageSize=1000;
   while(true){
@@ -228,22 +228,46 @@ async function dbFetchTable(table){
 }
 async function syncCfg(){if(!SUPA.url)return;try{await fetch(`${SUPA.url}/rest/v1/cfg`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:"cfg",data:DB.cfg})});}catch(e){console.error("Supabase cfg falhou",e);}}
 let _nuvemOk=null;
-async function loadFromSupabase(mostrarToast){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast),800);return;}try{for(const k of KEYS){const arr=await dbFetchTable(k);DB[k]=arr;_lastSynced[k]=new Map(arr.map(o=>[String(o.id),JSON.stringify(o)]));try{localStorage.setItem("obra:"+k,JSON.stringify(arr));}catch(e){}}const res=await fetch(`${SUPA.url}/rest/v1/cfg?select=data&id=eq.cfg`,{headers:supaHeaders()});if(res.ok){const rows=await res.json();if(rows.length){DB.cfg={...CFG_DEFAULT,...rows[0].data};try{localStorage.setItem("obra:cfg",JSON.stringify(DB.cfg));}catch(e){}}}_nuvemOk=true;buildNav();render();if(mostrarToast)toast("Dados atualizados da nuvem.");}catch(e){console.error("Falha ao carregar do Supabase, usando dados locais.",e);_nuvemOk=false;buildNav();if(mostrarToast)toast("Sem conexão — usando dados locais.");}}
+async function loadFromSupabase(mostrarToast){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast),800);return;}try{for(const k of KEYS){const arr=await dbFetchTable(k);
+      const pend=_pendentes[k];let final=arr;
+      if(pend&&pend.size){
+        final=arr.filter(o=>pend.get(String(o.id))!=="del");
+        pend.forEach((tipo,id)=>{if(tipo==="up"){const loc=(DB[k]||[]).find(o=>String(o.id)===id);if(loc){const i=final.findIndex(o=>String(o.id)===id);if(i>=0)final[i]=loc;else final.push(loc);}}});
+      }
+      DB[k]=final;_lastSynced[k]=new Map(arr.map(o=>[String(o.id),JSON.stringify(o)]));try{localStorage.setItem("obra:"+k,JSON.stringify(final));}catch(e){}}const res=await fetch(`${SUPA.url}/rest/v1/cfg?select=data&id=eq.cfg`,{headers:supaHeaders()});if(res.ok){const rows=await res.json();if(rows.length){DB.cfg={...CFG_DEFAULT,...rows[0].data};try{localStorage.setItem("obra:cfg",JSON.stringify(DB.cfg));}catch(e){}}}_nuvemOk=true;buildNav();render();if(pendenciasNuvem()>0)setTimeout(reenviarPendencias,1200);if(mostrarToast)toast("Dados atualizados da nuvem.");}catch(e){console.error("Falha ao carregar do Supabase, usando dados locais.",e);_nuvemOk=false;buildNav();if(mostrarToast)toast("Sem conexão — usando dados locais.");}}
 let DB={func:[],locais:[],mov:[],faltas:[],ferias:[],baixadas:[],reemb:[],veiculos:[],rotas:[],abastecimentos:[],mobilizacoes:[],vagas:[],compras_setores:[],compras_pedidos:[],compras_despesas:[],compras_estoque:[],compras_contratos:[],compras_notas:[],compras_estoque_mov:[],compras_fornecedores:[],almox_pedidos:[],vagas_abertas:[],cfg:{...CFG_DEFAULT}};
 let MEM={};
 function lsOK(){try{localStorage.setItem("_t","1");localStorage.removeItem("_t");return true;}catch(e){return false;}}
 const LS=lsOK();
 function load(){KEYS.concat("cfg").forEach(k=>{try{const raw=LS?localStorage.getItem("obra:"+k):MEM[k];if(raw)DB[k]=JSON.parse(raw);}catch(e){}});if(!DB.cfg)DB.cfg={...CFG_DEFAULT};}
 let _lastSynced={};
+const _pendentes={};
+let _ultimoErroNuvem="",_toastNuvemTs=0;
+function _pendSalvar(){try{if(!LS)return;const o={};for(const k in _pendentes)if(_pendentes[k]&&_pendentes[k].size)o[k]=[..._pendentes[k]];localStorage.setItem("obra:_pend",JSON.stringify(o));}catch(e){}}
+function _pendCarregar(){try{if(!LS)return;const o=JSON.parse(localStorage.getItem("obra:_pend")||"{}");for(const k in o)_pendentes[k]=new Map(o[k]);}catch(e){}}
+function pendenciasNuvem(){let n=0;for(const k in _pendentes)n+=(_pendentes[k]?_pendentes[k].size:0);return n;}
+function _txtPend(){const n=pendenciasNuvem();return n?" — "+n+" alteração(ões) por enviar":"";}
+function _falhaNuvem(k,id,tipo,antes){
+  (_pendentes[k]=_pendentes[k]||new Map()).set(String(id),tipo);
+  const m=_lastSynced[k];
+  if(m){if(antes!==undefined)m.set(String(id),antes);else m.delete(String(id));}
+  _pendSalvar();
+  if(Date.now()-_toastNuvemTs>30000){
+    _toastNuvemTs=Date.now();
+    try{toast("⚠ A nuvem não aceitou a gravação"+(_ultimoErroNuvem?" (erro "+_ultimoErroNuvem+(String(_ultimoErroNuvem)==="402"?" — cota/cobrança do Supabase":"")+")":"")+". Ficou guardada neste computador e será reenviada sozinha — não limpe o navegador.");buildNav();}catch(e){}
+  }
+}
+function _okNuvem(k,id){if(_pendentes[k]&&_pendentes[k].delete(String(id)))_pendSalvar();}
+function reenviarPendencias(){for(const k in _pendentes){if(_pendentes[k]&&_pendentes[k].size&&Array.isArray(DB[k]))save(k);}}
 function save(k){try{const raw=JSON.stringify(DB[k]);if(LS)localStorage.setItem("obra:"+k,raw);else MEM[k]=raw;}catch(e){}
   if(!SUPA.url)return;
   if(k==="cfg"){syncCfg();return;}
   if(!Array.isArray(DB[k]))return;
   const prevMap=_lastSynced[k]||new Map();
   const curMap=new Map(DB[k].map(o=>[String(o.id),JSON.stringify(o)]));
-  for(const id of prevMap.keys()){if(!curMap.has(id))dbDelete(k,id);}
-  for(const [id,json] of curMap){if(prevMap.get(id)!==json)dbUpsert(k,JSON.parse(json));}
   _lastSynced[k]=curMap;
+  for(const id of prevMap.keys()){if(!curMap.has(id)){const antes=prevMap.get(id);dbDelete(k,id).then(ok=>{if(ok===false)_falhaNuvem(k,id,"del",antes);else _okNuvem(k,id);});}}
+  for(const [id,json] of curMap){if(prevMap.get(id)!==json){const antes=prevMap.get(id);dbUpsert(k,JSON.parse(json)).then(ok=>{if(ok===false)_falhaNuvem(k,id,"up",antes);else _okNuvem(k,id);});}}
 }
 async function saveEsperando(k){
   try{const raw=JSON.stringify(DB[k]);if(LS)localStorage.setItem("obra:"+k,raw);else MEM[k]=raw;}catch(e){}
@@ -251,11 +275,11 @@ async function saveEsperando(k){
   if(!Array.isArray(DB[k]))return true;
   const prevMap=_lastSynced[k]||new Map();
   const curMap=new Map(DB[k].map(o=>[String(o.id),JSON.stringify(o)]));
-  const promessas=[];
-  for(const id of prevMap.keys()){if(!curMap.has(id))promessas.push(dbDelete(k,id));}
-  for(const [id,json] of curMap){if(prevMap.get(id)!==json)promessas.push(dbUpsert(k,JSON.parse(json)));}
   _lastSynced[k]=curMap;
-  const resultados=await Promise.all(promessas);
+  const tarefas=[];
+  for(const id of prevMap.keys()){if(!curMap.has(id)){const antes=prevMap.get(id);tarefas.push(dbDelete(k,id).then(ok=>{if(ok===false)_falhaNuvem(k,id,"del",antes);else _okNuvem(k,id);return ok;}));}}
+  for(const [id,json] of curMap){if(prevMap.get(id)!==json){const antes=prevMap.get(id);tarefas.push(dbUpsert(k,JSON.parse(json)).then(ok=>{if(ok===false)_falhaNuvem(k,id,"up",antes);else _okNuvem(k,id);return ok;}));}}
+  const resultados=await Promise.all(tarefas);
   return resultados.every(r=>r!==false);
 }
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -448,8 +472,8 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.5";
-function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem":_nuvemOk===false?"🟡 Sem conexão — usando dados locais":"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
+const APP_VERSAO="v2026-10-02.6";
+function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
     menuFiltrado=MENU.filter(m=>{if(m.sec)return true;const chave=secaoDaTela(m.v);if(!chave)return true;return nivelPermissaoUsuario(chave)!=="nenhum";});
@@ -2146,6 +2170,14 @@ function migrarFluxoPedidos(){
     if(p.status==="Chegou na obra"&&DB.compras_notas.some(n=>n.pedido===p.id))alvo="Nota fiscal gerada";
     p.statusAnterior=p.status;p.status=alvo;mudou=true;
   });
+  /* uma única vez: pedidos anteriores a 18/08 ficam Finalizados; os próximos seguem o fluxo novo.
+     Só roda com os dados da nuvem já carregados, pra não marcar "feito" antes de ver os pedidos de verdade. */
+  if(!DB.cfg.pedidosFinalizadosAte&&(!SUPA.url||_nuvemOk===true)){
+    const corte=iso(today()).slice(0,4)+"-08-18";
+    const n=finalizarPedidosAnterioresA(corte);
+    DB.cfg.pedidosFinalizadosAte=corte;save("cfg");
+    if(n){mudou=true;setTimeout(()=>toast(n+" pedido(s) anteriores a "+fmt(corte)+" foram finalizados."),800);}
+  }
   if(mudou)save("compras_pedidos");
 }
 function dataPedidoFeito(p){
@@ -2345,8 +2377,8 @@ function vPedidos(){
   main.innerHTML=`<div class="head"><div><h1>Pedidos de compra <span id="ped_total" class="tag t-steel" style="font-size:13px;vertical-align:middle"></span></h1><p>Fluxo: ${STATUS_FLUXO.join(" → ")}</p></div><div class="acts"><button class="btn btn-g" onclick="formFinalizarPedidosAntigos()">✔ Finalizar pedidos antigos</button><button class="btn btn-g" onclick="formLancamentoDireto()">🖇 Lançar direto (compra por fora)</button><button class="btn btn-a" onclick="formPedido()">＋ Novo pedido</button></div></div>
    <div class="toolbar"><input type="search" id="pf_busca" placeholder="Buscar por item/descrição..." value="${esc(_pedFiltroBusca)}" oninput="_pedFiltroBusca=this.value;renderPedidosTbl()"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${_pedFiltroSetor===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><select id="pf_forn" onchange="_pedFiltroForn=this.value;renderPedidosTbl()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_pedFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="pf_status" onchange="_pedFiltroStatus=this.value;renderPedidosTbl()"><option value="">Todas as etapas</option>${STATUS_FLUXO.map(s=>`<option value="${s}" ${_pedFiltroStatus===s?"selected":""}>${s}</option>`).join("")}</select></div>
    <div class="toolbar">
-     <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento</button>
-     <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✓ Finalizados</button>
+     <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento <span class="tag t-grey">${DB.compras_pedidos.filter(p=>p.status!=="Finalizado").length}</span></button>
+     <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✔ Finalizados <span class="tag t-green">${DB.compras_pedidos.filter(p=>p.status==="Finalizado").length}</span> (ver)</button>
      ${(_pedFiltroSetor||_pedFiltroForn||_pedFiltroStatus||_pedFiltroBusca)?`<button class="btn btn-g btn-sm" onclick="_pedFiltroSetor='';_pedFiltroForn='';_pedFiltroStatus='';_pedFiltroBusca='';render()">Limpar filtro</button>`:''}
      <button class="btn btn-g btn-sm" onclick="exportPedidosExcel()">⭳ Exportar Excel</button></div>
    <div id="ped_tbl"></div>`;
@@ -2354,11 +2386,16 @@ function vPedidos(){
 }
 let _pedMostrarPagos=false;
 function pedidosAntesDe(corte){return DB.compras_pedidos.filter(p=>p.status!=="Finalizado"&&p.data&&p.data<corte);}
+function finalizarPedidosAnterioresA(corte){
+  const l=pedidosAntesDe(corte);
+  l.forEach(p=>{p.status="Finalizado";p.finalizadoEmLote=corte;(p.statusHistorico=p.statusHistorico||[]).push({status:"Finalizado",data:iso(today())});});
+  return l.length;
+}
 function formFinalizarPedidosAntigos(){
   const ano=iso(today()).slice(0,4);
   openModal(`<div class="modal-h"><h3>Finalizar pedidos antigos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <p class="hint" style="margin-bottom:12px">Marca como <b>Finalizado</b> todos os pedidos com data <b>anterior</b> à data de corte. Use pra encerrar o que ficou do fluxo antigo.</p>
-   <div class="fg"><label>Finalizar pedidos anteriores a</label><input type="date" id="fp_corte" value="${ano}-10-18" onchange="previewFinalizarPedidos()"></div>
+   <div class="fg"><label>Finalizar pedidos anteriores a</label><input type="date" id="fp_corte" value="${ano}-08-18" onchange="previewFinalizarPedidos()"></div>
    <div id="fp_preview"></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="aplicarFinalizarPedidos()">Finalizar esses pedidos</button></div>`);
   previewFinalizarPedidos();
 }
@@ -2368,13 +2405,15 @@ function previewFinalizarPedidos(){
   const porSt={};l.forEach(p=>{porSt[p.status]=(porSt[p.status]||0)+1;});
   el.innerHTML=l.length?`<p><b>${l.length}</b> pedido(s) vão ser finalizados:</p><ul style="margin:6px 0 0;padding-left:20px">${Object.entries(porSt).map(([k,v])=>`<li>${v} em "${esc(k)}"</li>`).join("")}</ul>`:`<p class="hint">Nenhum pedido em andamento com data anterior a essa.</p>`;
 }
-function aplicarFinalizarPedidos(){
+async function aplicarFinalizarPedidos(){
   const corte=$("#fp_corte").value;if(!corte){toast("Escolha a data de corte.");return;}
   const l=pedidosAntesDe(corte);
   if(!l.length){toast("Nada pra finalizar.");return;}
   if(!confirm("Finalizar "+l.length+" pedido(s) anteriores a "+fmt(corte)+"? Dá pra reabrir um por um depois, voltando a etapa.")){return;}
-  l.forEach(p=>{p.status="Finalizado";p.finalizadoEmLote=corte;(p.statusHistorico=p.statusHistorico||[]).push({status:"Finalizado",data:iso(today())});});
-  save("compras_pedidos");closeModal();render();toast(l.length+" pedido(s) finalizado(s).");
+  const n=finalizarPedidosAnterioresA(corte);
+  const ok=await saveEsperando("compras_pedidos");
+  closeModal();render();
+  toast(ok?n+" pedido(s) finalizado(s).":"⚠ "+n+" pedido(s) finalizado(s) aqui, mas a nuvem ainda não confirmou — ficam guardados e serão reenviados sozinhos.");
 }
 function renderPedidosTbl(){
   let list=DB.compras_pedidos.slice();
@@ -4838,8 +4877,8 @@ function exportCandidatosExcel(){
   XLSX.writeFile(wb,"recrutamento-"+iso(today())+".xlsx");toast("Exportado.");
 }
 
-load();if(!SUPA.url){seed();seedVeiculos();}buildNav();render();
-if(SUPA.url){loadFromSupabase();setInterval(()=>{if(!ov.classList.contains("on")&&_pendingWrites===0&&!document.hidden)loadFromSupabase();},90000);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!ov.classList.contains("on")&&_pendingWrites===0)loadFromSupabase();});}
+_pendCarregar();load();if(!SUPA.url){seed();seedVeiculos();}buildNav();render();
+if(SUPA.url){loadFromSupabase();setInterval(()=>{if(!ov.classList.contains("on")&&_pendingWrites===0&&!document.hidden){if(pendenciasNuvem()>0)reenviarPendencias();loadFromSupabase();}},90000);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!ov.classList.contains("on")&&_pendingWrites===0)loadFromSupabase();});}
 </script>
 </body>
 </html>
