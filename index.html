@@ -590,7 +590,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.12";
+const APP_VERSAO="v2026-10-02.13";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -3947,7 +3947,7 @@ function ctFornAuto(){
   if(f&&f.cnpj&&cj&&!cj.value.trim())cj.value=f.cnpj;
 }
 function formContrato(id){
-  const c=id?DB.compras_contratos.find(x=>x.id===id):{statusContrato:"Ativo",periodicidadeFaturamento:"Mensal",...(window._ctPrefill||{})};window._ctPrefill=null;
+  window._ctVincularAtual=(!id&&window._ctPrefill&&window._ctPrefill._vincularA)||null;const c=id?DB.compras_contratos.find(x=>x.id===id):{statusContrato:"Ativo",periodicidadeFaturamento:"Mensal",...(window._ctPrefill||{})};window._ctPrefill=null;
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} contrato</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="row2"><div class="fg"><label>Número *</label><input id="ct_num" value="${esc(c.numero)}"></div><div class="fg"><label>Fornecedor *</label><input id="ct_forn" list="ct_fornlist" value="${esc(c.fornecedor)}" onchange="ctFornAuto()"><datalist id="ct_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div>
    <div class="row2"><div class="fg"><label>CNPJ/CPF</label><input id="ct_cnpj" value="${esc(c.cnpj)}"></div><div class="fg"><label>Status</label><select id="ct_status"><option ${c.statusContrato==="Ativo"?"selected":""}>Ativo</option><option ${c.statusContrato==="Inativo"?"selected":""}>Inativo</option></select></div></div>
@@ -4130,7 +4130,11 @@ function salvarContrato(id){
   const custosExtrasExistentes=id?((DB.compras_contratos.find(x=>x.id===id)||{}).custosExtras||[]):[];
   const prevCt=id?(DB.compras_contratos.find(x=>x.id===id)||{}):{};
   const o={...prevCt,id:id||uid(),semLancamento:$("#ct_semlanc").value,numero,fornecedor,cnpj:$("#ct_cnpj").value.trim(),statusContrato:$("#ct_status").value,segmento:$("#ct_seg").value.trim(),objeto:$("#ct_obj").value.trim(),valorTotal:$("#ct_valor").value,periodicidadeFaturamento:$("#ct_periodicidade").value,caucaoValor:$("#ct_caucao_valor")?.value||"",caucaoDevolvida:$("#ct_caucao_dev")?.value||"Não",dataAssinatura:$("#ct_assin").value,vigenciaInicio:$("#ct_vigini").value,vigenciaFim:$("#ct_vigfim").value,responsavel:$("#ct_resp").value.trim(),itensContrato:_itensContratoTemp.slice(),custosExtras:custosExtrasExistentes,anexos:_anexosTemp.slice(),obs:$("#ct_obs").value.trim()};
-  if(id){const i=DB.compras_contratos.findIndex(x=>x.id===id);DB.compras_contratos[i]=o;}else DB.compras_contratos.push(o);
+  if(id){const i=DB.compras_contratos.findIndex(x=>x.id===id);DB.compras_contratos[i]=o;}
+  else{
+    DB.compras_contratos.push(o);
+    if(window._ctVincularAtual){const fo=DB.compras_fornecedores.find(x=>x.id===window._ctVincularAtual);if(fo){fo.contratos=[...new Set([...(fo.contratos||[]),o.id])];save("compras_fornecedores");}window._ctVincularAtual=null;}
+  }
   save("compras_contratos");closeModal();render();toast("Contrato salvo.");
 }
 function delContrato(id){if(!confirm("Excluir este contrato?"))return;DB.compras_contratos=DB.compras_contratos.filter(x=>x.id!==id);save("compras_contratos");closeModal();render();toast("Excluído.");}
@@ -4336,38 +4340,43 @@ function tagFormaPagamentoFornecedor(fo){
 }
 function novoContratoDoFornecedor(id){
   const fo=DB.compras_fornecedores.find(x=>x.id===id);if(!fo)return;
-  window._ctPrefill={fornecedor:fo.nome,cnpj:fo.cnpj||""};
+  window._ctPrefill={fornecedor:fo.nome,cnpj:fo.cnpj||"",_vincularA:fo.id};
   CUR="contratos";buildNav();render();formContrato();
 }
 function contratosDoFornecedor(fo){
-  const alvo=normalizaNome(fo.nome||""),cnpj=soDigitos(fo.cnpj);
-  return DB.compras_contratos.filter(c=>normalizaNome(c.fornecedor||"")===alvo||(cnpj&&soDigitos(c.cnpj)===cnpj));
+  return (fo.contratos||[]).map(id=>DB.compras_contratos.find(c=>c.id===id)).filter(Boolean);
 }
 function contratosFornecedorHtml(fo){
   const cts=contratosDoFornecedor(fo);
+  const botao=`<button class="btn btn-g btn-sm" style="margin-top:6px" onclick="formVincularContratos('${fo.id}')">🔗 Vincular contratos</button>`;
   if(!cts.length){
-    return fo.faturamento==="Contrato"?`<div class="cap" style="margin-top:8px"><span class="tag t-amber">⚠ via medição de contrato, mas sem contrato cadastrado</span><br><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="novoContratoDoFornecedor('${fo.id}')">＋ Cadastrar contrato</button></div>`:"";
+    return fo.faturamento==="Contrato"
+      ?`<div class="cap" style="margin-top:8px"><span class="tag t-amber">⚠ via medição de contrato, mas sem contrato vinculado</span><br>${botao} <button class="btn btn-g btn-sm" style="margin-top:6px" onclick="novoContratoDoFornecedor('${fo.id}')">＋ Cadastrar contrato</button></div>`
+      :`<div class="cap" style="margin-top:8px">${botao}</div>`;
   }
-  return `<div class="cap" style="margin-top:8px"><b>📄 Contratos (${cts.length})</b>${cts.map(c=>{const st=c.statusContrato||"Ativo";return `<div style="margin-top:3px"><a href="#" onclick="formContrato('${c.id}');return false" style="color:var(--steel);font-weight:600">${esc(c.numero)}</a> <span class="tag ${st==='Ativo'?'t-green':'t-grey'}" style="font-size:10px">${st}</span>${c.segmento?` <small>· ${esc(c.segmento)}</small>`:''}${c.objeto?`<br><small style="color:var(--muted)">${esc(String(c.objeto).slice(0,80))}</small>`:''}</div>`;}).join("")}</div>`;
+  return `<div class="cap" style="margin-top:8px"><b>📄 Contratos (${cts.length})</b>${cts.map(c=>{const st=c.statusContrato||"Ativo";return `<div style="margin-top:3px"><a href="#" onclick="formContrato('${c.id}');return false" style="color:var(--steel);font-weight:600">${esc(c.numero)}</a> <span class="tag ${st==='Ativo'?'t-green':'t-grey'}" style="font-size:10px">${st}</span>${c.segmento?` <small>· ${esc(c.segmento)}</small>`:''}${c.objeto?`<br><small style="color:var(--muted)">${esc(String(c.objeto).slice(0,80))}</small>`:''}</div>`;}).join("")}<br>${botao}</div>`;
 }
-function importarFornecedoresDosContratos(){
-  if(!confirmarSenhaSalvar())return;
-  const nomes=new Set(DB.compras_fornecedores.map(f=>normalizaNome(f.nome)));
-  const cnpjs=new Set(DB.compras_fornecedores.map(f=>soDigitos(f.cnpj)).filter(Boolean));
-  const novos=new Map();
-  DB.compras_contratos.forEach(c=>{
-    const n=String(c.fornecedor||"").trim();if(!n)return;
-    const nn=normalizaNome(n),cj=soDigitos(c.cnpj);
-    if(nomes.has(nn)||(cj&&cnpjs.has(cj))||novos.has(nn))return;
-    novos.set(nn,{nome:n,cnpj:c.cnpj||"",seg:c.segmento||""});
-  });
-  if(!novos.size){toast("Todos os fornecedores dos contratos já estão cadastrados.");return;}
-  if(!confirm(novos.size+" fornecedor(es) de contratos ainda não estão cadastrados:\n\n"+[...novos.values()].map(x=>"• "+x.nome).join("\n")+"\n\nCadastrar todos agora, já ligados aos contratos?"))return;
-  novos.forEach(x=>{
-    const cat=CATEGORIAS_FORNECEDOR.find(c=>normalizaNome(c)===normalizaNome(x.seg))||"";
-    DB.compras_fornecedores.push({id:uid(),nome:x.nome,cnpj:x.cnpj,categoria:cat,local:"",faturamento:"",precisaOC:"",itensFornecidos:"",contato:"",telefone:"",email:"",obs:"Cadastrado a partir dos contratos"});
-  });
-  save("compras_fornecedores");render();toast(novos.size+" fornecedor(es) cadastrado(s) a partir dos contratos.");
+function formVincularContratos(foId){
+  const fo=DB.compras_fornecedores.find(x=>x.id===foId);if(!fo)return;
+  const meus=new Set(fo.contratos||[]);
+  const dono=id=>{const o=DB.compras_fornecedores.find(f=>f.id!==foId&&(f.contratos||[]).includes(id));return o?o.nome:"";};
+  const lista=DB.compras_contratos.slice().sort((a,b)=>String(a.numero||"").localeCompare(String(b.numero||""),"pt-BR",{numeric:true}));
+  openModal(`<div class="modal-h"><h3>🔗 Contratos de ${esc(fo.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Marque os contratos que são deste fornecedor. O vínculo é manual: nada é ligado sozinho.</p>
+   <div class="fg"><input id="vc_busca" placeholder="Filtrar por número, fornecedor ou objeto..." oninput="filtrarVincularContratos()"></div>
+   <div id="vc_lista" style="max-height:46vh;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:6px 10px">${lista.length?lista.map(c=>{const d=dono(c.id);const txt=(String(c.numero||"")+" "+String(c.fornecedor||"")+" "+String(c.objeto||"")).toLowerCase();return `<label class="vc_item" data-txt="${esc(txt)}" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="vc_chk" value="${c.id}" ${meus.has(c.id)?"checked":""} style="width:auto;margin-top:3px"><span><b>${esc(c.numero)}</b> — ${esc(c.fornecedor||"sem fornecedor")}${c.segmento?` <small>· ${esc(c.segmento)}</small>`:''}${d?` <span class="tag t-amber" style="font-size:10px">hoje ligado a ${esc(d)}</span>`:''}${c.objeto?`<br><small style="color:var(--muted)">${esc(String(c.objeto).slice(0,90))}</small>`:''}</span></label>`;}).join(""):'<p class="hint">Nenhum contrato cadastrado ainda.</p>'}</div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarVinculoContratos('${foId}')">Salvar vínculos</button></div>`);
+}
+function filtrarVincularContratos(){
+  const q=($("#vc_busca").value||"").toLowerCase().trim();
+  document.querySelectorAll("#vc_lista .vc_item").forEach(el=>{el.style.display=(!q||el.dataset.txt.includes(q))?"flex":"none";});
+}
+function salvarVinculoContratos(foId){
+  const fo=DB.compras_fornecedores.find(x=>x.id===foId);if(!fo)return;
+  const ids=[...document.querySelectorAll("#vc_lista .vc_chk:checked")].map(i=>i.value);
+  DB.compras_fornecedores.forEach(f=>{if(f.id!==foId&&f.contratos&&f.contratos.length)f.contratos=f.contratos.filter(id=>!ids.includes(id));});
+  fo.contratos=ids;
+  save("compras_fornecedores");closeModal();render();toast(ids.length+" contrato(s) vinculado(s) a "+fo.nome+".");
 }
 function movimentosFornecedor(nome){
   const alvo=normalizaNome(nome||"");
@@ -4384,9 +4393,11 @@ function movimentosFornecedor(nome){
     const ct=d.contrato?DB.compras_contratos.find(c=>c.id===d.contrato):null;
     mov.push({data:d.data||"",origem:"Despesa",doc:d.descricao||d.categoria||"—",pedido:"",pedidoData:"",oc:"",contrato:ct?ct.numero:"",valor:+d.valor||0,conta:true,obs:d.categoria||""});
   });
+  const foAlvo=DB.compras_fornecedores.find(f=>normalizaNome(f.nome)===alvo);
+  const ligado=c=>!!(foAlvo&&(foAlvo.contratos||[]).includes(c.id));
   const notaCobre=(c,valor,mes,porMes)=>DB.compras_notas.some(n=>n.contrato===c.id&&(Math.abs((+n.valor||0)-valor)<0.01||(porMes&&mesRef(n.dataEmissao)===mes)));
   DB.compras_contratos.forEach(c=>{
-    if(normalizaNome(c.fornecedor||"")===alvo){
+    if(normalizaNome(c.fornecedor||"")===alvo||ligado(c)){
       (c.medicoes||[]).forEach(m=>{
         if(m.valorLancado===undefined||m.valorLancado==="")return;
         const v=+m.valorLancado||0,lanc=m.status==="Faturamento enviado para pagamento (Central de Notas)";
@@ -4397,7 +4408,7 @@ function movimentosFornecedor(nome){
       });
     }
     (c.custosExtras||[]).forEach(ce=>{
-      if(normalizaNome(ce.fornecedor||c.fornecedor||"")!==alvo)return;
+      if(normalizaNome(ce.fornecedor||c.fornecedor||"")!==alvo&&!(ligado(c)&&!ce.fornecedor))return;
       (ce.lancamentos||[]).forEach(l=>{
         if(l.valor===undefined||l.valor==="")return;
         const v=+l.valor||0,lanc=l.lancado!==false;
@@ -4508,14 +4519,14 @@ function vFornecedores(){
   const gastoTotal=todos.reduce((s,f)=>s+gastoFornecedor(f.nome),0);
   const ranking=todos.map(f=>({f,g:gastoFornecedor(f.nome)})).sort((a,b)=>b.g-a.g);
   const top=ranking[0];
-  main.innerHTML=`<div class="head"><div><h1>Central de Fornecedores <span class="tag t-steel" style="font-size:13px;vertical-align:middle">${todos.length}</span></h1><p>Todas as empresas que atendem a obra — veículos, alojamentos, contas, materiais.</p></div><div class="acts"><button class="btn btn-g" onclick="formCanhotoPedido()">🖨 Canhoto de Pedido</button><button class="btn btn-g" onclick="importarFornecedoresDosContratos()">📄 Trazer fornecedores dos contratos</button><button class="btn btn-g" onclick="exportGastosFornecedores()">⭳ Gastos por fornecedor</button><button class="btn btn-g" onclick="exportFornecedoresExcel()">⭳ Exportar Excel</button><button class="btn btn-a" onclick="formFornecedor()">＋ Novo fornecedor</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>Central de Fornecedores <span class="tag t-steel" style="font-size:13px;vertical-align:middle">${todos.length}</span></h1><p>Todas as empresas que atendem a obra — veículos, alojamentos, contas, materiais.</p></div><div class="acts"><button class="btn btn-g" onclick="formCanhotoPedido()">🖨 Canhoto de Pedido</button><button class="btn btn-g" onclick="exportGastosFornecedores()">⭳ Gastos por fornecedor</button><button class="btn btn-g" onclick="exportFornecedoresExcel()">⭳ Exportar Excel</button><button class="btn btn-a" onclick="formFornecedor()">＋ Novo fornecedor</button></div></div>
    <div class="grid stats">
      <div class="stat steel"><div class="n">${todos.length}</div><div class="l">Fornecedores</div></div>
      <div class="stat"><div class="n">${categorias.length}</div><div class="l">Categorias</div></div>
      <div class="stat green"><div class="n">R$ ${gastoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Gasto total lançado</div></div>
      <div class="stat amber"><div class="n" style="font-size:17px;line-height:1.3">${top&&top.g>0?esc(top.f.nome):"—"}</div><div class="l">Maior gasto${top&&top.g>0?" (R$ "+top.g.toLocaleString('pt-BR',{minimumFractionDigits:2})+")":""}</div></div>
    </div>
-   <div class="toolbar"><input type="search" id="forn_busca" placeholder="Buscar por nome, CNPJ, contato..." oninput="_fornBusca=this.value;renderFornecedores()" style="min-width:220px"><select id="forn_cat" onchange="_fornFiltroCat=this.value;renderFornecedores()"><option value="">Todas as categorias</option>${CATEGORIAS_FORNECEDOR.map(c=>`<option value="${c}" ${_fornFiltroCat===c?"selected":""}>${c} (${todos.filter(f=>f.categoria===c).length})</option>`).join("")}</select><select id="forn_pag" onchange="_fornFiltroPag=this.value;renderFornecedores()"><option value="">Todas as formas de pagamento</option><option value="Contrato" ${_fornFiltroPag==="Contrato"?"selected":""}>📄 Faturado via medição de contrato (${todos.filter(f=>f.faturamento==="Contrato").length})</option><option value="TemContrato" ${_fornFiltroPag==="TemContrato"?"selected":""}>Tem contrato cadastrado (${todos.filter(f=>contratosDoFornecedor(f).length>0).length})</option><option value="Faturado" ${_fornFiltroPag==="Faturado"?"selected":""}>Faturado (a prazo)</option><option value="Imediato" ${_fornFiltroPag==="Imediato"?"selected":""}>Pagamento imediato</option></select></div>
+   <div class="toolbar"><input type="search" id="forn_busca" placeholder="Buscar por nome, CNPJ, contato..." oninput="_fornBusca=this.value;renderFornecedores()" style="min-width:220px"><select id="forn_cat" onchange="_fornFiltroCat=this.value;renderFornecedores()"><option value="">Todas as categorias</option>${CATEGORIAS_FORNECEDOR.map(c=>`<option value="${c}" ${_fornFiltroCat===c?"selected":""}>${c} (${todos.filter(f=>f.categoria===c).length})</option>`).join("")}</select><select id="forn_pag" onchange="_fornFiltroPag=this.value;renderFornecedores()"><option value="">Todas as formas de pagamento</option><option value="Contrato" ${_fornFiltroPag==="Contrato"?"selected":""}>📄 Faturado via medição de contrato (${todos.filter(f=>f.faturamento==="Contrato").length})</option><option value="TemContrato" ${_fornFiltroPag==="TemContrato"?"selected":""}>Tem contrato vinculado (${todos.filter(f=>contratosDoFornecedor(f).length>0).length})</option><option value="Faturado" ${_fornFiltroPag==="Faturado"?"selected":""}>Faturado (a prazo)</option><option value="Imediato" ${_fornFiltroPag==="Imediato"?"selected":""}>Pagamento imediato</option></select></div>
    <div id="forn_grupos"></div>`;
   $("#forn_busca").value=_fornBusca;
   renderFornecedores();
