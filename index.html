@@ -216,31 +216,31 @@ async function dbUpsert(table,obj){if(!SUPA.url)return true;_pendingWrites++;try
 async function dbDelete(table,id){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:supaHeaders()});if(!res.ok){console.error("Supabase delete falhou",table,res.status);_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase delete falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
 const _parciais={},_tamTab={};
 async function dbFetchTable(table){
-  /* páginas adaptativas: começa em 200; se o servidor devolver erro 5xx (tempo esgotado por registros pesados),
-     reduz a página e tenta de novo no mesmo ponto, até chegar a 1 registro. Um registro que nem sozinho carrega é pulado e anotado. */
-  const INICIAL=200;let all=[],offset=0,pageSize=INICIAL,okSeq=0,guarda=0,puladas=0;const ruins=[];
+  /* páginas adaptativas: começa em 200; se o servidor devolver 5xx (tempo esgotado por registros pesados), reduz a página
+     e tenta de novo no mesmo ponto, até 1 registro. Registro que nem sozinho carrega é pulado e anotado.
+     Se 3 registros seguidos falham sem nenhum sucesso no meio, a tabela inteira está fora: desiste rápido. */
+  const INICIAL=200;let all=[],offset=0,pageSize=INICIAL,okSeq=0,guarda=0,puladas=0,seguidas=0;const ruins=[];
   delete _parciais[table];
+  const url=(lim,off,sel)=>`${SUPA.url}/rest/v1/${table}?select=${sel||"id,data"}&order=id&limit=${lim}&offset=${off}`;
   while(true){
     if(++guarda>30000)throw new Error("Falha ao buscar "+table+": paginação sem fim");
     let res;
-    try{res=await fetch(`${SUPA.url}/rest/v1/${table}?select=id,data&order=id&limit=${pageSize}&offset=${offset}`,{headers:supaHeaders()});}
+    try{res=await fetch(url(pageSize,offset),{headers:supaHeaders()});}
     catch(e){throw new Error("Falha ao buscar "+table+": sem conexão");}
     if(!res.ok){
       if(res.status>=500&&pageSize>1){pageSize=Math.max(1,Math.floor(pageSize/4));okSeq=0;continue;}
       if(res.status>=500&&pageSize===1){
-        let ok=false;
-        for(let t=0;t<2&&!ok;t++){
-          await new Promise(r=>setTimeout(r,500*(t+1)));
-          try{const r2=await fetch(`${SUPA.url}/rest/v1/${table}?select=id,data&order=id&limit=1&offset=${offset}`,{headers:supaHeaders()});if(r2.ok){const b2=await r2.json();all=all.concat(b2.map(r=>r.data));ok=true;offset+=1;if(b2.length<1)return finalizaFetch(table,all,puladas);}}catch(e){}
-        }
-        if(ok){okSeq++;continue;}
-        try{const ri=await fetch(`${SUPA.url}/rest/v1/${table}?select=id&order=id&limit=1&offset=${offset}`,{headers:supaHeaders()});if(ri.ok){const bi=await ri.json();ruins.push(bi[0]?bi[0].id:("posição "+offset));}else ruins.push("posição "+offset);}catch(e){ruins.push("posição "+offset);}
-        puladas++;offset+=1;
-        if(puladas>25)throw new Error("Falha ao buscar "+table+": "+res.status);
-        continue;
+        await new Promise(r=>setTimeout(r,700));
+        let r2=null;try{r2=await fetch(url(1,offset),{headers:supaHeaders()});}catch(e){}
+        if(r2&&r2.ok){const b2=await r2.json();all=all.concat(b2.map(r=>r.data));seguidas=0;if(b2.length<1)break;offset+=1;okSeq++;continue;}
+        seguidas++;
+        if(seguidas>=3)throw new Error("Falha ao buscar "+table+": "+res.status);
+        try{const ri=await fetch(url(1,offset,"id"),{headers:supaHeaders()});if(ri.ok){const bi=await ri.json();ruins.push(bi[0]?bi[0].id:("posição "+offset));}else ruins.push("posição "+offset);}catch(e){ruins.push("posição "+offset);}
+        puladas++;offset+=1;continue;
       }
       throw new Error("Falha ao buscar "+table+": "+res.status);
     }
+    seguidas=0;
     const batch=await res.json();
     all=all.concat(batch.map(r=>r.data));
     if(batch.length<pageSize)break;
@@ -257,13 +257,22 @@ function finalizaFetch(table,all,puladas){
 }
 async function syncCfg(){if(!SUPA.url)return;try{await fetch(`${SUPA.url}/rest/v1/cfg`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:"cfg",data:DB.cfg})});}catch(e){console.error("Supabase cfg falhou",e);}}
 let _nuvemOk=null;
-async function loadFromSupabase(mostrarToast){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast),800);return;}try{const falhas=[];for(const k of KEYS){const arr=await dbFetchTableComRetry(k);if(arr===null){falhas.push(k);continue;}
+async function loadFromSupabase(mostrarToast,apenas){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast,apenas),800);return;}if(_carregando){if(mostrarToast)toast("Já está atualizando — aguarde um instante.");return;}_carregando=true;_ultimaTentativaTs=Date.now();try{const falhas=[];let falhasSeguidas=0;for(const k of (apenas||KEYS)){const arr=await dbFetchTableComRetry(k);
+      if(arr===null){
+        falhas.push(k);falhasSeguidas++;
+        if(falhasSeguidas>=3&&!apenas){ /* disjuntor: 3 tabelas seguidas fora = nuvem fora do ar; não insiste nas demais */
+          KEYS.slice(KEYS.indexOf(k)+1).forEach(t=>{falhas.push(t);_errTab[t]=_errTab[k]||"fora do ar";});
+          break;
+        }
+        continue;
+      }
+      falhasSeguidas=0;
       const pend=_pendentes[k];let final=arr;
       if(pend&&pend.size){
         final=arr.filter(o=>pend.get(String(o.id))!=="del");
         pend.forEach((tipo,id)=>{if(tipo==="up"){const loc=(DB[k]||[]).find(o=>String(o.id)===id);if(loc){const i=final.findIndex(o=>String(o.id)===id);if(i>=0)final[i]=loc;else final.push(loc);}}});
       }
-      DB[k]=final;_lastSynced[k]=new Map(arr.map(o=>[String(o.id),JSON.stringify(o)]));try{localStorage.setItem("obra:"+k,JSON.stringify(final));}catch(e){}}const res=await fetch(`${SUPA.url}/rest/v1/cfg?select=data&id=eq.cfg`,{headers:supaHeaders()});if(res.ok){const rows=await res.json();if(rows.length){DB.cfg={...CFG_DEFAULT,...rows[0].data};try{localStorage.setItem("obra:cfg",JSON.stringify(DB.cfg));}catch(e){}}}_tabelasFalharam=falhas;_nuvemOk=falhas.length===0;buildNav();render();if(pendenciasNuvem()>0)setTimeout(reenviarPendencias,1200);if(falhas.length)toast("⚠ A nuvem não respondeu para: "+falhas.map(t=>(NOMES_TABELAS[t]||t)+(_errTab[t]?" (erro "+_errTab[t]+")":"")).join(", ")+". Mostrando o que está salvo neste navegador (pode estar incompleto).");else if(mostrarToast)toast("Dados atualizados da nuvem.");}catch(e){console.error("Falha ao carregar do Supabase, usando dados locais.",e);_nuvemOk=false;buildNav();if(mostrarToast)toast("Sem conexão — usando dados locais.");}}
+      DB[k]=final;_lastSynced[k]=new Map(arr.map(o=>[String(o.id),JSON.stringify(o)]));try{localStorage.setItem("obra:"+k,JSON.stringify(final));}catch(e){}}const res=apenas?{ok:false}:await fetch(`${SUPA.url}/rest/v1/cfg?select=data&id=eq.cfg`,{headers:supaHeaders()});if(res.ok){const rows=await res.json();if(rows.length){DB.cfg={...CFG_DEFAULT,...rows[0].data};try{localStorage.setItem("obra:cfg",JSON.stringify(DB.cfg));}catch(e){}}}_ultimaCargaTs=Date.now();_tabelasFalharam=apenas?_tabelasFalharam.filter(t=>!apenas.includes(t)).concat(falhas):falhas;_nuvemOk=_tabelasFalharam.length===0;buildNav();render();if(pendenciasNuvem()>0)setTimeout(reenviarPendencias,1200);if(falhas.length&&!apenas)toast("⚠ A nuvem não respondeu para: "+falhas.map(t=>(NOMES_TABELAS[t]||t)+(_errTab[t]?" (erro "+_errTab[t]+")":"")).join(", ")+". Mostrando o que está salvo neste navegador (pode estar incompleto).");else if(mostrarToast)toast("Dados atualizados da nuvem.");}catch(e){console.error("Falha ao carregar do Supabase, usando dados locais.",e);_nuvemOk=false;buildNav();if(mostrarToast)toast("Sem conexão — usando dados locais.");}finally{_carregando=false;}}
 let DB={func:[],locais:[],mov:[],faltas:[],ferias:[],baixadas:[],reemb:[],veiculos:[],rotas:[],abastecimentos:[],mobilizacoes:[],vagas:[],compras_setores:[],compras_pedidos:[],compras_despesas:[],compras_estoque:[],compras_contratos:[],compras_notas:[],compras_estoque_mov:[],compras_fornecedores:[],almox_pedidos:[],vagas_abertas:[],cfg:{...CFG_DEFAULT}};
 let MEM={};
 function lsOK(){try{localStorage.setItem("_t","1");localStorage.removeItem("_t");return true;}catch(e){return false;}}
@@ -272,6 +281,26 @@ function load(){KEYS.concat("cfg").forEach(k=>{try{const raw=LS?localStorage.get
 let _lastSynced={};
 const _pendentes={};
 let _tabelasFalharam=[];
+let _ultimaCargaTs=0,_ultimaTentativaTs=0,_ultimoReenvioTs=0,_carregando=false;
+function modoAtualizacao(){try{return LS?(localStorage.getItem("obra:_modoRefresh")||"15"):"15";}catch(e){return"15";}}
+function setModoAtualizacao(v){
+  try{if(LS)localStorage.setItem("obra:_modoRefresh",v);}catch(e){}
+  buildNav();
+  toast(v==="manual"?"Atualização só manual — use 🔄 Atualizar quando quiser ver o que os outros mudaram.":"Atualização automática a cada "+v+" minutos.");
+}
+function _txtUltima(){
+  if(!_ultimaCargaTs)return"";
+  const h=new Date(_ultimaCargaTs).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  return " · atualizado "+h+(modoAtualizacao()==="manual"?" (só manual)":"");
+}
+function tickAtualizacao(){
+  if(!SUPA.url||document.hidden||ov.classList.contains("on")||_pendingWrites>0)return;
+  const agora=Date.now();
+  if(pendenciasNuvem()>0&&agora-_ultimoReenvioTs>=120000){_ultimoReenvioTs=agora;reenviarPendencias();}
+  if(_tabelasFalharam.length&&agora-_ultimaTentativaTs>=180000){loadFromSupabase(false,_tabelasFalharam.slice());return;}
+  const modo=modoAtualizacao();
+  if(modo!=="manual"&&agora-_ultimaCargaTs>=(+modo)*60000)loadFromSupabase();
+}
 const NOMES_TABELAS={func:"Funcionários",locais:"Locais",mov:"Movimentações",faltas:"Ponto/Ocorrências",ferias:"Férias",baixadas:"Baixadas",reemb:"Reembolsos",veiculos:"Veículos",rotas:"Rotas",abastecimentos:"Abastecimentos",mobilizacoes:"Mobilizações",vagas:"Vagas",compras_setores:"Setores",compras_pedidos:"Pedidos",compras_despesas:"Despesas",compras_estoque:"Estoque",compras_contratos:"Contratos",compras_notas:"Notas fiscais",compras_estoque_mov:"Mov. de estoque",compras_fornecedores:"Fornecedores",almox_pedidos:"Pedidos de almoxarifado",vagas_abertas:"Vagas abertas"};
 const _errTab={};
 async function dbFetchTableComRetry(k){
@@ -561,15 +590,15 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.9";
-function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
+const APP_VERSAO="v2026-10-02.10";
+function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
     menuFiltrado=MENU.filter(m=>{if(m.sec)return true;const chave=secaoDaTela(m.v);if(!chave)return true;return nivelPermissaoUsuario(chave)!=="nenhum";});
     menuFiltrado=menuFiltrado.filter((m,i)=>{if(!m.sec)return true;for(let j=i+1;j<menuFiltrado.length;j++){if(menuFiltrado[j].sec)return false;return true;}return false;});
     if(CUR!=="permissoes"&&!menuFiltrado.some(m=>m.v===CUR)){CUR="painel";setTimeout(render,0);}
   }
-  nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+menuFiltrado.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><a href="#" onclick="abrirDiagnostico();return false" style="color:#9aa3ad;text-decoration:underline">🔎 Diagnóstico dos dados</a><br><a href="#" onclick="abrirGerenciarPermissoes();return false" style="color:#9aa3ad;text-decoration:underline">⚙ Gerenciar permissões</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
+  nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+menuFiltrado.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}${SUPA.url?`<br><span style="opacity:.9">Atualizar sozinho: <select onchange="setModoAtualizacao(this.value)" style="background:#1a2733;color:#cdd3da;border:1px solid #33414f;border-radius:4px;font-size:11px"><option value="15" ${modoAtualizacao()==="15"?"selected":""}>a cada 15 min</option><option value="30" ${modoAtualizacao()==="30"?"selected":""}>a cada 30 min</option><option value="manual" ${modoAtualizacao()==="manual"?"selected":""}>só manual</option></select></span>`:""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><a href="#" onclick="abrirDiagnostico();return false" style="color:#9aa3ad;text-decoration:underline">🔎 Diagnóstico dos dados</a><br><a href="#" onclick="abrirGerenciarPermissoes();return false" style="color:#9aa3ad;text-decoration:underline">⚙ Gerenciar permissões</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
 function atualizarBannerIdentificacao(){
   const el=$("#idBanner");if(!el)return;
   el.innerHTML=_usuarioLogadoNome?"":`<div class="idbanner-bar" onclick="abrirLoginUsuario()">👤 <b>Você ainda não se identificou.</b> Clique aqui pra identificar-se com seu CPF + PIN — isso garante que fique registrado quem faz cada alteração no sistema.<span style="text-decoration:underline;white-space:nowrap">Identificar-se →</span></div>`;
@@ -4985,7 +5014,7 @@ function exportCandidatosExcel(){
 }
 
 _pendCarregar();load();if(!SUPA.url){seed();seedVeiculos();}buildNav();render();
-if(SUPA.url){loadFromSupabase();setInterval(()=>{if(!ov.classList.contains("on")&&_pendingWrites===0&&!document.hidden){if(pendenciasNuvem()>0)reenviarPendencias();loadFromSupabase();}},90000);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!ov.classList.contains("on")&&_pendingWrites===0)loadFromSupabase();});}
+if(SUPA.url){loadFromSupabase();setInterval(tickAtualizacao,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)tickAtualizacao();});}
 </script>
 </body>
 </html>
