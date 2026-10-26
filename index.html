@@ -403,9 +403,9 @@ async function saveEsperando(k){
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const MS=86400000;
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
-function pd(s){if(!s)return null;const p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function pd(s){if(!s)return null;const p=String(s).split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function fmt(s){if(!s)return"—";const d=pd(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
+function fmt(s){if(!s)return"—";const d=pd(s);if(isNaN(d.getTime()))return String(s);return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();}
 function diasEntre(a,b){return Math.floor((b-a)/MS);}
 function humano(dias){if(dias<0)return"—";const a=Math.floor(dias/365),m=Math.floor((dias%365)/30),d=(dias%365)%30;let o=[];if(a)o.push(a+"a");if(m)o.push(m+"m");if(d||!o.length)o.push(d+"d");return o.join(" ");}
 function estadias(fid){return DB.mov.filter(m=>m.func===fid).sort((a,b)=>(a.entrada>b.entrada?1:-1));}
@@ -590,7 +590,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.11";
+const APP_VERSAO="v2026-10-02.12";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -681,7 +681,7 @@ function abrirLoginUsuario(){
 function buscarPorCpfLogin(){
   const cpfDigitado=($("#lg_cpf").value||"").replace(/\D/g,"");
   if(!cpfDigitado){toast("Digite o CPF.");return;}
-  const f=DB.func.find(x=>ativo(x)&&x.cpf&&x.cpf.replace(/\D/g,"")===cpfDigitado);
+  const f=DB.func.find(x=>ativo(x)&&x.cpf&&soDigitos(x.cpf)===cpfDigitado);
   const wrap=$("#lg_pessoawrap");
   if(!f){wrap.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">Não achei ninguém com esse CPF. Confere se digitou certo — se continuar sem achar, favor entrar em contato com o Vitor Martins.</p>`;return;}
   _usuarioLogadoId=f.id;_usuarioLogadoNome=f.nome;
@@ -737,7 +737,7 @@ function vFunc(){
 }
 function limparFiltrosFunc(){fFiltro="";fStatus="ativo";fFuncao="";fAloj="";fAdmDe="";fAdmAte="";vFunc();}
 function fotoThumb(f,size){return f.foto?`<img src="${f.foto}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block">`:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:#eef0ee;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.42)}px;font-weight:700">${esc((f.nome||"?").charAt(0).toUpperCase())}</div>`;}
-function porNome(list){return list.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));}
+function porNome(list){return list.slice().sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));}
 function funcMatch(list,q){q=(q||"").toLowerCase();const filtrado=q?list.filter(f=>[f.nome,f.matricula,f.cpf,f.funcao,f.cidade,f.empresa].some(v=>(v||"").toLowerCase().includes(q))):list;return porNome(filtrado);}
 function renderFTbl(){
   let list=DB.func.slice();
@@ -1328,7 +1328,7 @@ function salvarCorrecaoSaida(faltaId){
   fa.motivo=$("#cs_obs").value.trim();
   save("faltas");closeModal();render();toast("Saída completada.");
 }
-function normalizaNome(s){return(s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();}
+function normalizaNome(s){return String(s==null?"":s).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();}
 const LOCAL_MARCACOES_OBRA="UNEM - NOVA LIMA / MG";
 function abrirImportarMarcacoes(){$("#marc_file").click();}
 function processarArquivoMarcacoes(e){
@@ -1566,7 +1566,7 @@ function preverImportacaoVale(){
     const volta=paraNumero(cols[iVolta]);
     if(!linha&&!ida&&!volta)return null;
     let match=null;
-    if(cpfRaw)match=DB.func.find(f=>f.cpf&&f.cpf.replace(/\D/g,"")===cpfRaw);
+    if(cpfRaw)match=DB.func.find(f=>f.cpf&&soDigitos(f.cpf)===cpfRaw);
     if(!match)match=DB.func.find(f=>normalizaNome(f.nome)===normalizaNome(nomeRaw));
     return{nomeRaw,cpfRaw,linha,ida,volta,fid:match?match.id:null,fNome:match?match.nome:null};
   }).filter(Boolean);
@@ -2330,7 +2330,7 @@ function tagNotaPendente(p){
   if(prazo&&pd(prazo)<today())return `<span class="tag t-red">🚨 nota fiscal atrasada ${diasEntre(pd(prazo),today())}d</span>`;
   return `<span class="tag t-amber">⚠ nota sem lançamento${prazo?" — até "+fmt(prazo):""}</span>`;
 }
-function nfNormalizaNumero(x){return String(x||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0+/,"");}
+function nfNormalizaNumero(x){return String(x==null?"":x).toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0+/,"");}
 function nfDuplicada(numero,fornecedor,ignorarId){
   const nn=nfNormalizaNumero(numero),fn=normalizaNome(fornecedor||"");
   if(!nn)return{mesma:null,outra:null};
@@ -4146,12 +4146,12 @@ function exportContratosExcel(){
 let _nfFiltroMes="",_nfFiltroForn="",_nfFiltroStatus="",_nfFiltroContrato="";
 function notasFiltradas(){
   let list=DB.compras_notas.slice();
-  if(_nfFiltroMes)list=list.filter(n=>(n.dataEmissao||"").startsWith(_nfFiltroMes));
+  if(_nfFiltroMes)list=list.filter(n=>String(n.dataEmissao||"").startsWith(_nfFiltroMes));
   if(_nfFiltroForn)list=list.filter(n=>(n.fornecedor||"")===_nfFiltroForn);
   if(_nfFiltroContrato)list=list.filter(n=>n.contrato===_nfFiltroContrato);
   if(_nfFiltroStatus==="Pago")list=list.filter(n=>notaStatus(n).txt==="Pago");
   else if(_nfFiltroStatus==="APagar")list=list.filter(n=>notaStatus(n).txt!=="Pago");
-  return list.sort((a,b)=>(b.dataEmissao||"").localeCompare(a.dataEmissao||""));
+  return list.sort((a,b)=>String(b.dataEmissao||"").localeCompare(String(a.dataEmissao||"")));
 }
 function bannerPedidosSemNota(){
   const lista=pedidosFeitosSemNota();if(!lista.length)return"";
@@ -4324,6 +4324,7 @@ function exportNotasExcel(){
 /* ============ COMPRAS: fornecedores ============ */
 const CATEGORIAS_FORNECEDOR=["Locação","Material","Serviço","Veículos/Transporte","Alojamento","Imobiliária","Container","Energia elétrica","Água","Internet","Condomínio","Almoxarifado/Material","Outro"];
 let _fornFiltroCat="",_fornBusca="",_fornFiltroPag="";
+function soDigitos(x){return String(x==null?"":x).replace(/\D/g,"");}
 function fornecedorViaContrato(nome){
   const alvo=normalizaNome(nome||"");
   return DB.compras_fornecedores.some(f=>f.faturamento==="Contrato"&&normalizaNome(f.nome)===alvo);
@@ -4339,8 +4340,8 @@ function novoContratoDoFornecedor(id){
   CUR="contratos";buildNav();render();formContrato();
 }
 function contratosDoFornecedor(fo){
-  const alvo=normalizaNome(fo.nome||""),cnpj=(fo.cnpj||"").replace(/\D/g,"");
-  return DB.compras_contratos.filter(c=>normalizaNome(c.fornecedor||"")===alvo||(cnpj&&(c.cnpj||"").replace(/\D/g,"")===cnpj));
+  const alvo=normalizaNome(fo.nome||""),cnpj=soDigitos(fo.cnpj);
+  return DB.compras_contratos.filter(c=>normalizaNome(c.fornecedor||"")===alvo||(cnpj&&soDigitos(c.cnpj)===cnpj));
 }
 function contratosFornecedorHtml(fo){
   const cts=contratosDoFornecedor(fo);
@@ -4352,11 +4353,11 @@ function contratosFornecedorHtml(fo){
 function importarFornecedoresDosContratos(){
   if(!confirmarSenhaSalvar())return;
   const nomes=new Set(DB.compras_fornecedores.map(f=>normalizaNome(f.nome)));
-  const cnpjs=new Set(DB.compras_fornecedores.map(f=>(f.cnpj||"").replace(/\D/g,"")).filter(Boolean));
+  const cnpjs=new Set(DB.compras_fornecedores.map(f=>soDigitos(f.cnpj)).filter(Boolean));
   const novos=new Map();
   DB.compras_contratos.forEach(c=>{
-    const n=(c.fornecedor||"").trim();if(!n)return;
-    const nn=normalizaNome(n),cj=(c.cnpj||"").replace(/\D/g,"");
+    const n=String(c.fornecedor||"").trim();if(!n)return;
+    const nn=normalizaNome(n),cj=soDigitos(c.cnpj);
     if(nomes.has(nn)||(cj&&cnpjs.has(cj))||novos.has(nn))return;
     novos.set(nn,{nome:n,cnpj:c.cnpj||"",seg:c.segmento||""});
   });
