@@ -260,7 +260,7 @@ let _nuvemOk=null;
 async function loadFromSupabase(mostrarToast,apenas){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast,apenas),800);return;}if(_carregando){if(mostrarToast)toast("Já está atualizando — aguarde um instante.");return;}_carregando=true;_ultimaTentativaTs=Date.now();try{const falhas=[];let falhasSeguidas=0;for(const k of (apenas||KEYS)){const arr=await dbFetchTableComRetry(k);
       if(arr===null){
         falhas.push(k);falhasSeguidas++;
-        if(falhasSeguidas>=3&&!apenas){ /* disjuntor: 3 tabelas seguidas fora = nuvem fora do ar; não insiste nas demais */
+        if(falhasSeguidas>=2&&!apenas){ /* disjuntor: 3 tabelas seguidas fora = nuvem fora do ar; não insiste nas demais */
           KEYS.slice(KEYS.indexOf(k)+1).forEach(t=>{falhas.push(t);_errTab[t]=_errTab[k]||"fora do ar";});
           break;
         }
@@ -305,7 +305,7 @@ const NOMES_TABELAS={func:"Funcionários",locais:"Locais",mov:"Movimentações",
 const _errTab={};
 async function dbFetchTableComRetry(k){
   let cod="";
-  for(let t=0;t<3;t++){
+  for(let t=0;t<2;t++){
     try{const r=await dbFetchTable(k);delete _errTab[k];return r;}
     catch(e){const m=String(e&&e.message||e).match(/\b(\d{3})\b/);cod=m?m[1]:"sem conexão";await new Promise(r=>setTimeout(r,600*(t+1)));}
   }
@@ -590,7 +590,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.10";
+const APP_VERSAO="v2026-10-02.11";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
