@@ -214,16 +214,45 @@ function supaHeaders(extra){return Object.assign({"apikey":SUPA.key,"Content-Typ
 let _pendingWrites=0;
 async function dbUpsert(table,obj){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:String(obj.id),data:obj})});if(!res.ok){console.error("Supabase upsert falhou",table,res.status,await res.text());_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase upsert falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
 async function dbDelete(table,id){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:supaHeaders()});if(!res.ok){console.error("Supabase delete falhou",table,res.status);_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase delete falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
+const _parciais={},_tamTab={};
 async function dbFetchTable(table){
-  let all=[],offset=0;const pageSize=1000;
+  /* páginas adaptativas: começa em 200; se o servidor devolver erro 5xx (tempo esgotado por registros pesados),
+     reduz a página e tenta de novo no mesmo ponto, até chegar a 1 registro. Um registro que nem sozinho carrega é pulado e anotado. */
+  const INICIAL=200;let all=[],offset=0,pageSize=INICIAL,okSeq=0,guarda=0,puladas=0;const ruins=[];
+  delete _parciais[table];
   while(true){
-    const res=await fetch(`${SUPA.url}/rest/v1/${table}?select=id,data&limit=${pageSize}&offset=${offset}`,{headers:supaHeaders()});
-    if(!res.ok)throw new Error("Falha ao buscar "+table+": "+res.status);
+    if(++guarda>30000)throw new Error("Falha ao buscar "+table+": paginação sem fim");
+    let res;
+    try{res=await fetch(`${SUPA.url}/rest/v1/${table}?select=id,data&order=id&limit=${pageSize}&offset=${offset}`,{headers:supaHeaders()});}
+    catch(e){throw new Error("Falha ao buscar "+table+": sem conexão");}
+    if(!res.ok){
+      if(res.status>=500&&pageSize>1){pageSize=Math.max(1,Math.floor(pageSize/4));okSeq=0;continue;}
+      if(res.status>=500&&pageSize===1){
+        let ok=false;
+        for(let t=0;t<2&&!ok;t++){
+          await new Promise(r=>setTimeout(r,500*(t+1)));
+          try{const r2=await fetch(`${SUPA.url}/rest/v1/${table}?select=id,data&order=id&limit=1&offset=${offset}`,{headers:supaHeaders()});if(r2.ok){const b2=await r2.json();all=all.concat(b2.map(r=>r.data));ok=true;offset+=1;if(b2.length<1)return finalizaFetch(table,all,puladas);}}catch(e){}
+        }
+        if(ok){okSeq++;continue;}
+        try{const ri=await fetch(`${SUPA.url}/rest/v1/${table}?select=id&order=id&limit=1&offset=${offset}`,{headers:supaHeaders()});if(ri.ok){const bi=await ri.json();ruins.push(bi[0]?bi[0].id:("posição "+offset));}else ruins.push("posição "+offset);}catch(e){ruins.push("posição "+offset);}
+        puladas++;offset+=1;
+        if(puladas>25)throw new Error("Falha ao buscar "+table+": "+res.status);
+        continue;
+      }
+      throw new Error("Falha ao buscar "+table+": "+res.status);
+    }
     const batch=await res.json();
     all=all.concat(batch.map(r=>r.data));
     if(batch.length<pageSize)break;
-    offset+=pageSize;
+    offset+=pageSize;okSeq++;
+    if(okSeq>=3&&pageSize<INICIAL){pageSize=Math.min(INICIAL,pageSize*4);okSeq=0;}
   }
+  if(ruins.length)_parciais[table]=ruins;
+  return finalizaFetch(table,all,puladas);
+}
+function finalizaFetch(table,all,puladas){
+  if(puladas&&!_parciais[table])_parciais[table]=["?"];
+  try{_tamTab[table]=Math.round(JSON.stringify(all).length/1024);}catch(e){}
   return all;
 }
 async function syncCfg(){if(!SUPA.url)return;try{await fetch(`${SUPA.url}/rest/v1/cfg`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:"cfg",data:DB.cfg})});}catch(e){console.error("Supabase cfg falhou",e);}}
@@ -276,21 +305,24 @@ function _falhaNuvem(k,id,tipo,antes){
 }
 function _okNuvem(k,id){if(_pendentes[k]&&_pendentes[k].delete(String(id)))_pendSalvar();}
 function bannerNuvem(){
-  if(!SUPA.url||_nuvemOk!==false)return;
+  if(!SUPA.url)return;
+  const parc=Object.keys(_parciais);
+  if(_nuvemOk!==false&&!parc.length)return;
   const m=document.getElementById("main");if(!m)return;
   const falt=_tabelasFalharam.length;
   const titulo=falt?"⚠ A nuvem não respondeu por completo — esta tela pode estar INCOMPLETA ou desatualizada":"⚠ A nuvem recusou uma gravação — suas alterações estão guardadas e serão reenviadas";
   const det=falt?`Não carregou: <b>${_tabelasFalharam.map(t=>esc((NOMES_TABELAS[t]||t)+(_errTab[t]?" (erro "+_errTab[t]+")":""))).join(", ")}</b>. Estou mostrando o que está salvo neste navegador${_ultimoErroNuvem?" (erro "+esc(String(_ultimoErroNuvem))+")":""}. Evite cadastrar coisa importante até normalizar.`:`Erro ${esc(String(_ultimoErroNuvem||"?"))}${pendenciasNuvem()?" · "+pendenciasNuvem()+" alteração(ões) por enviar":""}.`;
+  if(_nuvemOk!==false){m.insertAdjacentHTML("afterbegin",`<div class="alert" style="background:#fdf8ee;border:2px solid var(--amber);border-radius:10px;margin-bottom:14px;align-items:center;gap:10px"><span class="dot" style="background:var(--amber)"></span><div class="txt"><b>⚠ Alguns registros pesados não carregaram</b><small>${parc.map(t=>esc((NOMES_TABELAS[t]||t)+": "+_parciais[t].length+" registro(s)")).join(" · ")}. Eles existem na nuvem, mas o servidor não conseguiu entregar. Veja o 🔎 Diagnóstico.</small></div><button class="btn btn-a btn-sm" onclick="abrirDiagnostico()">🔎 Diagnóstico</button></div>`);return;}
   m.insertAdjacentHTML("afterbegin",`<div class="alert" style="background:#fdf1ef;border:2px solid var(--red);border-radius:10px;margin-bottom:14px;align-items:center;gap:10px"><span class="dot" style="background:var(--red)"></span><div class="txt"><b>${titulo}</b><small>${det}</small></div><button class="btn btn-g btn-sm" onclick="loadFromSupabase(true)">Tentar de novo</button><button class="btn btn-a btn-sm" onclick="abrirDiagnostico()">🔎 Diagnóstico</button></div>`);
 }
 async function abrirDiagnostico(){
   const niv=c=>{const n=nivelPermissaoUsuario(c);return n===null?"não identificado":n==="salvar"?"ver e salvar":n==="ver"?"só ver":"sem acesso";};
   const nuvemTxt=!SUPA.url?"não configurada":_nuvemOk===true?"🟢 conectada":_nuvemOk===false?"🔴 com problema":"conectando…";
-  window._dgResumo=[["Versão",APP_VERSAO],["Hoje",fmt(iso(today()))],["Usuário",_usuarioLogadoNome||"não identificado"],["Nuvem",nuvemTxt],["Último erro",String(_ultimoErroNuvem||"nenhum")],["Alterações por enviar",String(pendenciasNuvem())],["Tabelas que não carregaram",_tabelasFalharam.map(t=>(NOMES_TABELAS[t]||t)+(_errTab[t]?" (erro "+_errTab[t]+")":"")).join(", ")||"nenhuma"],["Seu acesso — Contratos",niv("contratos")],["Seu acesso — Fornecedores",niv("fornecedores")],["Seu acesso — Custos de Contratos",niv("custoscontratos")],["Seu acesso — Pedidos",niv("pedidos")]];
+  window._dgResumo=[["Versão",APP_VERSAO],["Hoje",fmt(iso(today()))],["Usuário",_usuarioLogadoNome||"não identificado"],["Nuvem",nuvemTxt],["Último erro",String(_ultimoErroNuvem||"nenhum")],["Alterações por enviar",String(pendenciasNuvem())],["Registros pesados que não carregaram",Object.keys(_parciais).map(t=>(NOMES_TABELAS[t]||t)+": "+_parciais[t].join(", ")).join(" | ")||"nenhum"],["Tabelas que não carregaram",_tabelasFalharam.map(t=>(NOMES_TABELAS[t]||t)+(_errTab[t]?" (erro "+_errTab[t]+")":"")).join(", ")||"nenhuma"],["Seu acesso — Contratos",niv("contratos")],["Seu acesso — Fornecedores",niv("fornecedores")],["Seu acesso — Custos de Contratos",niv("custoscontratos")],["Seu acesso — Pedidos",niv("pedidos")]];
   window._dgLinhas=[];
   openModal(`<div class="modal-h"><h3>🔎 Diagnóstico dos dados</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <table class="tbl" style="font-size:12.5px"><tbody>${window._dgResumo.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td></tr>`).join("")}</tbody></table>
-   <div class="tblwrap" style="max-height:42vh;overflow:auto;margin-top:12px"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Dados</th><th>Neste navegador</th><th>Na nuvem</th><th>Situação</th></tr></thead><tbody>${KEYS.map(k=>`<tr><td>${esc(NOMES_TABELAS[k]||k)}</td><td class="num">${(DB[k]||[]).length}</td><td class="num" id="dg_n_${k}">…</td><td id="dg_s_${k}">verificando…</td></tr>`).join("")}</tbody></table></div>
+   <div class="tblwrap" style="max-height:42vh;overflow:auto;margin-top:12px"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Dados</th><th>Neste navegador</th><th>Na nuvem</th><th>Tamanho</th><th>Situação</th></tr></thead><tbody>${KEYS.map(k=>`<tr><td>${esc(NOMES_TABELAS[k]||k)}</td><td class="num">${(DB[k]||[]).length}</td><td class="num" id="dg_n_${k}">…</td><td class="num">${_tamTab[k]!==undefined?(_tamTab[k]>=1024?(_tamTab[k]/1024).toFixed(1)+" MB":_tamTab[k]+" KB"):"—"}</td><td id="dg_s_${k}">verificando…</td></tr>`).join("")}</tbody></table></div>
    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-a btn-sm" onclick="closeModal();loadFromSupabase(true)">🔄 Recarregar da nuvem agora</button><button class="btn btn-g btn-sm" onclick="copiarDiagnostico()">📋 Copiar relatório</button></div>
    <p class="hint" style="margin-top:8px">Se "Neste navegador" tiver menos que "Na nuvem", a tela está incompleta: clique em Recarregar. Se a nuvem mostrar erro, é problema do Supabase (cota, cobrança ou instabilidade).</p>
    </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Fechar</button></div>`);
@@ -302,13 +334,13 @@ async function abrirDiagnostico(){
       if(r.ok){const mm=(r.headers.get("content-range")||"").match(/\/(\d+)$/);const c=mm?+mm[1]:null;nuvem=c===null?"?":String(c);sit=c===null?"?":c===n?"✓ igual":c>n?"⚠ faltam "+(c-n)+" aqui":"⚠ "+(n-c)+" a mais aqui";}
       else{nuvem="—";sit="✖ erro "+r.status;}
     }catch(e){nuvem="—";sit="✖ sem conexão";}
-    window._dgLinhas.push([NOMES_TABELAS[k]||k,n,nuvem,sit]);
+    window._dgLinhas.push([NOMES_TABELAS[k]||k,n,nuvem,(_tamTab[k]!==undefined?_tamTab[k]+" KB":"—"),sit]);
     const a=document.getElementById("dg_n_"+k),b=document.getElementById("dg_s_"+k);if(a)a.textContent=nuvem;if(b)b.textContent=sit;
   };
   for(let i=0;i<KEYS.length;i+=6)await Promise.all(KEYS.slice(i,i+6).map(um));
 }
 function copiarDiagnostico(){
-  const t="DIAGNÓSTICO CENTRAL DA OBRA\n"+(window._dgResumo||[]).map(r=>r[0]+": "+r[1]).join("\n")+"\n\nTabela | neste navegador | nuvem | situação\n"+(window._dgLinhas||[]).map(r=>r.join(" | ")).join("\n");
+  const t="DIAGNÓSTICO CENTRAL DA OBRA\n"+(window._dgResumo||[]).map(r=>r[0]+": "+r[1]).join("\n")+"\n\nTabela | neste navegador | nuvem | tamanho | situação\n"+(window._dgLinhas||[]).map(r=>r.join(" | ")).join("\n");
   const ok=()=>toast("Relatório copiado — cole no chat pra eu ver.");
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok).catch(()=>{prompt("Copie o relatório:",t);});}
   else prompt("Copie o relatório:",t);
@@ -529,7 +561,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.8";
+const APP_VERSAO="v2026-10-02.9";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
