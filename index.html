@@ -634,7 +634,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.17";
+const APP_VERSAO="v2026-10-02.18";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -2605,7 +2605,7 @@ function migrarFluxoPedidos(){
     const novo=MAPA_STATUS_ANTIGO[p.status];
     if(!novo)return;
     let alvo=novo;
-    if(p.status==="Chegou na obra"&&DB.compras_notas.some(n=>n.pedido===p.id))alvo="Nota fiscal gerada";
+    if(p.status==="Chegou na obra"&&(notasDoPedido(p.id).length>0))alvo="Nota fiscal gerada";
     p.statusAnterior=p.status;p.status=alvo;mudou=true;
   });
   /* uma única vez: pedidos anteriores a 18/08 ficam Finalizados; os próximos seguem o fluxo novo.
@@ -2629,9 +2629,9 @@ function prazoNotaPedido(p){
   const d=dataPedidoFeito(p);if(!d)return"";
   return iso(new Date(pd(d).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS));
 }
-function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!pedidoAntigo(p)&&!DB.compras_notas.some(n=>n.pedido===p.id));}
+function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!pedidoAntigo(p)&&!(notasDoPedido(p.id).length>0));}
 function tagNotaPendente(p){
-  if(p.status!=="Pedido feito"||pedidoAntigo(p)||DB.compras_notas.some(n=>n.pedido===p.id))return"";
+  if(p.status!=="Pedido feito"||pedidoAntigo(p)||(notasDoPedido(p.id).length>0))return"";
   const prazo=prazoNotaPedido(p);
   if(prazo&&pd(prazo)<today())return `<span class="tag t-red">🚨 nota fiscal atrasada ${diasEntre(pd(prazo),today())}d</span>`;
   return `<span class="tag t-amber">⚠ nota sem lançamento${prazo?" — até "+fmt(prazo):""}</span>`;
@@ -2715,7 +2715,7 @@ function vPainelCompras(){
   const ocsSemNotaFiscalNoPrazo=[];
   DB.compras_pedidos.forEach(p=>{
     if(pedidoEncerrado(p))return;
-    const temNota=DB.compras_notas.some(n=>n.pedido===p.id);
+    const temNota=(notasDoPedido(p.id).length>0);
     if(temNota)return;
     (p.ordensCompra||[]).forEach(oc=>{
       if(oc.prazoEstimado&&pd(oc.prazoEstimado)<today())ocsVencidasSemNota.push({p,oc});
@@ -2791,6 +2791,7 @@ function delSetor(id){if(!confirm("Excluir este setor?"))return;DB.compras_setor
 
 /* ============ COMPRAS: pedidos ============ */
 let _pedFiltroSetor="",_pedFiltroStatus="",_pedFiltroForn="",_pedFiltroBusca="";
+let _pedFiltroSol="",_pedFiltroLanc="";
 const TIPOS_PEDIDO=["Material","Serviço","Locação","EPI/Segurança","Manutenção","Outro"];
 function aprovadoresPedidos(){
   /* Quem aprova: funcionários ativos marcados como "Aprovador de pedidos" (Gerenciar permissões).
@@ -2849,7 +2850,7 @@ function proximaDataDiaSemana(diaSemana){
 function vPedidos(){
   const fornecedores=[...new Set(DB.compras_pedidos.flatMap(p=>(p.ordensCompra||[]).map(oc=>oc.fornecedor)).filter(Boolean))].sort();
   main.innerHTML=`<div class="head"><div><h1>Pedidos de compra <span id="ped_total" class="tag t-steel" style="font-size:13px;vertical-align:middle"></span></h1><p>Fluxo: ${STATUS_FLUXO.join(" → ")}</p></div><div class="acts"><button class="btn btn-g" onclick="formFinalizarPedidosAntigos()">✔ Finalizar pedidos antigos</button><button class="btn btn-g" onclick="formLancamentoDireto()">🖇 Lançar direto (compra por fora)</button><button class="btn btn-a" onclick="formPedido()">＋ Novo pedido</button></div></div>
-   <div class="toolbar"><input type="search" id="pf_busca" placeholder="Buscar por item/descrição..." value="${esc(_pedFiltroBusca)}" oninput="_pedFiltroBusca=this.value;renderPedidosTbl()"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${_pedFiltroSetor===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><select id="pf_forn" onchange="_pedFiltroForn=this.value;renderPedidosTbl()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_pedFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="pf_status" onchange="_pedFiltroStatus=this.value;renderPedidosTbl()"><option value="">Todas as etapas</option>${STATUS_FLUXO.map(s=>`<option value="${s}" ${_pedFiltroStatus===s?"selected":""}>${s}</option>`).join("")}</select></div>
+   <div class="toolbar"><input type="search" id="pf_busca" placeholder="Buscar por item/descrição..." value="${esc(_pedFiltroBusca)}" oninput="_pedFiltroBusca=this.value;renderPedidosTbl()"><select id="pf_setor" onchange="_pedFiltroSetor=this.value;renderPedidosTbl()"><option value="">Todos os setores</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${_pedFiltroSetor===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select><select id="pf_forn" onchange="_pedFiltroForn=this.value;renderPedidosTbl()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_pedFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="pf_status" onchange="_pedFiltroStatus=this.value;renderPedidosTbl()"><option value="">Todas as etapas</option>${STATUS_FLUXO.map(s=>`<option value="${s}" ${_pedFiltroStatus===s?"selected":""}>${s}</option>`).join("")}</select><select id="pf_sol" onchange="_pedFiltroSol=this.value;renderPedidosTbl()"><option value="">Quem fez o pedido</option>${[...new Set(DB.compras_pedidos.map(nomeSolicitante).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>`<option ${_pedFiltroSol===x?"selected":""}>${esc(x)}</option>`).join("")}</select><select id="pf_lanc" onchange="_pedFiltroLanc=this.value;renderPedidosTbl()"><option value="">Lançado por</option>${[...new Set(DB.compras_pedidos.map(p=>p.lancadoPor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(x=>`<option ${_pedFiltroLanc===x?"selected":""}>${esc(x)}</option>`).join("")}</select></div>
    <div class="toolbar">
      <button class="btn ${!_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=false;render()">Em andamento <span class="tag t-grey">${DB.compras_pedidos.filter(p=>!pedidoEncerrado(p)).length}</span></button>
      <button class="btn ${_pedMostrarPagos?'btn-a':'btn-g'} btn-sm" onclick="_pedMostrarPagos=true;render()">✔ Finalizados e anteriores <span class="tag t-green">${DB.compras_pedidos.filter(p=>pedidoEncerrado(p)).length}</span></button>
@@ -2895,8 +2896,10 @@ function renderPedidosTbl(){
   if(_pedFiltroSetor)list=list.filter(p=>p.setor===_pedFiltroSetor);
   if(_pedFiltroForn)list=list.filter(p=>(p.ordensCompra||[]).some(oc=>oc.fornecedor===_pedFiltroForn));
   if(_pedFiltroStatus)list=list.filter(p=>p.status===_pedFiltroStatus);
+  if(_pedFiltroSol)list=list.filter(p=>nomeSolicitante(p)===_pedFiltroSol);
+  if(_pedFiltroLanc)list=list.filter(p=>(p.lancadoPor||"")===_pedFiltroLanc);
   list=list.filter(p=>_pedMostrarPagos?pedidoEncerrado(p):!pedidoEncerrado(p));
-  if(_pedFiltroBusca){const q=_pedFiltroBusca.toLowerCase();list=list.filter(p=>(resumoItensPedidoCurto(p)||"").toLowerCase().includes(q));}
+  if(_pedFiltroBusca){const q=_pedFiltroBusca.toLowerCase();list=list.filter(p=>((resumoItensPedidoCurto(p)||"")+" "+nomeSolicitante(p)).toLowerCase().includes(q));}
   list.sort((a,b)=>{const ua=(a.nivelUrgencia==="Urgente"||(a.foraDoDia&&!a.excecaoLiberada))&&a.status==="Solicitado",ub=(b.nivelUrgencia==="Urgente"||(b.foraDoDia&&!b.excecaoLiberada))&&b.status==="Solicitado";if(!_pedMostrarPagos&&ua!==ub)return ua?-1:1;return (a.data||"").localeCompare(b.data||"");});
   const el=$("#ped_tbl");if(!el)return;
   const totalEl=$("#ped_total");if(totalEl)totalEl.textContent=list.length;
@@ -2907,7 +2910,7 @@ function renderPedidosTbl(){
     const ocs=p.ordensCompra||[];
     return `<div class="panel" style="${destaque?'border-left:4px solid var(--red)':''}"><div style="padding:14px 18px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">
-        <div><b>${esc(funcNome(p.solicitante))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora do dia — precisa liberação</span>':''}</div>
+        <div><b>${esc(nomeSolicitante(p))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}${p.localPedido?" · "+esc(p.localPedido):""}${(p.lancadoPor&&!p.lancamentoDireto)?` · lançado por <b>${esc(p.lancadoPor)}</b>`:""}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora do dia — precisa liberação</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado&&!pedidoEncerrado(p)?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}${pedidoAntigo(p)?'<span class="tag t-grey">fluxo antigo</span>':''}${p.viaRegularizacao?'<span class="tag t-steel">via regularização</span>':''}${p.viaNotaFiscal?'<span class="tag t-steel">via nota fiscal</span>':''}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
       </div>
       <p class="hint" style="margin:0 0 10px">${resumoItensPedidoCurto(p)||"—"}</p>
@@ -2940,8 +2943,9 @@ function formPedido(id,prefill){
   const p=id?DB.compras_pedidos.find(x=>x.id===id):{data:iso(today()),nivelUrgencia:"Normal",...(prefill||{})};
   _pedSolicitante=p.solicitante||"";
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} pedido</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="fg"><label>Solicitante * <span class="opt">(só quem está ativo no efetivo)</span></label><div class="cbx"><input id="pd_busca" placeholder="Digite o nome..." autocomplete="off"><div class="cbx-list" id="pd_list"></div></div><div id="pd_picked"></div></div>
+   <div class="fg"><label>Quem fez o pedido * <span class="opt">(só quem está ativo no efetivo)</span></label><div class="cbx"><input id="pd_busca" placeholder="Digite o nome..." autocomplete="off"><div class="cbx-list" id="pd_list"></div></div><div id="pd_picked"></div><p class="hint" style="margin-top:6px">📝 Quem está lançando: <b>${esc(id&&p.lancadoPor?p.lancadoPor:nomeUsuarioLogado()||"— (identifique-se)")}</b> (almoxarifado) · registrado em ${fmt(id&&p.lancadoEm?p.lancadoEm:iso(today()))}</p></div>
    <div class="row2"><div class="fg"><label>Setor *</label><select id="pd_setor" onchange="avisoDiaPedido()">${DB.compras_setores.map(s=>`<option value="${s.id}" ${s.id===p.setor?"selected":""}>${esc(s.nome)}</option>`).join("")}</select></div><div class="fg"><label>Data do pedido * <span class="opt">(sugerida pro dia certo do setor — não pode ser retroativa)</span></label><input type="date" id="pd_data" value="${esc(p.data)}" min="${iso(today())}" onchange="avisoDiaPedido()"></div></div>
+   <div class="fg"><label>Local / frente de serviço <span class="opt">(opcional — onde o pedido foi feito ou vai ser usado)</span></label><input id="pd_local" list="pd_locallist" value="${esc(p.localPedido)}"><datalist id="pd_locallist">${DB.locais.map(l=>`<option value="${esc(l.nome)}">`).join("")}</datalist></div>
    <div id="pd_aviso"></div>
    <div id="pd_motivowrap" style="display:none"><div class="fg"><label>Justificativa da exceção *</label><textarea id="pd_motivoexcecao" rows="2" placeholder="ex.: esqueci de enviar na quinta, item quebrou hoje, etc.">${esc(p.motivoExcecao)}</textarea></div></div>
    <div class="row2"><div class="fg"><label>Tipo de pedido</label><select id="pd_tipo">${TIPOS_PEDIDO.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Nível de urgência</label><select id="pd_urgencia"><option ${p.nivelUrgencia==="Normal"?"selected":""}>Normal</option><option ${p.nivelUrgencia==="Atenção"?"selected":""}>Atenção</option><option ${p.nivelUrgencia==="Urgente"?"selected":""}>Urgente</option></select></div></div>
@@ -2995,13 +2999,13 @@ function salvarPedido(id){
   const itensLista=_itensPedidoTemp.slice();
   if(id){
     const p=DB.compras_pedidos.find(x=>x.id===id);
-    Object.assign(p,{solicitante:_pedSolicitante,setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),obs:$("#pd_obs").value.trim()});
+    Object.assign(p,{solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),obs:$("#pd_obs").value.trim()});
     if(fora&&!p.foraDoDia){p.foraDoDia=true;p.motivoExcecao=motivoExcecao;p.excecaoLiberada=false;}
     else if(fora){p.motivoExcecao=motivoExcecao;}
     save("compras_pedidos");closeModal();render();toast("Pedido atualizado.");
     return;
   }
-  const o={id:uid(),fluxoNovo:true,solicitante:_pedSolicitante,setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
+  const o={id:uid(),fluxoNovo:true,solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),lancadoPor:nomeUsuarioLogado(),lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
   DB.compras_pedidos.push(o);save("compras_pedidos");closeModal();render();toast("Pedido criado.");
 }
 const TIPOS_AQUISICAO=["Compra","Aluguel"];
@@ -3034,9 +3038,10 @@ function formLancamentoDireto(){
   openModal(`<div class="modal-h"><h3>🖇 Lançar direto — compra feita por fora</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <p class="hint" style="margin-bottom:14px">Pra compras que já aconteceram sem passar pelo pedido normal (feitas direto pelo ADM) — preenche o que já souber agora, o resto completa depois editando.</p>
    <div class="row2"><div class="fg"><label>Setor *</label><select id="ld_setor">${DB.compras_setores.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select></div><div class="fg"><label>Data da compra *</label><input type="date" id="ld_data" value="${iso(today())}"></div></div>
+   <div class="row2"><div class="fg"><label>Quem fez o pedido *</label><input id="ld_solic" list="ld_soliclist" placeholder="nome de quem pediu"><datalist id="ld_soliclist">${DB.func.filter(f=>ativo(f)).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div><div class="fg"><label>Local / frente de serviço <span class="opt">(opcional)</span></label><input id="ld_local" list="ld_locallist"><datalist id="ld_locallist">${DB.locais.map(l=>`<option value="${esc(l.nome)}">`).join("")}</datalist></div></div>
    <div class="fg"><label>O que é / material <span class="opt">(descrição do que foi comprado)</span></label><input id="ld_desc" placeholder="ex.: material elétrico, peça de reposição..."></div>
    <div class="fg"><label>Itens <span class="opt">(opcional — um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="ld_itens" rows="4" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('ld_itens','ld_itens_info')"></textarea><div id="ld_itens_info" class="hint"></div></div>
-   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando essa compra)</span></label><input id="ld_lancadopor" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
+   <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando — o almoxarife)</span></label><input id="ld_lancadopor" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
    <div class="fg"><label>Já lançou a nota em Notas Fiscais? <span class="opt">(vincule aqui — não precisa digitar a nota de novo)</span></label><select id="ld_notaexist" onchange="ldNotaExistenteMudou()"><option value="">— não, a nota ainda não foi lançada —</option>${DB.compras_notas.filter(n=>!n.pedido&&!n.viaRegularizacao).sort((a,b)=>String(b.dataEmissao||"").localeCompare(String(a.dataEmissao||""))).map(n=>`<option value="${n.id}">NF ${esc(n.numero)} — ${esc(n.fornecedor||"sem fornecedor")} — ${fmt(n.dataEmissao)} — R$ ${(+n.valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}</option>`).join("")}</select></div>
    <div id="ld_regul_info" style="display:none;background:#eaf4ee;border-left:4px solid var(--green);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">📄 <b>Via regularização</b>: não tem ordem de compra. O lançamento vai <b>direto pra pagamento</b> — preencha a nota abaixo (número, valor, vencimento e forma de pagamento).</div>
    <div class="sub">Ordem de Compra <span class="opt">— Fluig do pedido/OC</span></div>
@@ -3059,6 +3064,9 @@ function salvarLancamentoDireto(){
   const setor=$("#ld_setor").value,data=$("#ld_data").value,lancadoPor=$("#ld_lancadopor").value.trim();
   if(!setor||!data){toast("Preencha setor e data.");return;}
   if(!lancadoPor){toast("Informe quem está lançando.");return;}
+  const solicNome=$("#ld_solic").value.trim();
+  if(!solicNome){toast("Informe quem fez o pedido.");return;}
+  const solicF=DB.func.find(f=>ativo(f)&&normalizaNome(f.nome)===normalizaNome(solicNome));
   const notaExistId=$("#ld_notaexist")?$("#ld_notaexist").value:"";
   let fornecedor=$("#ld_forn").value.trim();
   if(!fornecedor&&notaExistId){const nn=DB.compras_notas.find(x=>x.id===notaExistId);fornecedor=nn?(nn.fornecedor||""):"";}
@@ -3075,7 +3083,7 @@ function salvarLancamentoDireto(){
     const dup=nfDuplicada($("#ld_nfnum").value.trim(),fornecedor);
     if(dup.mesma){toast("🚫 A NF "+$("#ld_nfnum").value.trim()+" desse fornecedor já foi lançada (emissão "+fmt(dup.mesma.dataEmissao)+"). Não dá pra lançar duas vezes.");return;}
   }
-  const dados={setor,data,lancadoPor,fornecedor,regul,notaExistId,itens:parsearItensDeTexto($("#ld_itens").value),desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
+  const dados={setor,data,lancadoPor,solicitanteNome:solicNome,solicitanteId:solicF?solicF.id:"",local:$("#ld_local").value.trim(),fornecedor,regul,notaExistId,itens:parsearItensDeTexto($("#ld_itens").value),desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
     temNota,nfnum:$("#ld_nfnum").value.trim(),nfvalor:$("#ld_nfvalor").value,nffluignum:$("#ld_nffluignum").value.trim(),nffluiglink:$("#ld_nffluiglink").value.trim(),nfemissao:$("#ld_nfemissao").value,nfprazo:$("#ld_nfprazo").value,nfforma:$("#ld_nfforma").value};
   if(fornecedor&&!DB.compras_fornecedores.some(f=>f.nome.toLowerCase()===fornecedor.toLowerCase())){
     if(confirm('O fornecedor "'+fornecedor+'" ainda não está cadastrado. Cadastrar agora?')){
@@ -3090,7 +3098,7 @@ function salvarLancamentoDireto(){
 function concluirSalvarLancamentoDireto(d){
   let linkFluig=d.fluiglink;
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:uid(),fluxoNovo:true,solicitante:"",lancamentoDireto:true,lancadoPor:d.lancadoPor,setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:(d.itens&&d.itens.length)?d.itens:(d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[]),valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:(d.temNota||d.notaExistId)?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
+  const o={id:uid(),fluxoNovo:true,solicitante:d.solicitanteId||"",solicitanteNome:d.solicitanteNome||"",localPedido:d.local||"",lancamentoDireto:true,lancadoPor:d.lancadoPor,lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:(d.itens&&d.itens.length)?d.itens:(d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[]),valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:(d.temNota||d.notaExistId)?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
   const ocId=uid();
   if(d.regul){o.viaRegularizacao=true;o.origemCompra="Via regularização";if(!d.obs)o.obs="Via regularização — lançamento direto pra pagamento, registrado por "+d.lancadoPor;if(d.desc&&d.itens&&d.itens.length)o.obs+=" · "+d.desc;}
   o.ordensCompra=d.regul?[]:[{id:ocId,numero:d.ocnum,numeroFluig:d.fluignum,linkFluig,origemCompra:d.origem,fornecedor:d.fornecedor,tipoAquisicao:d.tipoaq,duracaoAluguel:"",prazoEstimado:"",dataCriacao:d.data,prazoNotaFiscal:iso(new Date(pd(d.data).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS)),itensIncluidos:[],obs:""}];
@@ -3117,7 +3125,7 @@ function abrirEmailAprovacao(id){
   if(!dest){toast('Esse setor não tem e-mail cadastrado. Vai em "Setores" e adiciona antes de enviar.');return;}
   const itens=(p.itensLista&&p.itensLista.length)?p.itensLista.map(it=>`- ${it.quantidade?it.quantidade+"x ":""}${it.nome}`).join("\n"):(p.itens||"—");
   const assunto=`Aprovação de pedido — ${setorNome(p.setor)} — ${fmt(p.data)}`;
-  const corpo=`Olá,\n\nSegue pedido pra aprovação:\n\nSolicitante: ${funcNome(p.solicitante)}\nSetor: ${setorNome(p.setor)}\nData do pedido: ${fmt(p.data)}\nUrgência: ${p.nivelUrgencia||"Normal"}\nTipo: ${p.tipo||"—"}\n\nItens:\n${itens}\n\nValor estimado: R$ ${(+p.valorEstimado||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}\n\nPor favor confirmar aprovação.\n\nObra GM.MG.00083 — Vale — Nova Lima`;
+  const corpo=`Olá,\n\nSegue pedido pra aprovação:\n\nSolicitante: ${nomeSolicitante(p)}\nSetor: ${setorNome(p.setor)}\nData do pedido: ${fmt(p.data)}\nUrgência: ${p.nivelUrgencia||"Normal"}\nTipo: ${p.tipo||"—"}\n\nItens:\n${itens}\n\nValor estimado: R$ ${(+p.valorEstimado||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}\n\nPor favor confirmar aprovação.\n\nObra GM.MG.00083 — Vale — Nova Lima`;
   window.location.href=`mailto:${dest}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
 }
 function abrirEmailChegada(id){
@@ -3126,7 +3134,7 @@ function abrirEmailChegada(id){
   if(!dest){toast('Esse setor não tem e-mail cadastrado. Vai em "Setores" e adiciona antes de enviar.');return;}
   const itens=(p.itensLista&&p.itensLista.length)?p.itensLista.map(it=>`- ${it.quantidade?it.quantidade+"x ":""}${it.nome}`).join("\n"):(p.itens||"—");
   const assunto=`Pedido chegou na obra — ${setorNome(p.setor)}`;
-  const corpo=`Olá,\n\nO pedido abaixo chegou na obra e está aguardando nota fiscal / envio pra pagamento:\n\nSolicitante: ${funcNome(p.solicitante)}\nSetor: ${setorNome(p.setor)}\nData do pedido: ${fmt(p.data)}\n\nItens:\n${itens}\n\nObra GM.MG.00083 — Vale — Nova Lima`;
+  const corpo=`Olá,\n\nO pedido abaixo chegou na obra e está aguardando nota fiscal / envio pra pagamento:\n\nSolicitante: ${nomeSolicitante(p)}\nSetor: ${setorNome(p.setor)}\nData do pedido: ${fmt(p.data)}\n\nItens:\n${itens}\n\nObra GM.MG.00083 — Vale — Nova Lima`;
   window.location.href=`mailto:${dest}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
 }
 function formOrdemCompra(pedidoId,ocId){
@@ -3225,21 +3233,22 @@ function avisoNotaPedido(p){
   let h="";
   if(p.viaRegularizacao&&!pedidoAntigo(p))h+=`<div class="alert" style="background:#eaf4ee;border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--green)"></span><div class="txt"><b>Via regularização</b><small>Sem ordem de compra — lançado direto pra pagamento.</small></div></div>`;
   if(pedidoAntigo(p))return `<div class="alert" style="background:#f3f4f2;border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--muted)"></span><div class="txt"><b>Pedido do fluxo antigo</b><small>Feito antes de ${fmt(fluxoNovoAPartirDe())} — não segue o fluxo novo e não gera alerta de nota.</small></div></div><button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="reabrirPedidoAntigo('${p.id}')">Reabrir no fluxo novo</button> `;
-  if(p.status==="Pedido feito"&&!DB.compras_notas.some(n=>n.pedido===p.id)){
+  if(p.status==="Pedido feito"&&!(notasDoPedido(p.id).length>0)){
     const prazo=prazoNotaPedido(p),atrasado=prazo&&pd(prazo)<today();
     h+=`<div class="alert" style="background:${atrasado?'var(--red-l)':'#fdf8ee'};border-radius:8px;margin-bottom:14px"><span class="dot" style="background:${atrasado?'var(--red)':'var(--amber)'}"></span><div class="txt"><b>${atrasado?"🚨 Nota fiscal atrasada":"⚠ Nota fiscal sem lançamento"}</b><small>Pedido feito em ${fmt(dataPedidoFeito(p))}${prazo?" · prazo da nota até "+fmt(prazo):""}. Lance a nota em Notas Fiscais.</small></div></div><button class="btn btn-a btn-sm" style="margin-bottom:14px" onclick="closeModal();lancarNotaDoPedido('${p.id}')">Lançar a nota deste pedido</button> `;
   }
   if(p.itemEstoque&&!p.entradaEstoqueData&&["Pedido feito","Nota fiscal gerada","Finalizado"].includes(p.status))h+=`<button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="formEntradaEstoquePedido('${p.id}')">📦 Registrar chegada no estoque</button>`;
-  if(!p.viaRegularizacao){const nn=DB.compras_notas.filter(n=>n.pedido===p.id).length;h+=`<button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="closeModal();formVincularNotas('${p.id}')">🔗 Vincular nota fiscal${nn?" ("+nn+")":""}</button> `;}
+  {const nts=notasDoPedido(p.id);if(nts.length)h+=`<div class="hint" style="margin-bottom:10px"><b>Notas fiscais deste pedido (${nts.length}):</b> ${nts.map(n=>"NF "+esc(n.numero)+" · R$ "+valorDaNotaNoPedido(n,p.id).toLocaleString("pt-BR",{minimumFractionDigits:2})+(nPedidosDaNota(n)>1?" (compartilhada com "+(nPedidosDaNota(n)-1)+" outro(s) pedido(s))":"")).join(" — ")}</div>`;}
+  if(!p.viaRegularizacao){const nn=notasDoPedido(p.id).length;h+=`<button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="closeModal();formVincularNotas('${p.id}')">🔗 Vincular nota fiscal${nn?" ("+nn+")":""}</button> `;}
   return h;
 }
 function _ocMinimaDaNota(p,n){
   const oc={id:uid(),numero:"",numeroFluig:"",linkFluig:"",origemCompra:"Via nota fiscal",fornecedor:n.fornecedor||"",tipoAquisicao:TIPOS_AQUISICAO[0],duracaoAluguel:"",prazoEstimado:"",dataCriacao:n.dataEmissao||iso(today()),prazoNotaFiscal:"",itensIncluidos:[],obs:"Criada ao vincular a nota "+n.numero};
   (p.ordensCompra=p.ordensCompra||[]).push(oc);return oc;
 }
-function _novoPedidoDeNota(o,setor,itens){
+function _novoPedidoDeNota(o,setor,itens,solicNome,solicId,local){
   const ocId=uid();
-  const ped={id:uid(),fluxoNovo:true,solicitante:"",lancamentoDireto:false,viaNotaFiscal:true,lancadoPor:nomeUsuarioLogado(),setor,data:o.dataEmissao,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:itens,valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:"Nota fiscal gerada",pedidoFeitoData:o.dataEmissao,statusHistorico:[{status:"Solicitado",data:o.dataEmissao},{status:"Nota fiscal gerada",data:o.dataEmissao}],obs:"Criado a partir da nota fiscal "+o.numero+" (via lançamento de nota fiscal)",
+  const ped={id:uid(),fluxoNovo:true,solicitante:solicId||"",solicitanteNome:solicNome||"",localPedido:local||"",lancamentoDireto:false,viaNotaFiscal:true,lancadoPor:nomeUsuarioLogado(),lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor,data:o.dataEmissao,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:itens,valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:"Nota fiscal gerada",pedidoFeitoData:o.dataEmissao,statusHistorico:[{status:"Solicitado",data:o.dataEmissao},{status:"Nota fiscal gerada",data:o.dataEmissao}],obs:"Criado a partir da nota fiscal "+o.numero+" (via lançamento de nota fiscal)",
     ordensCompra:[{id:ocId,numero:"",numeroFluig:"",linkFluig:"",origemCompra:"Via nota fiscal",fornecedor:o.fornecedor||"",tipoAquisicao:TIPOS_AQUISICAO[0],duracaoAluguel:"",prazoEstimado:"",dataCriacao:o.dataEmissao,prazoNotaFiscal:"",itensIncluidos:[],obs:""}]};
   return{ped,ocId};
 }
@@ -3247,43 +3256,46 @@ function formVincularNotas(pid){
   const p=DB.compras_pedidos.find(x=>x.id===pid);if(!p)return;
   const ocs=p.ordensCompra||[];
   const fornPed=new Set(ocs.map(o=>normalizaNome(o.fornecedor||"")).filter(Boolean));
-  const cand=DB.compras_notas.filter(n=>n.pedido===p.id||(!n.pedido&&!n.viaRegularizacao));
-  const peso=n=>(n.pedido===p.id?0:(fornPed.has(normalizaNome(n.fornecedor||""))?1:2));
+  const cand=DB.compras_notas.filter(n=>notaLigadaAoPedido(n,p.id)||!n.viaRegularizacao);
+  const peso=n=>(notaLigadaAoPedido(n,p.id)?0:(!n.pedido?(fornPed.has(normalizaNome(n.fornecedor||""))?1:2):3));
   cand.sort((a,b)=>peso(a)-peso(b)||String(b.dataEmissao||"").localeCompare(String(a.dataEmissao||"")));
   const brl=v=>"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+  const outroPedido=n=>{const v=vinculosDaNota(n)[0];if(!v)return"";const pp=DB.compras_pedidos.find(x=>x.id===v.pedidoId);return pp?(nomeSolicitante(pp)||setorNome(pp.setor)||"outro pedido"):"outro pedido";};
   openModal(`<div class="modal-h"><h3>🔗 Notas fiscais do pedido</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <p class="hint" style="margin-bottom:10px">Marque as notas que já foram lançadas em Notas Fiscais e pertencem a este pedido. Desmarcar uma nota já vinculada desfaz o vínculo.</p>
+   <p class="hint" style="margin-bottom:10px">Um pedido pode ter <b>várias notas</b>, e uma nota pode cobrir <b>vários pedidos</b>. Marque as notas deste pedido. Notas que já estão em outro pedido aparecem com aviso: marcar compartilha a nota entre os dois pedidos. Desmarcar uma nota desfaz o vínculo só com este pedido.</p>
    ${ocs.length>1?`<div class="fg"><label>Ordem de compra das notas novas</label><select id="vn_oc">${ocs.map(o=>`<option value="${o.id}">${esc(o.numero||"s/nº")} — ${esc(o.fornecedor||"sem fornecedor")}</option>`).join("")}</select></div>`:""}
    <div class="fg"><input id="vn_busca" placeholder="Filtrar por número ou fornecedor..." oninput="filtrarVincularNotas()"></div>
-   <div id="vn_lista" style="max-height:44vh;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:6px 10px">${cand.length?cand.map(n=>`<label class="vn_item" data-txt="${esc((String(n.numero||"")+" "+String(n.fornecedor||"")).toLowerCase())}" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="vn_chk" value="${n.id}" ${n.pedido===p.id?"checked":""} style="width:auto;margin-top:3px"><span><b>NF ${esc(n.numero)}</b> — ${esc(n.fornecedor||"sem fornecedor")} · ${fmt(n.dataEmissao)} · ${brl(n.valor)}${n.tipoNota?` <small>· ${esc(n.tipoNota)}</small>`:""}${n.pedido===p.id?' <span class="tag t-green" style="font-size:10px">já vinculada</span>':(fornPed.has(normalizaNome(n.fornecedor||""))?' <span class="tag t-steel" style="font-size:10px">mesmo fornecedor</span>':'')}</span></label>`).join(""):'<p class="hint">Nenhuma nota disponível: todas já estão ligadas a algum pedido. Lance a nota em Notas Fiscais primeiro.</p>'}</div>
+   <div id="vn_lista" style="max-height:44vh;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:6px 10px">${cand.length?cand.map(n=>{const meu=notaLigadaAoPedido(n,p.id);return `<label class="vn_item" data-txt="${esc((String(n.numero||"")+" "+String(n.fornecedor||"")).toLowerCase())}" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="vn_chk" value="${n.id}" ${meu?"checked":""} style="width:auto;margin-top:3px"><span><b>NF ${esc(n.numero)}</b> — ${esc(n.fornecedor||"sem fornecedor")} · ${fmt(n.dataEmissao)} · ${brl(n.valor)}${n.tipoNota?` <small>· ${esc(n.tipoNota)}</small>`:""}${meu?' <span class="tag t-green" style="font-size:10px">já vinculada</span>':(!n.pedido?(fornPed.has(normalizaNome(n.fornecedor||""))?' <span class="tag t-steel" style="font-size:10px">mesmo fornecedor</span>':''):` <span class="tag t-amber" style="font-size:10px">já está no pedido de ${esc(outroPedido(n))} — marcar compartilha</span>`)}</span></label>`;}).join(""):'<p class="hint">Nenhuma nota disponível. Lance a nota em Notas Fiscais primeiro.</p>'}</div>
    </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarVinculoNotas('${pid}')">Salvar vínculos</button></div>`);
 }
 function filtrarVincularNotas(){
   const q=($("#vn_busca").value||"").toLowerCase().trim();
   document.querySelectorAll("#vn_lista .vn_item").forEach(el=>{el.style.display=(!q||el.dataset.txt.includes(q))?"flex":"none";});
 }
+function _desligarNotaDoPedido(n,pid){
+  const vs=vinculosDaNota(n).filter(v=>v.pedidoId!==pid);
+  const prim=vs[0];
+  n.pedido=prim?prim.pedidoId:"";n.ordemCompraId=prim?prim.ocId:"";
+  n.vinculosExtras=vs.slice(1);
+}
 function salvarVinculoNotas(pid){
   const p=DB.compras_pedidos.find(x=>x.id===pid);if(!p)return;
   const marcados=[...document.querySelectorAll("#vn_lista .vn_chk:checked")].map(i=>i.value);
   const ocSel=$("#vn_oc")?$("#vn_oc").value:"";
-  const novas=marcados.map(id=>DB.compras_notas.find(n=>n.id===id)).filter(n=>n&&n.pedido!==p.id);
-  const remover=DB.compras_notas.filter(n=>n.pedido===p.id&&!marcados.includes(n.id));
+  const novas=marcados.map(id=>DB.compras_notas.find(n=>n.id===id)).filter(n=>n&&!notaLigadaAoPedido(n,p.id));
+  const remover=DB.compras_notas.filter(n=>notaLigadaAoPedido(n,p.id)&&!marcados.includes(n.id));
   if(!novas.length&&!remover.length){closeModal();return;}
   if(novas.length&&["Solicitado","Aprovado pelo engenheiro"].includes(p.status)&&!confirm('Esse pedido ainda está em "'+p.status+'". Vincular a nota vai marcá-lo como "Nota fiscal gerada" (pula as etapas). Continuar?'))return;
-  remover.forEach(n=>{n.pedido="";n.ordemCompraId="";});
+  remover.forEach(n=>_desligarNotaDoPedido(n,p.id));
   novas.forEach(n=>{
-    const ocs=p.ordensCompra||[];let ocId=ocSel;
-    if(!ocId){
-      if(ocs.length===1)ocId=ocs[0].id;
-      else if(!ocs.length)ocId=_ocMinimaDaNota(p,n).id;
-      else ocId=(ocs.find(o=>normalizaNome(o.fornecedor||"")===normalizaNome(n.fornecedor||""))||ocs[0]).id;
-    }
-    n.pedido=p.id;n.ordemCompraId=ocId;
+    const ocId=ocSel||ocDoPedidoParaNota(p,n);
+    if(!n.pedido){n.pedido=p.id;n.ordemCompraId=ocId;}
+    else{(n.vinculosExtras=n.vinculosExtras||[]).push({pedidoId:p.id,ocId,valor:""});}
   });
   if(novas.length&&["Solicitado","Aprovado pelo engenheiro","Pedido feito"].includes(p.status)){
     p.status="Nota fiscal gerada";if(!p.pedidoFeitoData)p.pedidoFeitoData=iso(today());
     (p.statusHistorico=p.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});
-  }else if(remover.length&&!novas.length&&p.status==="Nota fiscal gerada"&&!DB.compras_notas.some(n=>n.pedido===p.id)&&(p.ordensCompra||[]).some(o=>o.fornecedor)){
+  }else if(remover.length&&!novas.length&&p.status==="Nota fiscal gerada"&&!(notasDoPedido(p.id).length>0)&&(p.ordensCompra||[]).some(o=>o.fornecedor)){
     p.status="Pedido feito";(p.statusHistorico=p.statusHistorico||[]).push({status:"Pedido feito",data:iso(today())});
   }
   save("compras_notas");save("compras_pedidos");closeModal();render();
@@ -3302,9 +3314,10 @@ function verPedido(id){
   const urgCls={"Urgente":"t-red","Atenção":"t-amber","Normal":"t-grey"};
   const ocs=p.ordensCompra||[];
   const itensMap={};(p.itensLista||[]).forEach(it=>itensMap[it.id]=it.nome);
-  openModal(`<div class="modal-h"><h3>Pedido — ${esc(funcNome(p.solicitante))}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+  openModal(`<div class="modal-h"><h3>Pedido — ${esc(nomeSolicitante(p))}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="step">${STATUS_FLUXO.map((s,i)=>`<span class="s ${i<idxAtual?'done':i===idxAtual?'cur':''}">${s}</span>${i<STATUS_FLUXO.length-1?'<span class="arrow">→</span>':''}`).join("")}</div>
    <p class="hint" style="margin-bottom:10px">Setor: <b>${esc(setorNome(p.setor))}</b> · Tipo: <b>${esc(p.tipo||"—")}</b> · Urgência: <span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span></p>
+   <p class="hint" style="margin-bottom:10px">Quem fez: <b>${esc(nomeSolicitante(p)||"—")}</b> · Onde: <b>${esc(setorNome(p.setor))}${p.localPedido?" / "+esc(p.localPedido):""}</b> · Data: <b>${fmt(p.data)}</b> · Lançado por: <b>${esc(p.lancadoPor||"—")}</b>${p.lancadoEm?" em "+fmt(p.lancadoEm):""}</p>
    ${avisoNotaPedido(p)}<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-g btn-sm" onclick="imprimirPedidoOrcamento('${id}')">🖨 Pedido de Orçamento</button><button class="btn btn-g btn-sm" onclick="abrirEmailAprovacao('${id}')">📧 E-mail de aprovação</button><button class="btn btn-g btn-sm" onclick="abrirEmailChegada('${id}')">📧 E-mail de chegada</button></div>
    ${bloqueado?`<div class="alert" style="background:var(--red-l);border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--red)"></span><div class="txt"><b>Fora do dia do setor — precisa liberação da engenharia</b><small>Justificativa: ${esc(p.motivoExcecao||"—")}</small></div></div><button class="btn btn-a" style="margin-bottom:14px" onclick="liberarExcecao('${id}')">Liberar exceção (engenharia)</button>`:p.foraDoDia?`<p class="hint" style="margin-bottom:14px">Exceção liberada em ${fmt(p.excecaoLiberadaData)}. Justificativa: ${esc(p.motivoExcecao||"—")}</p>`:""}
    <h3 style="font-size:14px;margin:14px 0 8px">Itens${p.status!=="Solicitado"?' <span style="font-weight:400;color:var(--muted);font-size:12px">🔒 travado</span>':''}</h3>
@@ -3313,7 +3326,7 @@ function verPedido(id){
    ${(p.anexos&&p.anexos.length)?`<h3 style="font-size:14px;margin:14px 0 8px">Anexos (${p.anexos.length})</h3><div style="border:1px solid #eef0ec;border-radius:8px;padding:8px 12px;margin-bottom:14px">${p.anexos.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f2f3f1">${iconeAnexo(a)}<span style="flex:1;font-size:13px">${esc(a.nome)}</span><a href="${a.dados}" target="_blank" download="${esc(a.nome)}" class="btn btn-g btn-sm">Ver</a></div>`).join("")}</div>`:""}
    <h3 style="font-size:14px;margin:14px 0 8px">Ordens de Compra <span class="tag t-steel">${ocs.length}</span></h3>
    <p class="hint" style="margin-bottom:10px">Um pedido de lista grande pode virar mais de uma OC (comprado em fornecedores diferentes). O prazo de entrega varia por fornecedor.</p>
-   ${ocs.length?ocs.map(oc=>{const temNota=DB.compras_notas.some(n=>n.pedido===p.id);const nfVencida=!temNota&&oc.prazoNotaFiscal&&pd(oc.prazoNotaFiscal)<today();const nfPertoDoPrazo=!temNota&&oc.prazoNotaFiscal&&!nfVencida&&diasEntre(today(),pd(oc.prazoNotaFiscal))<=1;return `<div style="border:1px solid #eef0ec;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>${esc(oc.numero||"(sem número)")}</b> — ${esc(oc.fornecedor||"fornecedor não informado")} <span class="tag ${oc.tipoAquisicao==='Aluguel'?'t-amber':'t-steel'}">${esc(oc.tipoAquisicao)}${oc.tipoAquisicao==='Aluguel'&&oc.duracaoAluguel?" · "+esc(oc.duracaoAluguel):""}</span> <span class="tag ${oc.origemCompra==='Compra interna'?'t-green':'t-grey'}">${esc(oc.origemCompra||"Suprimentos")}</span>${oc.numeroFluig?`<br><small style="color:var(--muted)">Fluig: ${oc.linkFluig?`<a href="${esc(oc.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(oc.numeroFluig)} ↗</a>`:esc(oc.numeroFluig)}</small>`:""}${oc.prazoEstimado?`<br><small style="color:var(--muted)">Prazo estimado de entrega: ${fmt(oc.prazoEstimado)}</small>`:""}${oc.prazoNotaFiscal?`<br><small style="color:${temNota?'var(--green)':nfVencida?'var(--red)':nfPertoDoPrazo?'var(--amber-d)':'var(--muted)'}">${temNota?'✓ Nota fiscal já lançada':nfVencida?'⚠ Prazo de nota fiscal vencido ('+fmt(oc.prazoNotaFiscal)+') — cobrar fornecedor':'Prazo pra nota fiscal: '+fmt(oc.prazoNotaFiscal)}</small>`:""}${(oc.itensIncluidos||[]).length?`<br><small style="color:var(--muted)">Itens: ${oc.itensIncluidos.map(iid=>esc(itensMap[iid]||"?")).join(", ")}</small>`:""}<div style="margin-top:8px"><button class="btn btn-g btn-sm" onclick="formOrdemCompra('${id}','${oc.id}')">Editar</button></div></div>`;}).join(""):`<p class="hint" style="margin-bottom:10px">Nenhuma OC gerada ainda.</p>`}
+   ${ocs.length?ocs.map(oc=>{const temNota=(notasDoPedido(p.id).length>0);const nfVencida=!temNota&&oc.prazoNotaFiscal&&pd(oc.prazoNotaFiscal)<today();const nfPertoDoPrazo=!temNota&&oc.prazoNotaFiscal&&!nfVencida&&diasEntre(today(),pd(oc.prazoNotaFiscal))<=1;return `<div style="border:1px solid #eef0ec;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>${esc(oc.numero||"(sem número)")}</b> — ${esc(oc.fornecedor||"fornecedor não informado")} <span class="tag ${oc.tipoAquisicao==='Aluguel'?'t-amber':'t-steel'}">${esc(oc.tipoAquisicao)}${oc.tipoAquisicao==='Aluguel'&&oc.duracaoAluguel?" · "+esc(oc.duracaoAluguel):""}</span> <span class="tag ${oc.origemCompra==='Compra interna'?'t-green':'t-grey'}">${esc(oc.origemCompra||"Suprimentos")}</span>${oc.numeroFluig?`<br><small style="color:var(--muted)">Fluig: ${oc.linkFluig?`<a href="${esc(oc.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(oc.numeroFluig)} ↗</a>`:esc(oc.numeroFluig)}</small>`:""}${oc.prazoEstimado?`<br><small style="color:var(--muted)">Prazo estimado de entrega: ${fmt(oc.prazoEstimado)}</small>`:""}${oc.prazoNotaFiscal?`<br><small style="color:${temNota?'var(--green)':nfVencida?'var(--red)':nfPertoDoPrazo?'var(--amber-d)':'var(--muted)'}">${temNota?'✓ Nota fiscal já lançada':nfVencida?'⚠ Prazo de nota fiscal vencido ('+fmt(oc.prazoNotaFiscal)+') — cobrar fornecedor':'Prazo pra nota fiscal: '+fmt(oc.prazoNotaFiscal)}</small>`:""}${(oc.itensIncluidos||[]).length?`<br><small style="color:var(--muted)">Itens: ${oc.itensIncluidos.map(iid=>esc(itensMap[iid]||"?")).join(", ")}</small>`:""}<div style="margin-top:8px"><button class="btn btn-g btn-sm" onclick="formOrdemCompra('${id}','${oc.id}')">Editar</button></div></div>`;}).join(""):`<p class="hint" style="margin-bottom:10px">Nenhuma OC gerada ainda.</p>`}
    <button class="btn btn-g btn-sm" onclick="formOrdemCompra('${id}')">＋ Nova Ordem de Compra</button>
    <h3 style="font-size:14px;margin:18px 0 8px">Histórico</h3>
    <table class="tbl" style="border:1px solid #eef0ec;border-radius:8px"><thead><tr><th>Status</th><th>Data</th></tr></thead><tbody>${(p.statusHistorico||[]).map(h=>`<tr><td>${esc(h.status)}</td><td>${fmt(h.data)}</td></tr>`).join("")}</tbody></table>
@@ -3347,7 +3360,7 @@ function avancarStatus(id){
     toast("Pedido feito — ficou o aviso de nota fiscal sem lançamento em Notas Fiscais.");
     return;
   }
-  if(proximo==="Nota fiscal gerada"&&!DB.compras_notas.some(n=>n.pedido===p.id)){
+  if(proximo==="Nota fiscal gerada"&&!(notasDoPedido(p.id).length>0)){
     if(!confirm("Esse pedido ainda não tem nota fiscal lançada em Notas Fiscais. Avançar mesmo assim?"))return;
   }
   p.status=proximo;(p.statusHistorico=p.statusHistorico||[]).push({status:proximo,data:iso(today())});
@@ -3434,9 +3447,9 @@ function voltarStatus(id){
 function delPedido(id){if(!confirm("Excluir este pedido?"))return;DB.compras_pedidos=DB.compras_pedidos.filter(x=>x.id!==id);save("compras_pedidos");closeModal();render();toast("Excluído.");}
 function exportPedidosExcel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
-  const rows=DB.compras_pedidos.map(p=>({Solicitante:funcNome(p.solicitante),Setor:setorNome(p.setor),Tipo:p.tipo||"",Itens:resumoItensPedido(p),"Valor estimado":+p.valorEstimado||0,Data:p.data,"Nível de urgência":p.nivelUrgencia||"Normal","Fora do dia":p.foraDoDia?"Sim":"Não","Justificativa":p.motivoExcecao||"","Exceção liberada":p.excecaoLiberada?"Sim":"Não",Status:p.status,"Aprovado por":p.aprovadoPor||"","Data aprovação":p.aprovadoData||"",Obs:p.obs||""}));
+  const rows=DB.compras_pedidos.map(p=>({Solicitante:nomeSolicitante(p),Local:p.localPedido||"","Lançado por":p.lancadoPor||"","Lançado em":p.lancadoEm||"",Setor:setorNome(p.setor),Tipo:p.tipo||"",Itens:resumoItensPedido(p),"Valor estimado":+p.valorEstimado||0,Data:p.data,"Nível de urgência":p.nivelUrgencia||"Normal","Fora do dia":p.foraDoDia?"Sim":"Não","Justificativa":p.motivoExcecao||"","Exceção liberada":p.excecaoLiberada?"Sim":"Não",Status:p.status,"Aprovado por":p.aprovadoPor||"","Data aprovação":p.aprovadoData||"",Obs:p.obs||""}));
   const itensRows=[];
-  DB.compras_pedidos.forEach(p=>{(p.itensLista||[]).forEach(it=>{itensRows.push({Pedido:funcNome(p.solicitante)+" — "+fmt(p.data),Item:it.nome,Quantidade:it.quantidade||"","Valor unitário":+it.valorUnitario||0});});});
+  DB.compras_pedidos.forEach(p=>{(p.itensLista||[]).forEach(it=>{itensRows.push({Pedido:nomeSolicitante(p)+" — "+fmt(p.data),Item:it.nome,Quantidade:it.quantidade||"","Valor unitário":+it.valorUnitario||0});});});
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),"Pedidos");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(itensRows.length?itensRows:[{"—":"sem dados"}]),"Itens detalhados");
@@ -3567,9 +3580,37 @@ const MOTIVOS_ALMOX_PEDIDO=["Primeira entrega","Desgaste","Perda","Dano","Roubo"
 const ITENS_COMUNS_ALMOX=["Capacete","Bota","Luva","Óculos de proteção","Protetor auricular","Uniforme (calça)","Uniforme (camisa)","Colete refletivo","Máscara/Respirador","Cinto de segurança"];
 let _itensApTemp=[];
 /* ============ PAINEL DE LANÇAMENTOS (pedido → OC → nota → pagamento, numa visão só) ============ */
+/* uma nota pode cobrir vários pedidos; um pedido pode ter várias notas.
+   n.pedido + n.ordemCompraId = vínculo principal; n.vinculosExtras = [{pedidoId,ocId,valor}] = demais pedidos */
+function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
+function vinculosDaNota(n){
+  const out=[];
+  if(n.pedido)out.push({pedidoId:n.pedido,ocId:n.ordemCompraId||"",valor:""});
+  (n.vinculosExtras||[]).forEach(v=>{if(v&&v.pedidoId&&!out.some(o=>o.pedidoId===v.pedidoId))out.push({pedidoId:v.pedidoId,ocId:v.ocId||"",valor:(v.valor===undefined||v.valor===null)?"":v.valor});});
+  return out;
+}
+function notaLigadaAoPedido(n,pid){return vinculosDaNota(n).some(v=>v.pedidoId===pid);}
+function notasDoPedido(pid){return DB.compras_notas.filter(n=>notaLigadaAoPedido(n,pid));}
+function nPedidosDaNota(n){return vinculosDaNota(n).length;}
+function valorDaNotaNoPedido(n,pid){
+  const vs=vinculosDaNota(n),total=+n.valor||0;
+  if(vs.length<2)return total;
+  const extras=vs.slice(1);
+  const algum=extras.some(v=>v.valor!==""&&!isNaN(+v.valor));
+  if(!algum)return total;
+  const v=vs.find(x=>x.pedidoId===pid);if(!v)return total;
+  if(v===vs[0])return total-extras.reduce((a,x)=>a+(+x.valor||0),0);
+  return +v.valor||0;
+}
+function ocDoPedidoParaNota(p,n){
+  const ocs=p.ordensCompra||[];
+  if(ocs.length===1)return ocs[0].id;
+  if(!ocs.length)return _ocMinimaDaNota(p,n).id;
+  return (ocs.find(o=>normalizaNome(o.fornecedor||"")===normalizaNome(n.fornecedor||""))||ocs[0]).id;
+}
 function notasDaOC(pedidoId,ocOuId,temUmaSoOC){
   const ocId=(ocOuId&&typeof ocOuId==="object")?ocOuId.id:ocOuId;
-  return DB.compras_notas.filter(n=>(n.ordemCompraId&&n.ordemCompraId===ocId)||(!n.ordemCompraId&&temUmaSoOC&&n.pedido===pedidoId));
+  return DB.compras_notas.filter(n=>vinculosDaNota(n).some(v=>(v.ocId&&v.ocId===ocId)||(!v.ocId&&temUmaSoOC&&v.pedidoId===pedidoId)));
 }
 function estagioNotas(notas){
   if(!notas.length)return{stage:"Sem nota",cls:"t-red",notas};
@@ -3599,9 +3640,9 @@ function estagioOC(pedidoId,oc,temUmaSoOC){
 function linhasLancamentos(){
   const linhas=[];
   DB.compras_pedidos.forEach(p=>{
-    if(pedidoAntigo(p)&&!DB.compras_notas.some(n=>n.pedido===p.id))return;
+    if(pedidoAntigo(p)&&!(notasDoPedido(p.id).length>0))return;
     const ocs=p.ordensCompra||[];
-    if(!ocs.length&&p.viaRegularizacao){linhas.push(linhaRegularizacao(DB.compras_notas.filter(n=>n.pedido===p.id),p));return;}
+    if(!ocs.length&&p.viaRegularizacao){linhas.push(linhaRegularizacao(notasDoPedido(p.id),p));return;}
     if(!ocs.length){
       if(["Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada"].includes(p.status)){
         linhas.push({pedidoId:p.id,setor:setorNome(p.setor),data:p.data,fornecedor:"—",origem:"—",ocNumero:"—",ocFluig:"",ocFluigLink:"",stage:"OC ainda não gerada",cls:"t-red",valor:0,notas:[],vencimento:"",vencendoEmBreve:false,vencido:false});
@@ -3610,7 +3651,7 @@ function linhasLancamentos(){
     }
     ocs.forEach(oc=>{
       const est=estagioOC(p.id,oc,ocs.length===1);
-      const valor=est.notas.reduce((s,n)=>s+(+n.valor||0),0);
+      const valor=est.notas.reduce((s,n)=>s+valorDaNotaNoPedido(n,p.id),0);
       const naoPagas=est.notas.filter(n=>!n.dataRealizada&&n.dataPrevista);
       const vencimento=naoPagas.length?naoPagas.sort((a,b)=>a.dataPrevista.localeCompare(b.dataPrevista))[0].dataPrevista:"";
       const vencido=vencimento&&pd(vencimento)<today();
@@ -4642,11 +4683,15 @@ function vNotasFiscais(){
    <div class="grid stats" style="margin-bottom:16px"><div class="stat red"><div class="n">R$ ${totalAPagar.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">A pagar (nesse filtro)</div></div><div class="stat green"><div class="n">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Pago (nesse filtro)</div></div></div>
    <div class="toolbar"><input type="month" id="nf_mes" value="${esc(_nfFiltroMes)}" onchange="_nfFiltroMes=this.value;render()"><select id="nf_forn_filtro" onchange="_nfFiltroForn=this.value;render()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_nfFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="nf_contrato_f" onchange="_nfFiltroContrato=this.value;render()"><option value="">Todos os contratos</option>${DB.compras_contratos.map(c=>`<option value="${c.id}" ${_nfFiltroContrato===c.id?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select><select id="nf_status_f" onchange="_nfFiltroStatus=this.value;render()"><option value="">Pagos e a pagar</option><option value="APagar" ${_nfFiltroStatus==="APagar"?"selected":""}>Só a pagar</option><option value="Pago" ${_nfFiltroStatus==="Pago"?"selected":""}>Só pagos</option></select>${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?`<button class="btn btn-g btn-sm" onclick="_nfFiltroMes='';_nfFiltroForn='';_nfFiltroStatus='';_nfFiltroContrato='';render()">Limpar filtro</button>`:""}</div>
    <div class="panel"><div class="tblwrap">${list.length?`<table class="tbl"><thead><tr><th>Nº NF</th><th>Tipo</th><th>Fornecedor</th><th>Pedido / Contrato</th><th>Emissão</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>${
-     list.map(n=>{const st=notaStatus(n);const ped=n.pedido?DB.compras_pedidos.find(p=>p.id===n.pedido):null;return `<tr>${(!n.lancado&&!n.dataRealizada)?'<td style="border-left:4px solid var(--red)">':'<td>'}<b>${esc(n.numero)}</b>${n.viaRegularizacao?' <span class="tag t-steel" style="font-size:10px">via regularização</span>':''}${(n.viaRegularizacao&&n.itens&&n.itens.length)?`<br><small style="color:var(--muted)">${esc(n.itens.map(i=>i.quantidade+"x "+i.nome).join(", ").slice(0,80))}</small>`:''}${(n.anexos&&n.anexos.length)?` <span class="tag t-steel">📎 ${n.anexos.length}</span>`:''}${n.notaRemessaNumero?` <span class="tag t-amber">remessa: ${esc(n.notaRemessaNumero)}</span>`:''}${n.numeroFluig?`<br><small style="color:var(--muted)">Fluig NF: ${n.linkFluig?`<a href="${esc(n.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.numeroFluig)} ↗</a>`:esc(n.numeroFluig)}</small>`:''}</td><td>${n.tipoNota?`<small>${esc(n.tipoNota)}</small>`:'—'}</td><td>${esc(n.fornecedor||"—")}</td><td>${ped?esc((ped.itens||"pedido").slice(0,28)):"—"}${n.contrato?(ped?" · ":"")+esc(contratoNumero(n.contrato)):""}</td><td>${fmt(n.dataEmissao)}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td><span class="tag ${st.cls}">${st.txt}</span>${n.dataPrevista?`<br><small style="color:var(--muted)">venc. ${fmt(n.dataPrevista)}</small>`:""}${n.formaPagamento?`<br><small style="color:var(--muted)">${esc(n.formaPagamento)}</small>`:""}${n.fluigPagamentoNumero?`<br><small style="color:var(--muted)">Fluig pagto: ${n.fluigPagamentoLink?`<a href="${esc(n.fluigPagamentoLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.fluigPagamentoNumero)} ↗</a>`:esc(n.fluigPagamentoNumero)}</small>`:(n.lancado?`<br><span class="tag t-amber" style="font-size:10px">⚠ sem Fluig de pagamento</span>`:'')}</td><td><button class="btn btn-g btn-sm" onclick="formNota('${n.id}')">Editar</button></td></tr>`;}).join("")
+     list.map(n=>{const st=notaStatus(n);const ped=n.pedido?DB.compras_pedidos.find(p=>p.id===n.pedido):null;return `<tr>${(!n.lancado&&!n.dataRealizada)?'<td style="border-left:4px solid var(--red)">':'<td>'}<b>${esc(n.numero)}</b>${n.viaRegularizacao?' <span class="tag t-steel" style="font-size:10px">via regularização</span>':''}${(n.viaRegularizacao&&n.itens&&n.itens.length)?`<br><small style="color:var(--muted)">${esc(n.itens.map(i=>i.quantidade+"x "+i.nome).join(", ").slice(0,80))}</small>`:''}${(n.anexos&&n.anexos.length)?` <span class="tag t-steel">📎 ${n.anexos.length}</span>`:''}${n.notaRemessaNumero?` <span class="tag t-amber">remessa: ${esc(n.notaRemessaNumero)}</span>`:''}${n.numeroFluig?`<br><small style="color:var(--muted)">Fluig NF: ${n.linkFluig?`<a href="${esc(n.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.numeroFluig)} ↗</a>`:esc(n.numeroFluig)}</small>`:''}</td><td>${n.tipoNota?`<small>${esc(n.tipoNota)}</small>`:'—'}</td><td>${esc(n.fornecedor||"—")}</td><td>${ped?esc((resumoItensPedido(ped)||"pedido").slice(0,28)):"—"}${nPedidosDaNota(n)>1?` <span class="tag t-steel" style="font-size:10px">+${nPedidosDaNota(n)-1} pedido(s)</span>`:""}${n.contrato?(ped?" · ":"")+esc(contratoNumero(n.contrato)):""}</td><td>${fmt(n.dataEmissao)}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td><span class="tag ${st.cls}">${st.txt}</span>${n.dataPrevista?`<br><small style="color:var(--muted)">venc. ${fmt(n.dataPrevista)}</small>`:""}${n.formaPagamento?`<br><small style="color:var(--muted)">${esc(n.formaPagamento)}</small>`:""}${n.fluigPagamentoNumero?`<br><small style="color:var(--muted)">Fluig pagto: ${n.fluigPagamentoLink?`<a href="${esc(n.fluigPagamentoLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.fluigPagamentoNumero)} ↗</a>`:esc(n.fluigPagamentoNumero)}</small>`:(n.lancado?`<br><span class="tag t-amber" style="font-size:10px">⚠ sem Fluig de pagamento</span>`:'')}</td><td><button class="btn btn-g btn-sm" onclick="formNota('${n.id}')">Editar</button></td></tr>`;}).join("")
    }</tbody></table>`:`<div class="empty"><div class="big">🧾</div><p>Nenhuma nota encontrada${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?" com esse filtro":""}.</p>${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?'':'<button class="btn btn-a" onclick="formNota()">Nova nota</button>'}</div>`}</div></div>`;
 }
 const FORMAS_PAGAMENTO=["Boleto","PIX","Transferência (TED/DOC)","Cartão","Depósito","Outro"];
 const TIPOS_NOTA=["Nota Fiscal de Serviço","Nota Fiscal de Material","Nota de Frete","Fatura","Boletim de Medição","Outro"];
+function filtrarExtrasNota(){
+  const q=($("#nf_ex_busca").value||"").toLowerCase().trim();
+  document.querySelectorAll("#nf_ex_lista .nf_ex_item").forEach(el=>{el.style.display=(!q||el.dataset.txt.includes(q))?"flex":"none";});
+}
 function nfRegularizacaoMudou(){nfModoAtualiza("regul");}
 function nfCriarPedidoMudou(){nfModoAtualiza("criar");}
 function nfModoAtualiza(quem){
@@ -4658,6 +4703,7 @@ function nfModoAtualiza(quem){
   const cw=$("#nf_criarwrap");if(cw)cw.style.display=criar?"block":"none";
   const ped=$("#nf_pedido");if(ped){if(regul||criar)ped.value="";ped.disabled=(regul||criar);}
   const ocw=$("#nf_ocwrap");if(ocw&&(regul||criar))ocw.style.display="none";
+  const exw=$("#nf_exwrap");if(exw)exw.style.display=(regul||criar)?"none":"";
   if(regul){const l=$("#nf_lancado");if(l){l.checked=true;const w=$("#nf_pagfluigwrap");if(w)w.style.display="block";}}
   if(regul||criar)previaItensTexto("nf_itens","nf_itens_info");
 }
@@ -4667,11 +4713,14 @@ function formNota(id){
    <div style="margin-bottom:14px"><button class="btn btn-g btn-sm" onclick="document.getElementById('nf_pdfinput').click()">📄 Ler PDF (extrai o texto pra copiar)</button><input type="file" id="nf_pdfinput" accept="application/pdf" style="display:none" onchange="lerPdfParaNota(event)"><p class="hint" style="margin-top:6px">Sobe o PDF da nota/pedido — não preenche os campos sozinho, mas mostra o texto de dentro do PDF pra você copiar rapidinho (número, itens, valores) sem digitar do zero.</p><div id="nf_pdftexto_wrap"></div></div>
    <div class="fg" style="background:#f3f7f0;border-radius:8px;padding:10px 12px"><label style="margin:0"><input type="checkbox" id="nf_regul" style="width:auto;margin-right:6px" onchange="nfRegularizacaoMudou()" ${n.viaRegularizacao?"checked":""}><b>Via regularização</b> <span class="opt">— sem ordem de compra; o lançamento vai direto pra pagamento</span></label></div>
    ${n.pedido?"":`<div class="fg" style="background:#f1f5fa;border-radius:8px;padding:10px 12px"><label style="margin:0"><input type="checkbox" id="nf_criarped" style="width:auto;margin-right:6px" onchange="nfCriarPedidoMudou()"><b>Criar o pedido a partir desta nota</b> <span class="opt">— via lançamento de nota fiscal (o pedido já nasce ligado à nota)</span></label>
-     <div id="nf_criarwrap" style="display:none;margin-top:10px"><label>Setor do pedido *</label><select id="nf_cp_setor">${DB.compras_setores.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join("")}</select></div></div>`}
+     <div id="nf_criarwrap" style="display:none;margin-top:10px"><div class="row2"><div class="fg"><label>Setor do pedido *</label><select id="nf_cp_setor">${DB.compras_setores.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join("")}</select></div><div class="fg"><label>Quem fez o pedido *</label><input id="nf_cp_solic" list="nf_cp_soliclist" placeholder="nome de quem pediu"><datalist id="nf_cp_soliclist">${DB.func.filter(f=>ativo(f)).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div><div class="fg" style="margin-bottom:0"><label>Local / frente de serviço <span class="opt">(opcional)</span></label><input id="nf_cp_local" list="nf_cp_loclist"><datalist id="nf_cp_loclist">${DB.locais.map(l=>`<option value="${esc(l.nome)}">`).join("")}</datalist></div></div></div>`}
    <div id="nf_regulwrap" class="fg" style="display:${n.viaRegularizacao?"block":"none"}"><label>Itens <span class="opt">(um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="nf_itens" rows="3" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg" oninput="previaItensTexto('nf_itens','nf_itens_info')">${esc(n.itensTexto||"")}</textarea><div id="nf_itens_info" class="hint"></div></div>
    <div class="row2"><div class="fg"><label>Número da NF *</label><input id="nf_num" value="${esc(n.numero)}"></div><div class="fg"><label>Tipo</label><select id="nf_tipo" onchange="document.getElementById('nf_freteinfo').style.display=this.value==='Nota de Frete'?'block':'none'"><option value="">—</option>${TIPOS_NOTA.map(t=>`<option ${n.tipoNota===t?"selected":""}>${t}</option>`).join("")}</select></div></div>
    <div class="fg"><label>Fornecedor</label><input id="nf_forn" list="nf_fornlist" value="${esc(n.fornecedor)}"><datalist id="nf_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
    <div class="row2"><div class="fg"><label>Pedido vinculado <span class="opt" id="nf_pedido_opt">(opcional, exceto pra Nota de Frete)</span></label><select id="nf_pedido" onchange="atualizarOcsDaNota()"><option value="">—</option>${DB.compras_pedidos.map(p=>`<option value="${p.id}" ${p.id===n.pedido?"selected":""}>${esc(setorNome(p.setor))} — ${esc((p.itens||"").slice(0,30))}</option>`).join("")}</select></div><div class="fg"><label>Contrato vinculado <span class="opt">(opcional)</span></label><select id="nf_contrato"><option value="">—</option>${DB.compras_contratos.map(c=>`<option value="${c.id}" ${c.id===n.contrato?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select></div></div>
+   <div class="fg" id="nf_exwrap"><label>Esta nota também cobre outros pedidos? <span class="opt">(uma nota pode cobrir vários pedidos; o pedido escolhido acima é o principal. Valor é opcional — serve pra ratear a nota entre os pedidos)</span></label>
+     <input id="nf_ex_busca" placeholder="Filtrar pedidos..." oninput="filtrarExtrasNota()" style="margin-bottom:6px">
+     <div id="nf_ex_lista" style="max-height:170px;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:4px 10px">${(()=>{const ex=new Map((n.vinculosExtras||[]).map(v=>[v.pedidoId,v]));const ps=DB.compras_pedidos.filter(pp=>!pedidoAntigo(pp)||ex.has(pp.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));return ps.length?ps.map(pp=>{const e=ex.get(pp.id);const txt=(nomeSolicitante(pp)+" "+setorNome(pp.setor)+" "+resumoItensPedido(pp)).toLowerCase();return `<label class="nf_ex_item" data-txt="${esc(txt)}" style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #f3f4f2"><input type="checkbox" class="nf_ex_chk" value="${pp.id}" ${e?"checked":""} style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(nomeSolicitante(pp)||"—")}</b> · ${esc(setorNome(pp.setor))} · ${fmt(pp.data)}<br><small style="color:var(--muted)">${esc(resumoItensPedido(pp).slice(0,60))}</small></span><input class="nf_ex_val" data-pid="${pp.id}" type="number" step="0.01" placeholder="R$ (opcional)" value="${e&&e.valor!==undefined?esc(e.valor):""}" style="width:120px"></label>`;}).join(""):'<p class="hint">Nenhum pedido disponível.</p>';})()}</div></div>
    <div class="fg" id="nf_ocwrap" style="display:none"><label>Ordem de Compra específica <span class="opt">(esse pedido tem mais de uma OC — escolhe qual essa nota cobre)</span></label><select id="nf_oc"></select></div>
    <p class="hint" id="nf_freteinfo" style="margin-top:-10px;margin-bottom:14px;display:${n.tipoNota==="Nota de Frete"?"block":"none"};color:var(--amber-d)">⚠ Nota de Frete precisa de um pedido vinculado, e esse pedido já precisa ter a Nota Fiscal de Material lançada — senão não tem como saber de onde veio o frete.</p>
    <div class="row2"><div class="fg"><label>Data de emissão *</label><input type="date" id="nf_emissao" value="${esc(n.dataEmissao)}" onchange="sugerirVencimentoNota()"></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="nf_valor" value="${esc(n.valor)}"></div></div>
@@ -4768,17 +4817,19 @@ function salvarNota(id){
   const lancadoAntes=id?(DB.compras_notas.find(x=>x.id===id)||{}).lancado:false;
   const regul=!!($("#nf_regul")&&$("#nf_regul").checked),itensTxt=$("#nf_itens")?$("#nf_itens").value:"";
   const criarPed=!!($("#nf_criarped")&&$("#nf_criarped").checked),cpSetor=$("#nf_cp_setor")?$("#nf_cp_setor").value:"";
+  const extrasSel=(regul||criarPed)?[]:[...document.querySelectorAll("#nf_ex_lista .nf_ex_chk:checked")].map(c=>({pedidoId:c.value,valor:((document.querySelector('#nf_ex_lista .nf_ex_val[data-pid="'+c.value+'"]')||{}).value)||""})).filter(v=>v.pedidoId!==pedido);
   if(!numero||!valor||!dataEmissao){toast("Preencha número, valor e emissão.");return;}
   if(!dataPrevista){toast("Preencha a data de vencimento.");return;}
   if(!formaPagamento){toast("Selecione a forma de pagamento.");return;}
   if(regul&&!parsearItensDeTexto(itensTxt).length){toast("Via regularização: descreva os itens (pode colar a mensagem).");return;}
   if(criarPed){
     if(!cpSetor){toast("Escolha o setor do pedido.");return;}
+    if(!($("#nf_cp_solic").value.trim())){toast("Informe quem fez o pedido.");return;}
     if(!parsearItensDeTexto(itensTxt).length){toast("Descreva os itens do pedido (pode colar a mensagem).");return;}
   }
   if(tipoNota==="Nota de Frete"&&!regul){
     if(!pedido){toast("Nota de Frete precisa de um pedido vinculado.");return;}
-    const temNotaMaterial=DB.compras_notas.some(n=>n.id!==id&&n.pedido===pedido&&n.tipoNota==="Nota Fiscal de Material");
+    const temNotaMaterial=DB.compras_notas.some(n=>n.id!==id&&notaLigadaAoPedido(n,pedido)&&n.tipoNota==="Nota Fiscal de Material");
     if(!temNotaMaterial){toast("Esse pedido ainda não tem Nota Fiscal de Material lançada — lança ela primeiro, depois a nota de frete.");return;}
   }
   {
@@ -4792,9 +4843,12 @@ function salvarNota(id){
   if(linkFluigPag&&!/^https?:\/\//i.test(linkFluigPag))linkFluigPag="https://"+linkFluigPag;
   const lancadoAgora=$("#nf_lancado").checked;
   const o={id:id||uid(),numero,tipoNota,fornecedor:$("#nf_forn").value.trim(),pedido:regul?"":pedido,ordemCompraId:regul?"":($("#nf_oc")?.value||""),viaRegularizacao:regul,itens:regul?parsearItensDeTexto(itensTxt):[],itensTexto:regul?itensTxt:"",contrato:$("#nf_contrato").value,dataEmissao,valor,numeroFluig:$("#nf_fluig").value.trim(),linkFluig,dataPrevista,formaPagamento,lancado:lancadoAgora,fluigPagamentoNumero:$("#nf_pagfluig")?.value.trim()||"",fluigPagamentoLink:linkFluigPag,dataRealizada:$("#nf_realizada").value,notaRemessaNumero:$("#nf_temremessa").checked?$("#nf_remessanum").value.trim():"",notaRemessaData:$("#nf_temremessa").checked?$("#nf_remessadata").value:"",anexos:_anexosTemp.slice(),obs:$("#nf_obs").value.trim()};
-  if(criarPed){const r=_novoPedidoDeNota(o,cpSetor,parsearItensDeTexto(itensTxt));DB.compras_pedidos.push(r.ped);o.pedido=r.ped.id;o.ordemCompraId=r.ocId;save("compras_pedidos");}
+  o.vinculosExtras=extrasSel.map(v=>{const pe=DB.compras_pedidos.find(x=>x.id===v.pedidoId);return{pedidoId:v.pedidoId,ocId:pe?ocDoPedidoParaNota(pe,o):"",valor:v.valor};});
+  if(!o.pedido&&o.vinculosExtras.length){const f0=o.vinculosExtras.shift();o.pedido=f0.pedidoId;o.ordemCompraId=f0.ocId;}
+  if(o.vinculosExtras.length||o.pedido)save("compras_pedidos");
+  if(criarPed){const _sn=$("#nf_cp_solic").value.trim(),_sf=DB.func.find(f=>ativo(f)&&normalizaNome(f.nome)===normalizaNome(_sn));const r=_novoPedidoDeNota(o,cpSetor,parsearItensDeTexto(itensTxt),_sn,_sf?_sf.id:"",($("#nf_cp_local")?$("#nf_cp_local").value.trim():""));DB.compras_pedidos.push(r.ped);o.pedido=r.ped.id;o.ordemCompraId=r.ocId;save("compras_pedidos");}
   if(id){const i=DB.compras_notas.findIndex(x=>x.id===id);DB.compras_notas[i]=o;}else DB.compras_notas.push(o);
-  if(o.pedido){const pedNF=DB.compras_pedidos.find(x=>x.id===o.pedido);if(pedNF&&pedNF.status==="Pedido feito"){pedNF.status="Nota fiscal gerada";(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});save("compras_pedidos");}}
+  vinculosDaNota(o).forEach(v=>{const pedNF=DB.compras_pedidos.find(x=>x.id===v.pedidoId);if(pedNF&&pedNF.status==="Pedido feito"){pedNF.status="Nota fiscal gerada";(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});save("compras_pedidos");}});
   save("compras_notas");closeModal();render();
   toast((!lancadoAntes&&lancadoAgora)?"Nota salva — marcada como enviada pra pagamento.":"Nota salva.");
 }
