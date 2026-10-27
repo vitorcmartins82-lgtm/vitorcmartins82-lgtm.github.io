@@ -634,7 +634,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.15";
+const APP_VERSAO="v2026-10-02.16";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -2636,6 +2636,41 @@ function tagNotaPendente(p){
   if(prazo&&pd(prazo)<today())return `<span class="tag t-red">🚨 nota fiscal atrasada ${diasEntre(pd(prazo),today())}d</span>`;
   return `<span class="tag t-amber">⚠ nota sem lançamento${prazo?" — até "+fmt(prazo):""}</span>`;
 }
+const _UN_ITEM="unidades?|unid\\.?|und\\.?|un\\.?|p[cç]s?\\.?|pe[cç]as?|cx\\.?|caixas?|kg|mts?\\.?|metros?|m|l|lts?\\.?|litros?|rolos?|pares?|jogos?|sacos?|latas?|gal[oõ]es|barras?|kits?";
+function _normUn(u){u=String(u||"").toLowerCase().replace(/\./g,"");if(/^(un|und|unid|unidade|unidades)$/.test(u))return"un";if(/^(p[cç]s?|pe[cç]as?)$/.test(u))return"pç";if(/^(cx|caixas?)$/.test(u))return"cx";if(/^(mts?|metros?|m)$/.test(u))return"m";if(/^(l|lts?|litros?)$/.test(u))return"l";return u;}
+function parsearItensDeTexto(txt){
+  const out=[];const U="("+_UN_ITEM+")";
+  String(txt||"").split(/\r?\n/).forEach(raw=>{
+    let l=raw.replace(/[\u200e\u200f\u202a-\u202e]/g,"").trim();
+    l=l.replace(/^[\s•·●▪▫◦✅✔☑✓\-–—*]+/u,"").trim();
+    if(!l)return;
+    l=l.replace(/^\[\d{1,2}[^\]]*\]\s*[^:]{1,40}:\s*/,"").trim();
+    if(!l)return;
+    let qtd="",un="",nome=l,m;
+    if((m=l.match(/^(\d+(?:[.,]\d+)?)\s*(?:x|×)\s*(.+)$/i))){qtd=m[1];nome=m[2];}
+    else if((m=l.match(new RegExp("^(\\d+(?:[.,]\\d+)?)\\s*"+U+"?\\s*[-–—:)]\\s*(.+)$","i")))){qtd=m[1];un=m[2]||"";nome=m[3];}
+    else if((m=l.match(new RegExp("^(\\d+(?:[.,]\\d+)?)\\s*"+U+"\\s+(.+)$","i")))){qtd=m[1];un=m[2];nome=m[3];}
+    else if((m=l.match(new RegExp("^(.+?)\\s*[-–—:]\\s*(\\d+(?:[.,]\\d+)?)\\s*"+U+"?\\s*$","i")))){nome=m[1];qtd=m[2];un=m[3]||"";}
+    else if((m=l.match(/^(\d{1,4})\s+(\D.*)$/))){qtd=m[1];nome=m[2];}
+    else if((m=l.match(/^\d+\s*[.)]\s+(.+)$/))){nome=m[1];}
+    nome=nome.trim().replace(/^[-–—:\s]+/,"").replace(/[\s;,.]+$/,"");
+    if(!nome)return;
+    out.push({id:uid(),codigo:"",nome,categoria:"",ca:"",quantidade:(qtd||"1").replace(",","."),unidade:_normUn(un),valorUnitario:""});
+  });
+  return out;
+}
+function previaItensTexto(taId,infoId){
+  const ta=document.getElementById(taId),el=document.getElementById(infoId);if(!ta||!el)return;
+  const its=parsearItensDeTexto(ta.value);
+  el.innerHTML=its.length?"✓ "+its.length+" item(ns) reconhecido(s): "+its.slice(0,4).map(i=>esc(i.quantidade+(i.unidade?" "+i.unidade:"")+"× "+i.nome)).join(" · ")+(its.length>4?" …":""):"";
+}
+function adicionarItensDaMensagem(){
+  const its=parsearItensDeTexto($("#pd_msg_itens").value);
+  if(!its.length){toast("Não encontrei itens no texto. Escreva um item por linha.");return;}
+  its.forEach(i=>_itensPedidoTemp.push(i));
+  renderItensPedidoTemp();$("#pd_msg_itens").value="";$("#pd_msg_info").innerHTML="";
+  toast(its.length+" item(ns) adicionado(s) da mensagem.");
+}
 function nfNormalizaNumero(x){return String(x==null?"":x).toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0+/,"");}
 function nfDuplicada(numero,fornecedor,ignorarId){
   const nn=nfNormalizaNumero(numero),fn=normalizaNome(fornecedor||"");
@@ -2873,11 +2908,11 @@ function renderPedidosTbl(){
     return `<div class="panel" style="${destaque?'border-left:4px solid var(--red)':''}"><div style="padding:14px 18px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">
         <div><b>${esc(funcNome(p.solicitante))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora do dia — precisa liberação</span>':''}</div>
-        <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado&&!pedidoEncerrado(p)?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}${pedidoAntigo(p)?'<span class="tag t-grey">fluxo antigo</span>':''}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
+        <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado&&!pedidoEncerrado(p)?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}${pedidoAntigo(p)?'<span class="tag t-grey">fluxo antigo</span>':''}${p.viaRegularizacao?'<span class="tag t-steel">via regularização</span>':''}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
       </div>
       <p class="hint" style="margin:0 0 10px">${resumoItensPedidoCurto(p)||"—"}</p>
       <div class="step" style="margin-bottom:${ocs.length?'8px':'0'}">${STATUS_FLUXO.map((s,i)=>`<span class="s ${i<idx?'done':i===idx?'cur':''}">${s}</span>${i<STATUS_FLUXO.length-1?'<span class="arrow">→</span>':''}`).join("")}</div>
-      ${ocs.length?`<p class="hint">${ocs.map(oc=>`OC ${esc(oc.numero||"s/nº")}${oc.origemCompra?" ("+esc(oc.origemCompra)+")":""}${oc.prazoEstimado?" — previsão "+fmt(oc.prazoEstimado):""}`).join(" · ")}</p>`:''}
+      ${ocs.length?`<p class="hint">${ocs.map(oc=>`OC ${esc(oc.numero||"s/nº")}${oc.origemCompra?" ("+esc(oc.origemCompra)+")":""}${oc.prazoEstimado?" — previsão "+fmt(oc.prazoEstimado):""}`).join(" · ")}</p>`:(p.viaRegularizacao?'<p class="hint">📄 Via regularização — sem ordem de compra, lançado direto pra pagamento</p>':'')}
     </div></div>`;
   }).join(""):`<div class="panel"><div class="empty"><div class="big">📋</div><p>Nenhum pedido ${_pedMostrarPagos?"finalizado":"em andamento"}.</p>${_pedMostrarPagos?"":'<button class="btn btn-a" onclick="formPedido()">Novo pedido</button>'}</div></div>`;
 }
@@ -2913,7 +2948,7 @@ function formPedido(id,prefill){
    <div class="fg"><label>Itens do pedido *</label>
      <div id="pd_itenslist"></div>
      ${(id&&p.status&&p.status!=="Solicitado")?`<p class="hint" style="color:var(--amber-d)">🔒 Pedido já ${esc(p.status.toLowerCase())} — os itens originais ficam travados pra manter o rastro. Se precisar de algo a mais, cria um pedido novo ou registra numa Ordem de Compra.</p>`:`<div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Código (opcional)</label><input id="pd_it_cod" placeholder="ex.: 3222"></div><div class="fg" style="margin-bottom:0"><label class="opt">Item *</label><input id="pd_it_nome" list="pd_it_nomelist" placeholder="ex.: Capacete de segurança"><datalist id="pd_it_nomelist">${DB.compras_estoque.map(it=>`<option value="${esc(it.nome)}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">C.A. (EPI, opcional)</label><input id="pd_it_ca" placeholder="ex.: 29638"></div></div><div class="row3" style="align-items:end;margin-top:10px"><div class="fg" style="margin-bottom:0"><label class="opt">Categoria</label><input id="pd_it_cat" list="pd_it_catlist" placeholder="ex.: EPI, Escritório..."><datalist id="pd_it_catlist">${categoriasAprovadas().map(c=>`<option value="${c}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">Quantidade</label><input id="pd_it_qtd" placeholder="ex.: 10"></div><div class="fg" style="margin-bottom:0"><label class="opt">Unidade</label><input id="pd_it_un" placeholder="ex.: UN, PR"></div></div><div class="fg" style="margin-top:10px;max-width:200px"><label class="opt">Valor unit. (R$)</label><input type="number" step="0.01" id="pd_it_valor"></div>
-     <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="adicionarItemPedidoTemp()">＋ Adicionar item</button>`}
+     <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="adicionarItemPedidoTemp()">＋ Adicionar item</button><details style="margin-top:12px"><summary style="cursor:pointer;color:var(--steel);font-weight:600;font-size:13px">📋 Colar lista de itens (mensagem)</summary><textarea id="pd_msg_itens" rows="5" style="margin-top:8px" placeholder="Cole aqui a mensagem do WhatsApp/e-mail, um item por linha. Ex.:&#10;40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('pd_msg_itens','pd_msg_info')"></textarea><div id="pd_msg_info" class="hint"></div><button type="button" class="btn btn-g btn-sm" style="margin-top:6px" onclick="adicionarItensDaMensagem()">Adicionar à lista</button></details>`}
      ${p.itens&&!(p.itensLista&&p.itensLista.length)?`<p class="hint" style="margin-top:10px">Descrição antiga (texto livre): "${esc(p.itens)}" — os itens novos que você adicionar acima ficam registrados separadamente.</p>`:""}
    </div>
    <div class="row2"><div class="fg"><label>Valor estimado (R$)</label><input type="number" step="0.01" id="pd_valor" value="${esc(p.valorEstimado)}"></div><div class="fg" style="display:flex;align-items:end"><button class="btn btn-g btn-sm" onclick="calcularTotalItensPedido()">🧮 Calcular pelo total dos itens</button></div></div>
@@ -2970,15 +3005,28 @@ function salvarPedido(id){
   DB.compras_pedidos.push(o);save("compras_pedidos");closeModal();render();toast("Pedido criado.");
 }
 const TIPOS_AQUISICAO=["Compra","Aluguel"];
+function ldOrigemMudou(){
+  const regul=$("#ld_origem").value==="Via regularização";
+  const esconde=sel=>{const el=$(sel);if(!el)return;const alvo=el.closest(".fg");if(alvo)alvo.style.display=regul?"none":"";};
+  esconde("#ld_ocnum");
+  const linhaFluig=$("#ld_fluignum")?$("#ld_fluignum").closest(".row2"):null;if(linhaFluig)linhaFluig.style.display=regul?"none":"";
+  const tipo=$("#ld_tipoaq");if(tipo){const a=tipo.closest(".fg");if(a)a.style.display=regul?"none":"";}
+  $("#ld_regul_info").style.display=regul?"block":"none";
+  const cb=$("#ld_temnota");
+  if(regul){cb.checked=true;cb.disabled=true;$("#ld_notawrap").style.display="block";}
+  else{cb.disabled=false;}
+}
 function formLancamentoDireto(){
   openModal(`<div class="modal-h"><h3>🖇 Lançar direto — compra feita por fora</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <p class="hint" style="margin-bottom:14px">Pra compras que já aconteceram sem passar pelo pedido normal (feitas direto pelo ADM) — preenche o que já souber agora, o resto completa depois editando.</p>
    <div class="row2"><div class="fg"><label>Setor *</label><select id="ld_setor">${DB.compras_setores.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select></div><div class="fg"><label>Data da compra *</label><input type="date" id="ld_data" value="${iso(today())}"></div></div>
    <div class="fg"><label>O que é / material <span class="opt">(descrição do que foi comprado)</span></label><input id="ld_desc" placeholder="ex.: material elétrico, peça de reposição..."></div>
+   <div class="fg"><label>Itens <span class="opt">(opcional — um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="ld_itens" rows="4" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('ld_itens','ld_itens_info')"></textarea><div id="ld_itens_info" class="hint"></div></div>
    <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando essa compra)</span></label><input id="ld_lancadopor" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
+   <div id="ld_regul_info" style="display:none;background:#eaf4ee;border-left:4px solid var(--green);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">📄 <b>Via regularização</b>: não tem ordem de compra. O lançamento vai <b>direto pra pagamento</b> — preencha a nota abaixo (número, valor, vencimento e forma de pagamento).</div>
    <div class="sub">Ordem de Compra <span class="opt">— Fluig do pedido/OC</span></div>
    <div class="row2"><div class="fg"><label>Nº da OC <span class="opt">(se já tiver)</span></label><input id="ld_ocnum" placeholder="ex.: OC-1234"></div><div class="fg"><label>Fornecedor</label><input id="ld_forn" list="ld_fornlist" placeholder="nome do fornecedor"><datalist id="ld_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div>
-   <div class="row2"><div class="fg"><label>Origem da compra</label><select id="ld_origem"><option>Suprimentos</option><option>Compra interna</option></select></div><div class="fg"><label>Tipo</label><select id="ld_tipoaq"><option>Compra</option><option>Aluguel</option></select></div></div>
+   <div class="row2"><div class="fg"><label>Origem da compra</label><select id="ld_origem" onchange="ldOrigemMudou()"><option>Suprimentos</option><option>Compra interna</option><option>Via regularização</option></select></div><div class="fg"><label>Tipo</label><select id="ld_tipoaq"><option>Compra</option><option>Aluguel</option></select></div></div>
    <div class="row2"><div class="fg"><label>Nº do Fluig da OC <span class="opt">(se já tiver pedido no Fluig)</span></label><input id="ld_fluignum" placeholder="ex.: 123456"></div><div class="fg"><label>Link do Fluig da OC</label><input id="ld_fluiglink" placeholder="https://..."></div></div>
    <label style="display:flex;align-items:center;gap:6px;margin:14px 0;font-size:13px"><input type="checkbox" id="ld_temnota" style="width:auto" onchange="document.getElementById('ld_notawrap').style.display=this.checked?'block':'none'">Já tenho a nota fiscal / lançamento pra pagamento também</label>
    <div id="ld_notawrap" style="display:none;background:#f7f8f6;border-radius:8px;padding:12px;margin-bottom:14px">
@@ -2997,13 +3045,20 @@ function salvarLancamentoDireto(){
   if(!setor||!data){toast("Preencha setor e data.");return;}
   if(!lancadoPor){toast("Informe quem está lançando.");return;}
   const fornecedor=$("#ld_forn").value.trim();
-  const temNota=$("#ld_temnota").checked;
+  const regul=$("#ld_origem").value==="Via regularização";
+  if(regul){
+    if(!fornecedor){toast("Via regularização: informe o fornecedor.");return;}
+    if(!$("#ld_desc").value.trim()&&!$("#ld_itens").value.trim()){toast("Via regularização: descreva os itens (pode colar a mensagem).");return;}
+    if(!$("#ld_nfnum").value.trim()||!$("#ld_nfvalor").value){toast("Via regularização vai direto pra pagamento: preencha número e valor da nota.");return;}
+    if(!$("#ld_nfprazo").value||!$("#ld_nfforma").value){toast("Preencha o vencimento e a forma de pagamento da nota.");return;}
+  }
+  const temNota=regul||$("#ld_temnota").checked;
   if(temNota&&(!$("#ld_nfnum").value.trim()||!$("#ld_nfvalor").value)){toast("Preencha número e valor da nota, ou desmarca a opção de já ter nota.");return;}
   if(temNota){
     const dup=nfDuplicada($("#ld_nfnum").value.trim(),fornecedor);
     if(dup.mesma){toast("🚫 A NF "+$("#ld_nfnum").value.trim()+" desse fornecedor já foi lançada (emissão "+fmt(dup.mesma.dataEmissao)+"). Não dá pra lançar duas vezes.");return;}
   }
-  const dados={setor,data,lancadoPor,fornecedor,desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
+  const dados={setor,data,lancadoPor,fornecedor,regul,itens:parsearItensDeTexto($("#ld_itens").value),desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
     temNota,nfnum:$("#ld_nfnum").value.trim(),nfvalor:$("#ld_nfvalor").value,nffluignum:$("#ld_nffluignum").value.trim(),nffluiglink:$("#ld_nffluiglink").value.trim(),nfemissao:$("#ld_nfemissao").value,nfprazo:$("#ld_nfprazo").value,nfforma:$("#ld_nfforma").value};
   if(fornecedor&&!DB.compras_fornecedores.some(f=>f.nome.toLowerCase()===fornecedor.toLowerCase())){
     if(confirm('O fornecedor "'+fornecedor+'" ainda não está cadastrado. Cadastrar agora?')){
@@ -3018,19 +3073,20 @@ function salvarLancamentoDireto(){
 function concluirSalvarLancamentoDireto(d){
   let linkFluig=d.fluiglink;
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:uid(),fluxoNovo:true,solicitante:"",lancamentoDireto:true,lancadoPor:d.lancadoPor,setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[],valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:d.temNota?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
+  const o={id:uid(),fluxoNovo:true,solicitante:"",lancamentoDireto:true,lancadoPor:d.lancadoPor,setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:(d.itens&&d.itens.length)?d.itens:(d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[]),valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:d.temNota?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
   const ocId=uid();
-  o.ordensCompra=[{id:ocId,numero:d.ocnum,numeroFluig:d.fluignum,linkFluig,origemCompra:d.origem,fornecedor:d.fornecedor,tipoAquisicao:d.tipoaq,duracaoAluguel:"",prazoEstimado:"",dataCriacao:d.data,prazoNotaFiscal:iso(new Date(pd(d.data).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS)),itensIncluidos:[],obs:""}];
+  if(d.regul){o.viaRegularizacao=true;o.origemCompra="Via regularização";if(!d.obs)o.obs="Via regularização — lançamento direto pra pagamento, registrado por "+d.lancadoPor;if(d.desc&&d.itens&&d.itens.length)o.obs+=" · "+d.desc;}
+  o.ordensCompra=d.regul?[]:[{id:ocId,numero:d.ocnum,numeroFluig:d.fluignum,linkFluig,origemCompra:d.origem,fornecedor:d.fornecedor,tipoAquisicao:d.tipoaq,duracaoAluguel:"",prazoEstimado:"",dataCriacao:d.data,prazoNotaFiscal:iso(new Date(pd(d.data).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS)),itensIncluidos:[],obs:""}];
   if(d.temNota)o.statusHistorico.push({status:"Nota fiscal gerada",data:d.data});
   DB.compras_pedidos.push(o);save("compras_pedidos");
   if(d.temNota){
     let linkFluigNf=d.nffluiglink;
     if(linkFluigNf&&!/^https?:\/\//i.test(linkFluigNf))linkFluigNf="https://"+linkFluigNf;
-    DB.compras_notas.push({id:uid(),numero:d.nfnum,tipoNota:"Nota Fiscal de Material",fornecedor:d.fornecedor,pedido:o.id,ordemCompraId:ocId,contrato:"",dataEmissao:d.nfemissao||d.data,valor:d.nfvalor,numeroFluig:d.nffluignum,linkFluig:linkFluigNf,dataPrevista:d.nfprazo,formaPagamento:d.nfforma,lancado:false,dataRealizada:"",anexos:[],obs:"Lançada junto com o lançamento direto"});
+    DB.compras_notas.push({id:uid(),numero:d.nfnum,tipoNota:"Nota Fiscal de Material",fornecedor:d.fornecedor,pedido:o.id,ordemCompraId:d.regul?"":ocId,contrato:"",dataEmissao:d.nfemissao||d.data,valor:d.nfvalor,numeroFluig:d.nffluignum,linkFluig:linkFluigNf,dataPrevista:d.nfprazo,formaPagamento:d.nfforma,lancado:!!d.regul,viaRegularizacao:!!d.regul,itens:d.itens||[],dataRealizada:"",anexos:[],obs:"Lançada junto com o lançamento direto"});
     save("compras_notas");
   }
   closeModal();render();
-  toast(d.temNota?"Lançamento e nota fiscal criados.":"Lançamento criado. Completa a nota fiscal quando ela chegar.");
+  toast(d.regul?"Via regularização: lançamento criado e nota enviada direto pra pagamento.":d.temNota?"Lançamento e nota fiscal criados.":"Lançamento criado. Completa a nota fiscal quando ela chegar.");
 }
 function emailsDoPedido(p){
   const s=setorObj(p.setor);
@@ -3149,6 +3205,7 @@ function imprimirPedidoOrcamento(id){
 }
 function avisoNotaPedido(p){
   let h="";
+  if(p.viaRegularizacao&&!pedidoAntigo(p))h+=`<div class="alert" style="background:#eaf4ee;border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--green)"></span><div class="txt"><b>Via regularização</b><small>Sem ordem de compra — lançado direto pra pagamento.</small></div></div>`;
   if(pedidoAntigo(p))return `<div class="alert" style="background:#f3f4f2;border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--muted)"></span><div class="txt"><b>Pedido do fluxo antigo</b><small>Feito antes de ${fmt(fluxoNovoAPartirDe())} — não segue o fluxo novo e não gera alerta de nota.</small></div></div><button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="reabrirPedidoAntigo('${p.id}')">Reabrir no fluxo novo</button> `;
   if(p.status==="Pedido feito"&&!DB.compras_notas.some(n=>n.pedido===p.id)){
     const prazo=prazoNotaPedido(p),atrasado=prazo&&pd(prazo)<today();
@@ -3438,6 +3495,22 @@ let _itensApTemp=[];
 function notasDaOC(pedidoId,ocId,temUmaSoOC){
   return DB.compras_notas.filter(n=>n.ordemCompraId===ocId||(!n.ordemCompraId&&temUmaSoOC&&n.pedido===pedidoId));
 }
+function estagioNotas(notas){
+  if(!notas.length)return{stage:"Sem nota",cls:"t-red",notas};
+  if(notas.find(n=>n.dataRealizada))return{stage:"Paga",cls:"t-green",notas};
+  if(notas.find(n=>n.lancado))return{stage:"Enviada p/ pagamento",cls:"t-steel",notas};
+  return{stage:"Nota lançada, aguardando envio",cls:"t-amber",notas};
+}
+function linhaRegularizacao(notas,p){
+  const est=estagioNotas(notas);
+  const valor=notas.reduce((s,n)=>s+(+n.valor||0),0);
+  const naoPagas=notas.filter(n=>!n.dataRealizada&&n.dataPrevista);
+  const vencimento=naoPagas.length?naoPagas.slice().sort((a,b)=>a.dataPrevista.localeCompare(b.dataPrevista))[0].dataPrevista:"";
+  const vencido=!!vencimento&&pd(vencimento)<today();
+  const vencendoEmBreve=!!vencimento&&!vencido&&diasEntre(today(),pd(vencimento))<=(DB.cfg.alertaVencimentoDias||10);
+  const n0=notas[0]||{};
+  return{pedidoId:p?p.id:"",notaId:n0.id||"",setor:p?setorNome(p.setor):"—",data:p?p.data:(n0.dataEmissao||""),fornecedor:n0.fornecedor||"?",origem:"Via regularização",ocNumero:"—",ocFluig:"",ocFluigLink:"",stage:est.stage,cls:est.cls,valor,notas,vencimento,vencendoEmBreve,vencido};
+}
 function estagioOC(pedidoId,oc,temUmaSoOC){
   const notas=notasDaOC(pedidoId,oc,temUmaSoOC);
   if(!notas.length)return{stage:"Sem nota",cls:"t-red",notas};
@@ -3452,6 +3525,7 @@ function linhasLancamentos(){
   DB.compras_pedidos.forEach(p=>{
     if(pedidoAntigo(p)&&!DB.compras_notas.some(n=>n.pedido===p.id))return;
     const ocs=p.ordensCompra||[];
+    if(!ocs.length&&p.viaRegularizacao){linhas.push(linhaRegularizacao(DB.compras_notas.filter(n=>n.pedido===p.id),p));return;}
     if(!ocs.length){
       if(["Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada"].includes(p.status)){
         linhas.push({pedidoId:p.id,setor:setorNome(p.setor),data:p.data,fornecedor:"—",origem:"—",ocNumero:"—",ocFluig:"",ocFluigLink:"",stage:"OC ainda não gerada",cls:"t-red",valor:0,notas:[],vencimento:"",vencendoEmBreve:false,vencido:false});
@@ -3468,6 +3542,7 @@ function linhasLancamentos(){
       linhas.push({pedidoId:p.id,setor:setorNome(p.setor),data:p.data,fornecedor:oc.fornecedor||"—",origem:oc.origemCompra||"Suprimentos",ocNumero:oc.numero||"(s/nº)",ocFluig:oc.numeroFluig||"",ocFluigLink:oc.linkFluig||"",stage:est.stage,cls:est.cls,valor,notas:est.notas,vencimento,vencendoEmBreve,vencido});
     });
   });
+  DB.compras_notas.filter(n=>n.viaRegularizacao&&!n.pedido).forEach(n=>linhas.push(linhaRegularizacao([n],null)));
   return linhas;
 }
 let _lcFiltroStage="",_lcFiltroOrigem="",_lcFiltroForn="",_lcSoVencendo=false;
@@ -3484,9 +3559,9 @@ function vLancamentos(){
   const vencendoCount=todas.filter(l=>l.vencendoEmBreve||l.vencido).length;
   main.innerHTML=`<div class="head"><div><h1>Painel de Lançamentos <span class="tag t-steel" style="font-size:13px;vertical-align:middle">${linhas.length}</span></h1><p>Toda Ordem de Compra de todos os pedidos, do "sem nota" até "paga" — numa tela só.</p></div><button class="btn btn-g" onclick="formLancamentoDireto()">🖇 Lançar direto (compra por fora)</button></div>
    <div class="toolbar">${['Todos',...ESTAGIOS_LANCAMENTO].map(s=>{const n=s==='Todos'?todas.length:(contagem.find(c=>c.stage===s)||{}).n||0;return `<button class="btn ${_lcFiltroStage===(s==='Todos'?'':s)?'btn-a':'btn-g'} btn-sm" onclick="_lcFiltroStage='${s==='Todos'?'':s}';render()">${s} <span class="tag t-grey" style="margin-left:4px">${n}</span></button>`;}).join("")}</div>
-   <div class="toolbar"><select id="lc_origem" onchange="_lcFiltroOrigem=this.value;render()"><option value="">Todas as origens</option><option value="Suprimentos" ${_lcFiltroOrigem==='Suprimentos'?'selected':''}>Suprimentos</option><option value="Compra interna" ${_lcFiltroOrigem==='Compra interna'?'selected':''}>Compra interna</option></select><select id="lc_forn" onchange="_lcFiltroForn=this.value;render()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_lcFiltroForn===f?'selected':''}>${esc(f)}</option>`).join("")}</select><button class="btn ${_lcSoVencendo?'btn-a':'btn-g'} btn-sm" onclick="_lcSoVencendo=!_lcSoVencendo;render()">⏰ Vencendo em breve (${vencendoCount})</button>${(_lcFiltroStage||_lcFiltroOrigem||_lcFiltroForn||_lcSoVencendo)?`<button class="btn btn-g btn-sm" onclick="_lcFiltroStage='';_lcFiltroOrigem='';_lcFiltroForn='';_lcSoVencendo=false;render()">Limpar filtro</button>`:''}</div>
+   <div class="toolbar"><select id="lc_origem" onchange="_lcFiltroOrigem=this.value;render()"><option value="">Todas as origens</option><option value="Suprimentos" ${_lcFiltroOrigem==='Suprimentos'?'selected':''}>Suprimentos</option><option value="Compra interna" ${_lcFiltroOrigem==='Compra interna'?'selected':''}>Compra interna</option><option value="Via regularização" ${_lcFiltroOrigem==='Via regularização'?'selected':''}>Via regularização</option></select><select id="lc_forn" onchange="_lcFiltroForn=this.value;render()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_lcFiltroForn===f?'selected':''}>${esc(f)}</option>`).join("")}</select><button class="btn ${_lcSoVencendo?'btn-a':'btn-g'} btn-sm" onclick="_lcSoVencendo=!_lcSoVencendo;render()">⏰ Vencendo em breve (${vencendoCount})</button>${(_lcFiltroStage||_lcFiltroOrigem||_lcFiltroForn||_lcSoVencendo)?`<button class="btn btn-g btn-sm" onclick="_lcFiltroStage='';_lcFiltroOrigem='';_lcFiltroForn='';_lcSoVencendo=false;render()">Limpar filtro</button>`:''}</div>
    <div class="panel"><div class="tblwrap">${linhas.length?`<table class="tbl"><thead><tr><th>Setor / Pedido</th><th>Fornecedor</th><th>Origem</th><th>OC / Fluig</th><th>Valor</th><th>Vencimento</th><th>Situação</th><th></th></tr></thead><tbody>${
-     linhas.sort((a,b)=>(a.data||"").localeCompare(b.data||"")).map(l=>`<tr><td><b>${esc(l.setor)}</b><br><small style="color:var(--muted)">${fmt(l.data)}</small></td><td>${esc(l.fornecedor)}</td><td>${l.origem!=="—"?`<span class="tag ${l.origem==='Compra interna'?'t-green':'t-grey'}">${esc(l.origem)}</span>`:"—"}</td><td>${esc(l.ocNumero)}${l.ocFluig?`<br><small>${l.ocFluigLink?`<a href="${esc(l.ocFluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(l.ocFluig)} ↗</a>`:esc(l.ocFluig)}</small>`:""}</td><td class="num">${l.valor?"R$ "+l.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${l.vencimento?`<span class="${l.vencido?'tag t-red':l.vencendoEmBreve?'tag t-amber':''}">${fmt(l.vencimento)}</span>`:"—"}</td><td><span class="tag ${l.cls}">${esc(l.stage)}</span></td><td><button class="btn btn-g btn-sm" onclick="verPedido('${l.pedidoId}')">Ver pedido</button></td></tr>`).join("")
+     linhas.sort((a,b)=>(a.data||"").localeCompare(b.data||"")).map(l=>`<tr><td><b>${esc(l.setor)}</b><br><small style="color:var(--muted)">${fmt(l.data)}</small></td><td>${esc(l.fornecedor)}</td><td>${l.origem!=="—"?`<span class="tag ${l.origem==='Compra interna'?'t-green':l.origem==='Via regularização'?'t-steel':'t-grey'}">${esc(l.origem)}</span>`:"—"}</td><td>${esc(l.ocNumero)}${l.ocFluig?`<br><small>${l.ocFluigLink?`<a href="${esc(l.ocFluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(l.ocFluig)} ↗</a>`:esc(l.ocFluig)}</small>`:""}</td><td class="num">${l.valor?"R$ "+l.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${l.vencimento?`<span class="${l.vencido?'tag t-red':l.vencendoEmBreve?'tag t-amber':''}">${fmt(l.vencimento)}</span>`:"—"}</td><td><span class="tag ${l.cls}">${esc(l.stage)}</span></td><td>${l.pedidoId?`<button class="btn btn-g btn-sm" onclick="verPedido('${l.pedidoId}')">Ver pedido</button>`:`<button class="btn btn-g btn-sm" onclick="formNota('${l.notaId}')">Ver nota</button>`}</td></tr>`).join("")
    }</tbody></table>`:`<div class="empty"><div class="big">🧮</div><p>Nenhum lançamento encontrado${(_lcFiltroStage||_lcFiltroOrigem||_lcFiltroForn||_lcSoVencendo)?" com esse filtro":""}.</p></div>`}</div></div>`;
 }
 function vAlmoxPedidos(){
@@ -4486,20 +4561,30 @@ function vNotasFiscais(){
   const semLancamentoVencidas=semLancamento.filter(n=>n.venceu);
   main.innerHTML=`<div class="head"><div><h1>Notas Fiscais <span class="tag t-steel" style="font-size:13px;vertical-align:middle" id="nf_total">${list.length}</span></h1><p>Vinculadas a pedidos e/ou contratos, com controle de pagamento.</p></div><div class="acts"><button class="btn btn-g" onclick="exportNotasExcel()">⭳ Exportar Excel (respeita filtro)</button><button class="btn btn-a" onclick="formNota()">＋ Nova nota</button></div></div>
    ${bannerPedidosSemNota()}${semLancamento.length?`<div class="panel" style="border:3px solid var(--red);background:#fdf1ef;margin-bottom:16px;box-shadow:0 0 0 3px #fde2de"><div style="padding:14px 18px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">🚨</span><div><b style="color:var(--red);font-size:16px">${semLancamento.length} nota(s) SEM LANÇAMENTO pra pagamento</b>${semLancamentoVencidas.length?`<br><b style="color:var(--red);font-size:13px">⚠ ${semLancamentoVencidas.length} já VENCIDA(S) — risco de multa/juros, agir agora</b>`:''}</div></div><div class="tblwrap"><table class="tbl" style="background:transparent"><tbody>${
-     semLancamento.map(n=>{const st=notaStatus(n);return `<tr style="${n.venceu?'background:#fbdbd6':''}"><td><b>${esc(n.numero)}</b></td><td>${esc(n.fornecedor||"—")}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td>${n.dataPrevista?(n.venceu?`<span class="tag t-red">🔴 VENCIDA há ${n.diasAtraso}d (${fmt(n.dataPrevista)})</span>`:`<span class="tag ${st.cls}">venc. ${fmt(n.dataPrevista)}</span>`):'<span class="tag t-red">sem vencimento definido</span>'}</td><td><button class="btn btn-a btn-sm" onclick="formNota('${n.id}')">Lançar agora</button></td></tr>`;}).join("")
+     semLancamento.map(n=>{const st=notaStatus(n);return `<tr style="${n.venceu?'background:#fbdbd6':''}"><td><b>${esc(n.numero)}</b>${n.viaRegularizacao?' <span class="tag t-steel" style="font-size:10px">via regularização</span>':''}${(n.viaRegularizacao&&n.itens&&n.itens.length)?`<br><small style="color:var(--muted)">${esc(n.itens.map(i=>i.quantidade+"x "+i.nome).join(", ").slice(0,80))}</small>`:''}</td><td>${esc(n.fornecedor||"—")}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td>${n.dataPrevista?(n.venceu?`<span class="tag t-red">🔴 VENCIDA há ${n.diasAtraso}d (${fmt(n.dataPrevista)})</span>`:`<span class="tag ${st.cls}">venc. ${fmt(n.dataPrevista)}</span>`):'<span class="tag t-red">sem vencimento definido</span>'}</td><td><button class="btn btn-a btn-sm" onclick="formNota('${n.id}')">Lançar agora</button></td></tr>`;}).join("")
    }</tbody></table></div></div></div>`:''}
    <div class="grid stats" style="margin-bottom:16px"><div class="stat red"><div class="n">R$ ${totalAPagar.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">A pagar (nesse filtro)</div></div><div class="stat green"><div class="n">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="l">Pago (nesse filtro)</div></div></div>
    <div class="toolbar"><input type="month" id="nf_mes" value="${esc(_nfFiltroMes)}" onchange="_nfFiltroMes=this.value;render()"><select id="nf_forn_filtro" onchange="_nfFiltroForn=this.value;render()"><option value="">Todos os fornecedores</option>${fornecedores.map(f=>`<option value="${esc(f)}" ${_nfFiltroForn===f?"selected":""}>${esc(f)}</option>`).join("")}</select><select id="nf_contrato_f" onchange="_nfFiltroContrato=this.value;render()"><option value="">Todos os contratos</option>${DB.compras_contratos.map(c=>`<option value="${c.id}" ${_nfFiltroContrato===c.id?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select><select id="nf_status_f" onchange="_nfFiltroStatus=this.value;render()"><option value="">Pagos e a pagar</option><option value="APagar" ${_nfFiltroStatus==="APagar"?"selected":""}>Só a pagar</option><option value="Pago" ${_nfFiltroStatus==="Pago"?"selected":""}>Só pagos</option></select>${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?`<button class="btn btn-g btn-sm" onclick="_nfFiltroMes='';_nfFiltroForn='';_nfFiltroStatus='';_nfFiltroContrato='';render()">Limpar filtro</button>`:""}</div>
    <div class="panel"><div class="tblwrap">${list.length?`<table class="tbl"><thead><tr><th>Nº NF</th><th>Tipo</th><th>Fornecedor</th><th>Pedido / Contrato</th><th>Emissão</th><th>Valor</th><th>Pagamento</th><th></th></tr></thead><tbody>${
-     list.map(n=>{const st=notaStatus(n);const ped=n.pedido?DB.compras_pedidos.find(p=>p.id===n.pedido):null;return `<tr>${(!n.lancado&&!n.dataRealizada)?'<td style="border-left:4px solid var(--red)">':'<td>'}<b>${esc(n.numero)}</b>${(n.anexos&&n.anexos.length)?` <span class="tag t-steel">📎 ${n.anexos.length}</span>`:''}${n.notaRemessaNumero?` <span class="tag t-amber">remessa: ${esc(n.notaRemessaNumero)}</span>`:''}${n.numeroFluig?`<br><small style="color:var(--muted)">Fluig NF: ${n.linkFluig?`<a href="${esc(n.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.numeroFluig)} ↗</a>`:esc(n.numeroFluig)}</small>`:''}</td><td>${n.tipoNota?`<small>${esc(n.tipoNota)}</small>`:'—'}</td><td>${esc(n.fornecedor||"—")}</td><td>${ped?esc((ped.itens||"pedido").slice(0,28)):"—"}${n.contrato?(ped?" · ":"")+esc(contratoNumero(n.contrato)):""}</td><td>${fmt(n.dataEmissao)}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td><span class="tag ${st.cls}">${st.txt}</span>${n.dataPrevista?`<br><small style="color:var(--muted)">venc. ${fmt(n.dataPrevista)}</small>`:""}${n.formaPagamento?`<br><small style="color:var(--muted)">${esc(n.formaPagamento)}</small>`:""}${n.fluigPagamentoNumero?`<br><small style="color:var(--muted)">Fluig pagto: ${n.fluigPagamentoLink?`<a href="${esc(n.fluigPagamentoLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.fluigPagamentoNumero)} ↗</a>`:esc(n.fluigPagamentoNumero)}</small>`:(n.lancado?`<br><span class="tag t-amber" style="font-size:10px">⚠ sem Fluig de pagamento</span>`:'')}</td><td><button class="btn btn-g btn-sm" onclick="formNota('${n.id}')">Editar</button></td></tr>`;}).join("")
+     list.map(n=>{const st=notaStatus(n);const ped=n.pedido?DB.compras_pedidos.find(p=>p.id===n.pedido):null;return `<tr>${(!n.lancado&&!n.dataRealizada)?'<td style="border-left:4px solid var(--red)">':'<td>'}<b>${esc(n.numero)}</b>${n.viaRegularizacao?' <span class="tag t-steel" style="font-size:10px">via regularização</span>':''}${(n.viaRegularizacao&&n.itens&&n.itens.length)?`<br><small style="color:var(--muted)">${esc(n.itens.map(i=>i.quantidade+"x "+i.nome).join(", ").slice(0,80))}</small>`:''}${(n.anexos&&n.anexos.length)?` <span class="tag t-steel">📎 ${n.anexos.length}</span>`:''}${n.notaRemessaNumero?` <span class="tag t-amber">remessa: ${esc(n.notaRemessaNumero)}</span>`:''}${n.numeroFluig?`<br><small style="color:var(--muted)">Fluig NF: ${n.linkFluig?`<a href="${esc(n.linkFluig)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.numeroFluig)} ↗</a>`:esc(n.numeroFluig)}</small>`:''}</td><td>${n.tipoNota?`<small>${esc(n.tipoNota)}</small>`:'—'}</td><td>${esc(n.fornecedor||"—")}</td><td>${ped?esc((ped.itens||"pedido").slice(0,28)):"—"}${n.contrato?(ped?" · ":"")+esc(contratoNumero(n.contrato)):""}</td><td>${fmt(n.dataEmissao)}</td><td class="num">R$ ${(+n.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td><td><span class="tag ${st.cls}">${st.txt}</span>${n.dataPrevista?`<br><small style="color:var(--muted)">venc. ${fmt(n.dataPrevista)}</small>`:""}${n.formaPagamento?`<br><small style="color:var(--muted)">${esc(n.formaPagamento)}</small>`:""}${n.fluigPagamentoNumero?`<br><small style="color:var(--muted)">Fluig pagto: ${n.fluigPagamentoLink?`<a href="${esc(n.fluigPagamentoLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(n.fluigPagamentoNumero)} ↗</a>`:esc(n.fluigPagamentoNumero)}</small>`:(n.lancado?`<br><span class="tag t-amber" style="font-size:10px">⚠ sem Fluig de pagamento</span>`:'')}</td><td><button class="btn btn-g btn-sm" onclick="formNota('${n.id}')">Editar</button></td></tr>`;}).join("")
    }</tbody></table>`:`<div class="empty"><div class="big">🧾</div><p>Nenhuma nota encontrada${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?" com esse filtro":""}.</p>${(_nfFiltroMes||_nfFiltroForn||_nfFiltroStatus||_nfFiltroContrato)?'':'<button class="btn btn-a" onclick="formNota()">Nova nota</button>'}</div>`}</div></div>`;
 }
 const FORMAS_PAGAMENTO=["Boleto","PIX","Transferência (TED/DOC)","Cartão","Depósito","Outro"];
 const TIPOS_NOTA=["Nota Fiscal de Serviço","Nota Fiscal de Material","Nota de Frete","Fatura","Boletim de Medição","Outro"];
+function nfRegularizacaoMudou(){
+  const regul=$("#nf_regul").checked;
+  $("#nf_regulwrap").style.display=regul?"block":"none";
+  const ped=$("#nf_pedido");if(ped){if(regul)ped.value="";ped.disabled=regul;}
+  const ocw=$("#nf_ocwrap");if(ocw&&regul)ocw.style.display="none";
+  if(regul){const l=$("#nf_lancado");if(l){l.checked=true;const w=$("#nf_pagfluigwrap");if(w)w.style.display="block";}}
+  if(regul)previaItensTexto("nf_itens","nf_itens_info");
+}
 function formNota(id){
   const n=id?DB.compras_notas.find(x=>x.id===id):{};
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Nova"} nota fiscal</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div style="margin-bottom:14px"><button class="btn btn-g btn-sm" onclick="document.getElementById('nf_pdfinput').click()">📄 Ler PDF (extrai o texto pra copiar)</button><input type="file" id="nf_pdfinput" accept="application/pdf" style="display:none" onchange="lerPdfParaNota(event)"><p class="hint" style="margin-top:6px">Sobe o PDF da nota/pedido — não preenche os campos sozinho, mas mostra o texto de dentro do PDF pra você copiar rapidinho (número, itens, valores) sem digitar do zero.</p><div id="nf_pdftexto_wrap"></div></div>
+   <div class="fg" style="background:#f3f7f0;border-radius:8px;padding:10px 12px"><label style="margin:0"><input type="checkbox" id="nf_regul" style="width:auto;margin-right:6px" onchange="nfRegularizacaoMudou()" ${n.viaRegularizacao?"checked":""}><b>Via regularização</b> <span class="opt">— sem ordem de compra; o lançamento vai direto pra pagamento</span></label>
+     <div id="nf_regulwrap" style="display:${n.viaRegularizacao?"block":"none"};margin-top:10px"><label>Itens <span class="opt">(um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="nf_itens" rows="3" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg" oninput="previaItensTexto('nf_itens','nf_itens_info')">${esc(n.itensTexto||"")}</textarea><div id="nf_itens_info" class="hint"></div></div></div>
    <div class="row2"><div class="fg"><label>Número da NF *</label><input id="nf_num" value="${esc(n.numero)}"></div><div class="fg"><label>Tipo</label><select id="nf_tipo" onchange="document.getElementById('nf_freteinfo').style.display=this.value==='Nota de Frete'?'block':'none'"><option value="">—</option>${TIPOS_NOTA.map(t=>`<option ${n.tipoNota===t?"selected":""}>${t}</option>`).join("")}</select></div></div>
    <div class="fg"><label>Fornecedor</label><input id="nf_forn" list="nf_fornlist" value="${esc(n.fornecedor)}"><datalist id="nf_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
    <div class="row2"><div class="fg"><label>Pedido vinculado <span class="opt" id="nf_pedido_opt">(opcional, exceto pra Nota de Frete)</span></label><select id="nf_pedido" onchange="atualizarOcsDaNota()"><option value="">—</option>${DB.compras_pedidos.map(p=>`<option value="${p.id}" ${p.id===n.pedido?"selected":""}>${esc(setorNome(p.setor))} — ${esc((p.itens||"").slice(0,30))}</option>`).join("")}</select></div><div class="fg"><label>Contrato vinculado <span class="opt">(opcional)</span></label><select id="nf_contrato"><option value="">—</option>${DB.compras_contratos.map(c=>`<option value="${c.id}" ${c.id===n.contrato?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select></div></div>
@@ -4597,10 +4682,12 @@ function salvarNota(id){
   const numero=$("#nf_num").value.trim(),valor=$("#nf_valor").value,dataEmissao=$("#nf_emissao").value;
   const dataPrevista=$("#nf_prazo").value,formaPagamento=$("#nf_forma").value,tipoNota=$("#nf_tipo").value,pedido=$("#nf_pedido").value;
   const lancadoAntes=id?(DB.compras_notas.find(x=>x.id===id)||{}).lancado:false;
+  const regul=!!($("#nf_regul")&&$("#nf_regul").checked),itensTxt=$("#nf_itens")?$("#nf_itens").value:"";
   if(!numero||!valor||!dataEmissao){toast("Preencha número, valor e emissão.");return;}
   if(!dataPrevista){toast("Preencha a data de vencimento.");return;}
   if(!formaPagamento){toast("Selecione a forma de pagamento.");return;}
-  if(tipoNota==="Nota de Frete"){
+  if(regul&&!parsearItensDeTexto(itensTxt).length){toast("Via regularização: descreva os itens (pode colar a mensagem).");return;}
+  if(tipoNota==="Nota de Frete"&&!regul){
     if(!pedido){toast("Nota de Frete precisa de um pedido vinculado.");return;}
     const temNotaMaterial=DB.compras_notas.some(n=>n.id!==id&&n.pedido===pedido&&n.tipoNota==="Nota Fiscal de Material");
     if(!temNotaMaterial){toast("Esse pedido ainda não tem Nota Fiscal de Material lançada — lança ela primeiro, depois a nota de frete.");return;}
@@ -4615,7 +4702,7 @@ function salvarNota(id){
   let linkFluigPag=$("#nf_pagfluiglink")?.value.trim()||"";
   if(linkFluigPag&&!/^https?:\/\//i.test(linkFluigPag))linkFluigPag="https://"+linkFluigPag;
   const lancadoAgora=$("#nf_lancado").checked;
-  const o={id:id||uid(),numero,tipoNota,fornecedor:$("#nf_forn").value.trim(),pedido,ordemCompraId:$("#nf_oc")?.value||"",contrato:$("#nf_contrato").value,dataEmissao,valor,numeroFluig:$("#nf_fluig").value.trim(),linkFluig,dataPrevista,formaPagamento,lancado:lancadoAgora,fluigPagamentoNumero:$("#nf_pagfluig")?.value.trim()||"",fluigPagamentoLink:linkFluigPag,dataRealizada:$("#nf_realizada").value,notaRemessaNumero:$("#nf_temremessa").checked?$("#nf_remessanum").value.trim():"",notaRemessaData:$("#nf_temremessa").checked?$("#nf_remessadata").value:"",anexos:_anexosTemp.slice(),obs:$("#nf_obs").value.trim()};
+  const o={id:id||uid(),numero,tipoNota,fornecedor:$("#nf_forn").value.trim(),pedido:regul?"":pedido,ordemCompraId:regul?"":($("#nf_oc")?.value||""),viaRegularizacao:regul,itens:regul?parsearItensDeTexto(itensTxt):[],itensTexto:regul?itensTxt:"",contrato:$("#nf_contrato").value,dataEmissao,valor,numeroFluig:$("#nf_fluig").value.trim(),linkFluig,dataPrevista,formaPagamento,lancado:lancadoAgora,fluigPagamentoNumero:$("#nf_pagfluig")?.value.trim()||"",fluigPagamentoLink:linkFluigPag,dataRealizada:$("#nf_realizada").value,notaRemessaNumero:$("#nf_temremessa").checked?$("#nf_remessanum").value.trim():"",notaRemessaData:$("#nf_temremessa").checked?$("#nf_remessadata").value:"",anexos:_anexosTemp.slice(),obs:$("#nf_obs").value.trim()};
   if(id){const i=DB.compras_notas.findIndex(x=>x.id===id);DB.compras_notas[i]=o;}else DB.compras_notas.push(o);
   if(o.pedido){const pedNF=DB.compras_pedidos.find(x=>x.id===o.pedido);if(pedNF&&pedNF.status==="Pedido feito"){pedNF.status="Nota fiscal gerada";(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});save("compras_pedidos");}}
   save("compras_notas");closeModal();render();
