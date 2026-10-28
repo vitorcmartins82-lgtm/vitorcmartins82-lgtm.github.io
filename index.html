@@ -599,7 +599,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -634,7 +634,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.18";
+const APP_VERSAO="v2026-10-02.20";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -768,7 +768,7 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
+function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];ativos.forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
@@ -1333,6 +1333,75 @@ function exportAniversariantes(){
   XLSX.writeFile(wb,"aniversariantes-"+(_anMes?MESES_NOME[_anMes]:"todos")+".xlsx");toast("Exportado.");
 }
 
+let _lsSemana="",_lsLista="",_lsSetor="",_lsSolic="",_lsForn="",_lsSit="",_lsBusca="",_lsAgrupar="lista";
+function itensDaSemana(seg){
+  const out=[];
+  DB.compras_pedidos.forEach(p=>{
+    if(semanaDoPedido(p)!==seg)return;
+    (p.itensLista||[]).forEach(it=>{
+      const forn=fornDoItem(p,it),cob=coberturaItem(p,it);
+      out.push({p,it,lista:listaDoItem(it,p),setor:setorNome(p.setor),solic:nomeSolicitante(p)||"—",dia:p.data,forn:forn.join(" · "),sit:situacaoItem(p,it),notas:cob.notas,cob});
+    });
+  });
+  return out;
+}
+function _diaTxt(iso_){const d=pd(iso_);return d?DIAS_ABREV3[d.getDay()]+" "+_ddmm(d):"—";}
+function lsSemanaMuda(n){_lsSemana=iso(_somaDias(pd(_lsSemana),7*n));render();}
+function lsLimpar(){_lsLista=_lsSetor=_lsSolic=_lsForn=_lsSit=_lsBusca="";render();}
+function _lsFiltrados(){
+  const todos=itensDaSemana(_lsSemana);
+  const q=normalizaNome(_lsBusca);
+  const lista=todos.filter(x=>(!_lsLista||x.lista===_lsLista)&&(!_lsSetor||x.setor===_lsSetor)&&(!_lsSolic||x.solic===_lsSolic)&&(!_lsForn||x.forn.split(" · ").includes(_lsForn))&&(!_lsSit||x.sit===_lsSit)&&(!q||normalizaNome(x.it.nome+" "+x.solic+" "+x.forn).includes(q)));
+  const chave=x=>_lsAgrupar==="lista"?x.lista:_lsAgrupar==="setor"?x.setor:_lsAgrupar==="solicitante"?x.solic:_lsAgrupar==="dia"?x.dia+"|"+_diaTxt(x.dia):_lsAgrupar==="fornecedor"?(x.forn||"Sem fornecedor ainda"):"";
+  lista.sort((a,b)=>String(chave(a)).localeCompare(String(chave(b)),"pt-BR")||String(a.dia).localeCompare(String(b.dia))||String(a.it.nome).localeCompare(String(b.it.nome),"pt-BR"));
+  return{todos,lista,chave};
+}
+function vListaSemana(){
+  if(!_lsSemana)_lsSemana=semanaListaDe(iso(today()),false);
+  const {todos,lista,chave}=_lsFiltrados();
+  const uniq=f=>[...new Set(todos.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"pt-BR"));
+  const sel=(id,atual,vazio,vals,setter)=>`<select onchange="${setter}=this.value;render()"><option value="">${vazio}</option>${vals.map(v=>`<option ${atual===v?"selected":""}>${esc(v)}</option>`).join("")}</select>`;
+  const forns=[...new Set(todos.flatMap(x=>x.forn?x.forn.split(" · "):[]))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const sitCls={"Pedido":"t-grey","Aguardando engenheiro":"t-red","Comprado":"t-steel","Nota parcial":"t-amber","Com nota":"t-green"};
+  const cont={};todos.forEach(x=>{cont[x.sit]=(cont[x.sit]||0)+1;});
+  const pessoas=new Set(todos.map(x=>x.solic)).size,pedidos=new Set(todos.map(x=>x.p.id)).size;
+  let ult=null;
+  const linhas=lista.map(x=>{
+    const k=chave(x);let cab="";
+    if(_lsAgrupar!=="nenhum"&&k!==ult){ult=k;const nome=_lsAgrupar==="dia"?_diaTxt(x.dia):(String(k)||"—");const n=lista.filter(y=>chave(y)===k).length;cab=`<tr><td colspan="10" style="background:#f3f6ef;font-weight:700;padding:8px 12px">${esc(nome)} <span class="tag t-grey" style="font-size:10px">${n} item(ns)</span></td></tr>`;}
+    return cab+`<tr><td><b>${esc(x.it.nome)}</b></td><td class="num">${esc((x.it.quantidade||"1")+(x.it.unidade?" "+x.it.unidade:""))}</td><td><span class="tag t-grey" style="font-size:10px">${esc(x.lista)}</span></td><td>${esc(x.setor)}</td><td>${esc(x.solic)}</td><td>${_diaTxt(x.dia)}</td><td>${esc(x.forn||"—")}</td><td><span class="tag ${sitCls[x.sit]||'t-grey'}">${x.sit}${x.cob.parcial?` ${x.cob.qtd}/${x.cob.total}`:""}</span></td><td>${x.notas.length?x.notas.map(n=>"NF "+esc(n.numero)).join(", "):"—"}</td><td><button class="btn btn-g btn-sm" onclick="verPedido('${x.p.id}')">Pedido</button></td></tr>`;
+  }).join("");
+  const filtrando=_lsLista||_lsSetor||_lsSolic||_lsForn||_lsSit||_lsBusca;
+  main.innerHTML=`<div class="head"><div><h1>🗓 Lista da semana</h1><p>Todos os itens pedidos de ${rotuloJanelaPedidos(_lsSemana).replace("pedidos de ","")} — compra da semana ${rotuloSemana(_lsSemana)}. Quinta em diante entra na próxima semana.</p></div><div class="acts"><button class="btn btn-g" onclick="editarListasPedido()">⚙ Listas</button><button class="btn btn-g" onclick="copiarListaSemana()">📋 Copiar (WhatsApp)</button><button class="btn btn-a" onclick="exportListaSemana()">⭳ Excel</button></div></div>
+   <div class="toolbar"><button class="btn btn-g btn-sm" onclick="lsSemanaMuda(-1)">◀ Semana anterior</button><b style="padding:0 8px">${rotuloSemana(_lsSemana)}</b><button class="btn btn-g btn-sm" onclick="lsSemanaMuda(1)">Próxima semana ▶</button><button class="btn btn-g btn-sm" onclick="_lsSemana=semanaListaDe(iso(today()),false);render()">Hoje</button></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">${todos.length}</div><div class="l">Itens na semana</div></div><div class="stat"><div class="n">${pedidos}</div><div class="l">Pedidos · ${pessoas} pessoa(s)</div></div><div class="stat amber"><div class="n">${(cont["Pedido"]||0)+(cont["Aguardando engenheiro"]||0)}</div><div class="l">Ainda sem compra</div></div><div class="stat green"><div class="n">${cont["Com nota"]||0}</div><div class="l">Com nota</div></div></div>
+   <div class="toolbar">${sel("l",_lsLista,"Todas as listas",[...new Set([...listasPedido(),...todos.map(x=>x.lista)])],"_lsLista")}${sel("s",_lsSetor,"Todos os setores",uniq(x=>x.setor),"_lsSetor")}${sel("q",_lsSolic,"Quem pediu",uniq(x=>x.solic),"_lsSolic")}${sel("f",_lsForn,"Fornecedor",forns,"_lsForn")}${sel("t",_lsSit,"Situação",["Pedido","Aguardando engenheiro","Comprado","Nota parcial","Com nota"],"_lsSit")}
+    <input type="search" placeholder="Buscar item ou pessoa..." value="${esc(_lsBusca)}" oninput="_lsBusca=this.value;render()" style="min-width:200px">
+    <select onchange="_lsAgrupar=this.value;render()">${[["lista","Agrupar por lista"],["setor","Agrupar por setor"],["solicitante","Agrupar por pessoa"],["dia","Agrupar por dia"],["fornecedor","Agrupar por fornecedor"],["nenhum","Sem agrupar"]].map(([v,t])=>`<option value="${v}" ${_lsAgrupar===v?"selected":""}>${t}</option>`).join("")}</select>${filtrando?'<button class="btn btn-g btn-sm" onclick="lsLimpar()">Limpar filtros</button>':''}</div>
+   <div class="panel"><div class="tblwrap">${lista.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Item</th><th>Qtd.</th><th>Lista</th><th>Setor</th><th>Quem pediu</th><th>Dia</th><th>Fornecedor</th><th>Situação</th><th>Notas</th><th></th></tr></thead><tbody>${linhas}</tbody></table>`:`<div class="empty"><div class="big">🗓</div><p>${todos.length?"Nenhum item com esses filtros.":"Nenhum item pedido nessa semana."}</p></div>`}</div></div>`;
+}
+function _linhasListaSemana(){const {lista}=_lsFiltrados();return lista;}
+function exportListaSemana(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const rows=_linhasListaSemana().map(x=>({Semana:rotuloSemana(_lsSemana),Lista:x.lista,Item:x.it.nome,Quantidade:x.it.quantidade||"1",Unidade:x.it.unidade||"",Setor:x.setor,"Quem pediu":x.solic,Dia:x.dia?fmt(x.dia):"",Local:x.p.localPedido||"","Lançado por":x.p.lancadoPor||"",Fornecedor:x.forn,Situação:x.sit,Notas:x.notas.map(n=>n.numero).join(", ")}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem itens"}]),"Lista da semana");
+  XLSX.writeFile(wb,"lista-da-semana-"+_lsSemana+".xlsx");toast("Exportado.");
+}
+function copiarListaSemana(){
+  const ls=_linhasListaSemana();if(!ls.length){toast("Não há itens nessa semana.");return;}
+  const grupos={};ls.forEach(x=>{(grupos[x.lista]=grupos[x.lista]||[]).push(x);});
+  const t="*Lista de compras — semana "+rotuloSemana(_lsSemana)+"*\n"+Object.keys(grupos).map(g=>"\n*"+g+"*\n"+grupos[g].map(x=>"• "+(x.it.quantidade||"1")+(x.it.unidade?" "+x.it.unidade:"")+" — "+x.it.nome+" ("+x.solic+", "+_diaTxt(x.dia)+")"+(x.sit==="Aguardando engenheiro"?" ⚠ aguardando aprovação do engenheiro":"")).join("\n")).join("\n");
+  const ok=()=>toast("Lista copiada — é só colar no WhatsApp.");
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok).catch(()=>prompt("Copie a lista:",t));else prompt("Copie a lista:",t);
+}
+function editarListasPedido(){
+  openModal(`<div class="modal-h"><h3>⚙ Listas de compra</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Uma lista por linha. É assim que os itens são separados na Lista da semana (material de obra, de alojamento, serviço...).</p><div class="fg"><textarea id="ls_listas" rows="9">${esc(listasPedido().join("\n"))}</textarea></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarListasPedido()">Salvar</button></div>`);
+}
+function salvarListasPedido(){
+  const ls=[...new Set($("#ls_listas").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];
+  if(!ls.length){toast("Informe pelo menos uma lista.");return;}
+  DB.cfg.listasPedido=ls;save("cfg");closeModal();render();toast("Listas salvas.");
+}
 function vTransporteFds(){
   const alojados=porNome(DB.func.filter(f=>ativo(f)&&(estadiaAtual(f.id)||{}).tipo==="Alojamento"));
   main.innerHTML=`<div class="head"><div><h1>🚌 Transporte Fim de Semana</h1><p>Controle de quem é alojado e como volta pra casa: carro da empresa, passagem paga pela empresa, ou reembolso.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirImportarTransporteFds()">📋 Importar dados (colar do Excel)</button></div></div>
@@ -2616,6 +2685,7 @@ function migrarFluxoPedidos(){
     DB.cfg.pedidosFinalizadosAte=corte;save("cfg");
     if(n){mudou=true;setTimeout(()=>toast(n+" pedido(s) anteriores a "+fmt(corte)+" foram finalizados."),800);}
   }
+  DB.compras_pedidos.forEach(p=>{(p.itensLista||[]).forEach(it=>{if(!it.id){it.id=uid();mudou=true;}});});
   if(mudou)save("compras_pedidos");
 }
 function dataPedidoFeito(p){
@@ -2629,8 +2699,9 @@ function prazoNotaPedido(p){
   const d=dataPedidoFeito(p);if(!d)return"";
   return iso(new Date(pd(d).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS));
 }
-function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!pedidoAntigo(p)&&!(notasDoPedido(p.id).length>0));}
+function pedidosFeitosSemNota(){return DB.compras_pedidos.filter(p=>p.status==="Pedido feito"&&!pedidoAntigo(p)&&(!(notasDoPedido(p.id).length>0)||(pedidoRastreadoPorItem(p)&&resumoCoberturaPedido(p).semNota.length>0)));}
 function tagNotaPendente(p){
+  if(p.status==="Pedido feito"&&!pedidoAntigo(p)&&pedidoRastreadoPorItem(p)){const r=resumoCoberturaPedido(p);return r.semNota.length?`<span class="tag t-amber">NF parcial — ${r.comNota}/${r.itens} itens com nota</span>`:"";}
   if(p.status!=="Pedido feito"||pedidoAntigo(p)||(notasDoPedido(p.id).length>0))return"";
   const prazo=prazoNotaPedido(p);
   if(prazo&&pd(prazo)<today())return `<span class="tag t-red">🚨 nota fiscal atrasada ${diasEntre(pd(prazo),today())}d</span>`;
@@ -2667,7 +2738,7 @@ function previaItensTexto(taId,infoId){
 function adicionarItensDaMensagem(){
   const its=parsearItensDeTexto($("#pd_msg_itens").value);
   if(!its.length){toast("Não encontrei itens no texto. Escreva um item por linha.");return;}
-  its.forEach(i=>_itensPedidoTemp.push(i));
+  const _ls=$("#pd_msg_lista")?$("#pd_msg_lista").value:"";its.forEach(i=>{if(_ls)i.lista=_ls;_itensPedidoTemp.push(i);});
   renderItensPedidoTemp();$("#pd_msg_itens").value="";$("#pd_msg_info").innerHTML="";
   toast(its.length+" item(ns) adicionado(s) da mensagem.");
 }
@@ -2776,7 +2847,7 @@ function formSetor(id){
   const s=id?DB.compras_setores.find(x=>x.id===id):{diaSemana:""};
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} setor</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div class="fg"><label>Nome *</label><input id="st_nome" value="${esc(s.nome)}" placeholder="ex.: Meio Ambiente, Engenharia..."></div>
-   <div class="fg"><label>Dia da semana pra pedir <span class="opt">(opcional — sem dia fixo, sempre liberado)</span></label><select id="st_dia"><option value="">Sem dia fixo</option>${DIAS_SEMANA.map((d,i)=>`<option value="${i}" ${String(s.diaSemana)===String(i)?"selected":""}>${d}</option>`).join("")}</select></div>
+   <div class="fg"><label>Dia da semana pra pedir <span class="opt">(não é mais usado — vale o ciclo semanal: pedidos até quarta)</span></label><select id="st_dia"><option value="">Sem dia fixo</option>${DIAS_SEMANA.map((d,i)=>`<option value="${i}" ${String(s.diaSemana)===String(i)?"selected":""}>${d}</option>`).join("")}</select></div>
    <div class="fg"><label>E-mails <span class="opt">(um ou mais, separados por vírgula — usado nos avisos de aprovação/chegada)</span></label><input id="st_emails" value="${esc(s.emails)}" placeholder="ex.: arthur@priner.com.br, joao@priner.com.br"></div>
    <div class="fg"><label>Observações</label><input id="st_obs" value="${esc(s.obs)}"></div></div>
    <div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delSetor('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarSetor('${id||""}')">Salvar</button></div>`);
@@ -2792,6 +2863,8 @@ function delSetor(id){if(!confirm("Excluir este setor?"))return;DB.compras_setor
 /* ============ COMPRAS: pedidos ============ */
 let _pedFiltroSetor="",_pedFiltroStatus="",_pedFiltroForn="",_pedFiltroBusca="";
 let _pedFiltroSol="",_pedFiltroLanc="";
+const DIAS_ABREV3=["dom","seg","ter","qua","qui","sex","sáb"];
+const DIAS_NOME_LONGO=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 const TIPOS_PEDIDO=["Material","Serviço","Locação","EPI/Segurança","Manutenção","Outro"];
 function aprovadoresPedidos(){
   /* Quem aprova: funcionários ativos marcados como "Aprovador de pedidos" (Gerenciar permissões).
@@ -2824,8 +2897,8 @@ function resumoItensPedidoCurto(p){
 let _itensPedidoTemp=[];
 function renderItensPedidoTemp(travado){
   const el=$("#pd_itenslist");if(!el)return;
-  el.innerHTML=_itensPedidoTemp.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Cód.</th><th>Item</th><th>Categoria</th><th>C.A.</th><th>Qtd.</th><th>Un.</th><th>Valor unit.</th><th></th></tr></thead><tbody>${
-    _itensPedidoTemp.map((it,i)=>`<tr><td>${esc(it.codigo||"—")}</td><td>${esc(it.nome)}</td><td>${it.categoria?`<span class="tag t-steel">${esc(it.categoria)}</span>`:"—"}</td><td>${esc(it.ca||"—")}</td><td class="num">${esc(it.quantidade||"—")}</td><td>${esc(it.unidade||"—")}</td><td class="num">${it.valorUnitario?"R$ "+(+it.valorUnitario).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${travado?'<small class="hint">travado</small>':`<button class="btn btn-g btn-sm" onclick="removerItemPedidoTemp(${i})">Remover</button>`}</td></tr>`).join("")
+  el.innerHTML=_itensPedidoTemp.length?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:10px"><thead><tr><th>Cód.</th><th>Item</th><th>Lista</th><th>Categoria</th><th>C.A.</th><th>Qtd.</th><th>Un.</th><th>Valor unit.</th><th></th></tr></thead><tbody>${
+    _itensPedidoTemp.map((it,i)=>`<tr><td>${esc(it.codigo||"—")}</td><td>${esc(it.nome)}</td><td>${it.lista?`<span class="tag t-grey">${esc(it.lista)}</span>`:"—"}</td><td>${it.categoria?`<span class="tag t-steel">${esc(it.categoria)}</span>`:"—"}</td><td>${esc(it.ca||"—")}</td><td class="num">${esc(it.quantidade||"—")}</td><td>${esc(it.unidade||"—")}</td><td class="num">${it.valorUnitario?"R$ "+(+it.valorUnitario).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td><td>${travado?'<small class="hint">travado</small>':`<button class="btn btn-g btn-sm" onclick="removerItemPedidoTemp(${i})">Remover</button>`}</td></tr>`).join("")
   }</tbody></table>`:`<p class="hint" style="margin-bottom:10px">Nenhum item adicionado ainda.</p>`;
 }
 function adicionarItemPedidoTemp(){
@@ -2833,7 +2906,7 @@ function adicionarItemPedidoTemp(){
   if(!nome){toast("Informe o nome do item.");return;}
   const categoria=$("#pd_it_cat")?.value.trim()||"";
   const finalizar=()=>{
-    _itensPedidoTemp.push({id:uid(),codigo:$("#pd_it_cod")?.value.trim()||"",nome,categoria,ca:$("#pd_it_ca")?.value.trim()||"",quantidade:$("#pd_it_qtd").value.trim(),unidade:$("#pd_it_un")?.value.trim()||"",valorUnitario:$("#pd_it_valor").value});
+    _itensPedidoTemp.push({id:uid(),codigo:$("#pd_it_cod")?.value.trim()||"",nome,categoria,lista:($("#pd_it_lista")?$("#pd_it_lista").value:""),ca:$("#pd_it_ca")?.value.trim()||"",quantidade:$("#pd_it_qtd").value.trim(),unidade:$("#pd_it_un")?.value.trim()||"",valorUnitario:$("#pd_it_valor").value});
     $("#pd_it_nome").value="";$("#pd_it_qtd").value="";$("#pd_it_valor").value="";if($("#pd_it_cod"))$("#pd_it_cod").value="";if($("#pd_it_ca"))$("#pd_it_ca").value="";if($("#pd_it_un"))$("#pd_it_un").value="";if($("#pd_it_cat"))$("#pd_it_cat").value="";
     renderItensPedidoTemp();
     $("#pd_it_nome").focus();
@@ -2910,7 +2983,7 @@ function renderPedidosTbl(){
     const ocs=p.ordensCompra||[];
     return `<div class="panel" style="${destaque?'border-left:4px solid var(--red)':''}"><div style="padding:14px 18px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">
-        <div><b>${esc(nomeSolicitante(p))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}${p.localPedido?" · "+esc(p.localPedido):""}${(p.lancadoPor&&!p.lancamentoDireto)?` · lançado por <b>${esc(p.lancadoPor)}</b>`:""}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora do dia — precisa liberação</span>':''}</div>
+        <div><b>${esc(nomeSolicitante(p))||"—"}</b> <span class="hint">· ${esc(setorNome(p.setor))} · ${fmt(p.data)}${p.localPedido?" · "+esc(p.localPedido):""}${(p.lancadoPor&&!p.lancamentoDireto)?` · lançado por <b>${esc(p.lancadoPor)}</b>`:""}</span>${p.lancamentoDireto?` <span class="tag t-steel">🖇 lançamento direto — ${esc(p.lancadoPor||"")}</span>`:''}${excPend?' <span class="tag t-amber">fora da semana — aguarda engenheiro</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center"><span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span>${parado>=DB.cfg.diasAlertaParado&&!pedidoEncerrado(p)?`<span class="tag t-red">parado ${parado}d</span>`:''}${tagNotaPendente(p)}${pedidoAntigo(p)?'<span class="tag t-grey">fluxo antigo</span>':''}${p.viaRegularizacao?'<span class="tag t-steel">via regularização</span>':''}${p.viaNotaFiscal?'<span class="tag t-steel">via nota fiscal</span>':''}<button class="btn btn-g btn-sm" onclick="verPedido('${p.id}')">Ver / avançar</button></div>
       </div>
       <p class="hint" style="margin:0 0 10px">${resumoItensPedidoCurto(p)||"—"}</p>
@@ -2951,8 +3024,8 @@ function formPedido(id,prefill){
    <div class="row2"><div class="fg"><label>Tipo de pedido</label><select id="pd_tipo">${TIPOS_PEDIDO.map(t=>`<option ${p.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="fg"><label>Nível de urgência</label><select id="pd_urgencia"><option ${p.nivelUrgencia==="Normal"?"selected":""}>Normal</option><option ${p.nivelUrgencia==="Atenção"?"selected":""}>Atenção</option><option ${p.nivelUrgencia==="Urgente"?"selected":""}>Urgente</option></select></div></div>
    <div class="fg"><label>Itens do pedido *</label>
      <div id="pd_itenslist"></div>
-     ${(id&&p.status&&p.status!=="Solicitado")?`<p class="hint" style="color:var(--amber-d)">🔒 Pedido já ${esc(p.status.toLowerCase())} — os itens originais ficam travados pra manter o rastro. Se precisar de algo a mais, cria um pedido novo ou registra numa Ordem de Compra.</p>`:`<div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Código (opcional)</label><input id="pd_it_cod" placeholder="ex.: 3222"></div><div class="fg" style="margin-bottom:0"><label class="opt">Item *</label><input id="pd_it_nome" list="pd_it_nomelist" placeholder="ex.: Capacete de segurança"><datalist id="pd_it_nomelist">${DB.compras_estoque.map(it=>`<option value="${esc(it.nome)}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">C.A. (EPI, opcional)</label><input id="pd_it_ca" placeholder="ex.: 29638"></div></div><div class="row3" style="align-items:end;margin-top:10px"><div class="fg" style="margin-bottom:0"><label class="opt">Categoria</label><input id="pd_it_cat" list="pd_it_catlist" placeholder="ex.: EPI, Escritório..."><datalist id="pd_it_catlist">${categoriasAprovadas().map(c=>`<option value="${c}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">Quantidade</label><input id="pd_it_qtd" placeholder="ex.: 10"></div><div class="fg" style="margin-bottom:0"><label class="opt">Unidade</label><input id="pd_it_un" placeholder="ex.: UN, PR"></div></div><div class="fg" style="margin-top:10px;max-width:200px"><label class="opt">Valor unit. (R$)</label><input type="number" step="0.01" id="pd_it_valor"></div>
-     <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="adicionarItemPedidoTemp()">＋ Adicionar item</button><details style="margin-top:12px"><summary style="cursor:pointer;color:var(--steel);font-weight:600;font-size:13px">📋 Colar lista de itens (mensagem)</summary><textarea id="pd_msg_itens" rows="5" style="margin-top:8px" placeholder="Cole aqui a mensagem do WhatsApp/e-mail, um item por linha. Ex.:&#10;40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('pd_msg_itens','pd_msg_info')"></textarea><div id="pd_msg_info" class="hint"></div><button type="button" class="btn btn-g btn-sm" style="margin-top:6px" onclick="adicionarItensDaMensagem()">Adicionar à lista</button></details>`}
+     ${(id&&p.status&&p.status!=="Solicitado")?`<p class="hint" style="color:var(--amber-d)">🔒 Pedido já ${esc(p.status.toLowerCase())} — os itens originais ficam travados pra manter o rastro. Se precisar de algo a mais, cria um pedido novo ou registra numa Ordem de Compra.</p>`:`<div class="row3" style="align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Código (opcional)</label><input id="pd_it_cod" placeholder="ex.: 3222"></div><div class="fg" style="margin-bottom:0"><label class="opt">Item *</label><input id="pd_it_nome" list="pd_it_nomelist" placeholder="ex.: Capacete de segurança"><datalist id="pd_it_nomelist">${DB.compras_estoque.map(it=>`<option value="${esc(it.nome)}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">C.A. (EPI, opcional)</label><input id="pd_it_ca" placeholder="ex.: 29638"></div></div><div class="row3" style="align-items:end;margin-top:10px"><div class="fg" style="margin-bottom:0"><label class="opt">Categoria</label><input id="pd_it_cat" list="pd_it_catlist" placeholder="ex.: EPI, Escritório..."><datalist id="pd_it_catlist">${categoriasAprovadas().map(c=>`<option value="${c}">`).join("")}</datalist></div><div class="fg" style="margin-bottom:0"><label class="opt">Quantidade</label><input id="pd_it_qtd" placeholder="ex.: 10"></div><div class="fg" style="margin-bottom:0"><label class="opt">Unidade</label><input id="pd_it_un" placeholder="ex.: UN, PR"></div></div><div class="row2" style="margin-top:10px;align-items:end"><div class="fg" style="margin-bottom:0"><label class="opt">Lista de compra</label><select id="pd_it_lista"><option value="">Padrão do tipo do pedido</option>${listasPedido().map(l=>`<option>${esc(l)}</option>`).join("")}</select></div><div class="fg" style="margin-bottom:0;max-width:200px"><label class="opt">Valor unit. (R$)</label><input type="number" step="0.01" id="pd_it_valor"></div></div>
+     <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="adicionarItemPedidoTemp()">＋ Adicionar item</button><details style="margin-top:12px"><summary style="cursor:pointer;color:var(--steel);font-weight:600;font-size:13px">📋 Colar lista de itens (mensagem)</summary><select id="pd_msg_lista" style="margin-top:8px;max-width:280px"><option value="">Lista: padrão do tipo do pedido</option>${listasPedido().map(l=>`<option>${esc(l)}</option>`).join("")}</select><textarea id="pd_msg_itens" rows="5" style="margin-top:8px" placeholder="Cole aqui a mensagem do WhatsApp/e-mail, um item por linha. Ex.:&#10;40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('pd_msg_itens','pd_msg_info')"></textarea><div id="pd_msg_info" class="hint"></div><button type="button" class="btn btn-g btn-sm" style="margin-top:6px" onclick="adicionarItensDaMensagem()">Adicionar à lista</button></details>`}
      ${p.itens&&!(p.itensLista&&p.itensLista.length)?`<p class="hint" style="margin-top:10px">Descrição antiga (texto livre): "${esc(p.itens)}" — os itens novos que você adicionar acima ficam registrados separadamente.</p>`:""}
    </div>
    <div class="row2"><div class="fg"><label>Valor estimado (R$)</label><input type="number" step="0.01" id="pd_valor" value="${esc(p.valorEstimado)}"></div><div class="fg" style="display:flex;align-items:end"><button class="btn btn-g btn-sm" onclick="calcularTotalItensPedido()">🧮 Calcular pelo total dos itens</button></div></div>
@@ -2980,32 +3053,42 @@ function foraDoDiaCheck(setorId,dataStr){
   return String(d.getDay())!==String(s.diaSemana);
 }
 function avisoDiaPedido(){
-  const setorId=$("#pd_setor")?.value,data=$("#pd_data")?.value;
+  const data=$("#pd_data")?$("#pd_data").value:"";
   const el=$("#pd_aviso"),wrap=$("#pd_motivowrap");if(!el)return;
-  const s=setorObj(setorId);
-  if(!s||s.diaSemana===""||s.diaSemana==null){el.innerHTML="";if(wrap)wrap.style.display="none";return;}
-  const fora=foraDoDiaCheck(setorId,data);
-  if(!fora){el.innerHTML=`<p class="hint" style="color:var(--green);margin-bottom:14px">✓ Dentro do dia do setor (${DIAS_SEMANA[+s.diaSemana]}). Chega na obra na semana seguinte.</p>`;if(wrap)wrap.style.display="none";return;}
-  el.innerHTML=`<p class="hint" style="color:var(--red);margin-bottom:10px">⚠ Fora do dia do setor (dia certo: ${DIAS_SEMANA[+s.diaSemana]}). Pode esperar até o próximo dia certo, ou seguir como exceção justificando abaixo — precisa de liberação da engenharia.</p>`;if(wrap)wrap.style.display="block";
+  if(!data){el.innerHTML="";if(wrap)wrap.style.display="none";return;}
+  const corte=DIAS_NOME_LONGO[diaCorteLista()];
+  const depois=depoisDoCorte(data);
+  const estaSem=!!($("#pd_estasemana")&&$("#pd_estasemana").checked);
+  if(!depois){
+    const sem=semanaListaDe(data,false);
+    el.innerHTML=`<p class="hint" style="color:var(--green);margin-bottom:14px">✓ Entra na <b>lista da semana ${rotuloSemana(sem)}</b> (${rotuloJanelaPedidos(sem)}).</p>`;
+    if(wrap)wrap.style.display="none";return;
+  }
+  const prox=semanaListaDe(data,false),atual=semanaListaDe(data,true);
+  el.innerHTML=`<div class="hint" style="margin-bottom:12px;color:var(--ink)">📅 Como é depois de ${corte}, este pedido entra na <b>lista da próxima semana (${rotuloSemana(prox)})</b>.
+    <label style="display:block;margin-top:6px;cursor:pointer"><input type="checkbox" id="pd_estasemana" style="width:auto;margin-right:6px" onchange="avisoDiaPedido()" ${estaSem?"checked":""}>É urgente: precisa entrar na lista <b>desta</b> semana (${rotuloSemana(atual)}) — <b>exige aprovação do engenheiro</b></label></div>`;
+  if(wrap)wrap.style.display=estaSem?"block":"none";
 }
 function salvarPedido(id){
   if(!_pedSolicitante){toast("Selecione o solicitante.");return;}
   const setor=$("#pd_setor").value,data=$("#pd_data").value,nivelUrgencia=$("#pd_urgencia").value,tipo=$("#pd_tipo").value;
   if(!_itensPedidoTemp.length){toast("Adicione pelo menos um item ao pedido.");return;}
   if(!id&&data<iso(today())){toast("A data do pedido não pode ser retroativa (antes de hoje).");return;}
-  const fora=foraDoDiaCheck(setor,data);
+  const estaSem=!!($("#pd_estasemana")&&$("#pd_estasemana").checked);
+  const fora=estaSem&&depoisDoCorte(data);
+  const semanaLista=semanaListaDe(data,fora);
   const motivoExcecao=$("#pd_motivoexcecao")?.value.trim()||"";
-  if(fora&&!motivoExcecao){toast("Fora do dia do setor — escreva a justificativa da exceção, ou mude a data pro dia certo.");return;}
+  if(fora&&!motivoExcecao){toast("Pedido depois de quarta na lista desta semana: escreva a justificativa (o engenheiro vai aprovar) ou desmarque pra entrar na próxima semana.");return;}
   const itensLista=_itensPedidoTemp.slice();
   if(id){
     const p=DB.compras_pedidos.find(x=>x.id===id);
-    Object.assign(p,{solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),obs:$("#pd_obs").value.trim()});
+    Object.assign(p,{solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),semanaLista,setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),obs:$("#pd_obs").value.trim()});
     if(fora&&!p.foraDoDia){p.foraDoDia=true;p.motivoExcecao=motivoExcecao;p.excecaoLiberada=false;}
     else if(fora){p.motivoExcecao=motivoExcecao;}
     save("compras_pedidos");closeModal();render();toast("Pedido atualizado.");
     return;
   }
-  const o={id:uid(),fluxoNovo:true,solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),lancadoPor:nomeUsuarioLogado(),lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
+  const o={id:uid(),fluxoNovo:true,semanaLista,solicitante:_pedSolicitante,localPedido:$("#pd_local").value.trim(),lancadoPor:nomeUsuarioLogado(),lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor,data,tipo,nivelUrgencia,urgente:nivelUrgencia==="Urgente",itensLista,valorEstimado:$("#pd_valor").value,itemEstoque:$("#pd_itemestoque").value,contrato:$("#pd_contrato").value,anexos:_anexosTemp.slice(),foraDoDia:fora,motivoExcecao,excecaoLiberada:false,excecaoLiberadaData:"",excecaoLiberadaObs:"",status:"Solicitado",statusHistorico:[{status:"Solicitado",data:iso(today())}],obs:$("#pd_obs").value.trim()};
   DB.compras_pedidos.push(o);save("compras_pedidos");closeModal();render();toast("Pedido criado.");
 }
 const TIPOS_AQUISICAO=["Compra","Aluguel"];
@@ -3040,7 +3123,7 @@ function formLancamentoDireto(){
    <div class="row2"><div class="fg"><label>Setor *</label><select id="ld_setor">${DB.compras_setores.map(s=>`<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select></div><div class="fg"><label>Data da compra *</label><input type="date" id="ld_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Quem fez o pedido *</label><input id="ld_solic" list="ld_soliclist" placeholder="nome de quem pediu"><datalist id="ld_soliclist">${DB.func.filter(f=>ativo(f)).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div><div class="fg"><label>Local / frente de serviço <span class="opt">(opcional)</span></label><input id="ld_local" list="ld_locallist"><datalist id="ld_locallist">${DB.locais.map(l=>`<option value="${esc(l.nome)}">`).join("")}</datalist></div></div>
    <div class="fg"><label>O que é / material <span class="opt">(descrição do que foi comprado)</span></label><input id="ld_desc" placeholder="ex.: material elétrico, peça de reposição..."></div>
-   <div class="fg"><label>Itens <span class="opt">(opcional — um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="ld_itens" rows="4" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('ld_itens','ld_itens_info')"></textarea><div id="ld_itens_info" class="hint"></div></div>
+   <div class="fg"><label>Itens <span class="opt">(opcional — um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="ld_itens" rows="4" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg&#10;10 un Parafuso 8mm" oninput="previaItensTexto('ld_itens','ld_itens_info')"></textarea><div id="ld_itens_info" class="hint"></div><select id="ld_lista" style="margin-top:6px;max-width:280px"><option value="">Lista: padrão do tipo do pedido</option>${listasPedido().map(l=>`<option>${esc(l)}</option>`).join("")}</select></div>
    <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando — o almoxarife)</span></label><input id="ld_lancadopor" value="${esc(nomeUsuarioLogado())}" placeholder="seu nome"></div>
    <div class="fg"><label>Já lançou a nota em Notas Fiscais? <span class="opt">(vincule aqui — não precisa digitar a nota de novo)</span></label><select id="ld_notaexist" onchange="ldNotaExistenteMudou()"><option value="">— não, a nota ainda não foi lançada —</option>${DB.compras_notas.filter(n=>!n.pedido&&!n.viaRegularizacao).sort((a,b)=>String(b.dataEmissao||"").localeCompare(String(a.dataEmissao||""))).map(n=>`<option value="${n.id}">NF ${esc(n.numero)} — ${esc(n.fornecedor||"sem fornecedor")} — ${fmt(n.dataEmissao)} — R$ ${(+n.valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}</option>`).join("")}</select></div>
    <div id="ld_regul_info" style="display:none;background:#eaf4ee;border-left:4px solid var(--green);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">📄 <b>Via regularização</b>: não tem ordem de compra. O lançamento vai <b>direto pra pagamento</b> — preencha a nota abaixo (número, valor, vencimento e forma de pagamento).</div>
@@ -3083,7 +3166,7 @@ function salvarLancamentoDireto(){
     const dup=nfDuplicada($("#ld_nfnum").value.trim(),fornecedor);
     if(dup.mesma){toast("🚫 A NF "+$("#ld_nfnum").value.trim()+" desse fornecedor já foi lançada (emissão "+fmt(dup.mesma.dataEmissao)+"). Não dá pra lançar duas vezes.");return;}
   }
-  const dados={setor,data,lancadoPor,solicitanteNome:solicNome,solicitanteId:solicF?solicF.id:"",local:$("#ld_local").value.trim(),fornecedor,regul,notaExistId,itens:parsearItensDeTexto($("#ld_itens").value),desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
+  const dados={setor,data,lancadoPor,solicitanteNome:solicNome,solicitanteId:solicF?solicF.id:"",local:$("#ld_local").value.trim(),fornecedor,regul,notaExistId,listaItens:($("#ld_lista")?$("#ld_lista").value:""),itens:parsearItensDeTexto($("#ld_itens").value).map(i=>({...i,lista:($("#ld_lista")?$("#ld_lista").value:"")})),desc:$("#ld_desc").value.trim(),ocnum:$("#ld_ocnum").value.trim(),origem:$("#ld_origem").value,tipoaq:$("#ld_tipoaq").value,fluignum:$("#ld_fluignum").value.trim(),fluiglink:$("#ld_fluiglink").value.trim(),obs:$("#ld_obs").value.trim(),
     temNota,nfnum:$("#ld_nfnum").value.trim(),nfvalor:$("#ld_nfvalor").value,nffluignum:$("#ld_nffluignum").value.trim(),nffluiglink:$("#ld_nffluiglink").value.trim(),nfemissao:$("#ld_nfemissao").value,nfprazo:$("#ld_nfprazo").value,nfforma:$("#ld_nfforma").value};
   if(fornecedor&&!DB.compras_fornecedores.some(f=>f.nome.toLowerCase()===fornecedor.toLowerCase())){
     if(confirm('O fornecedor "'+fornecedor+'" ainda não está cadastrado. Cadastrar agora?')){
@@ -3098,7 +3181,7 @@ function salvarLancamentoDireto(){
 function concluirSalvarLancamentoDireto(d){
   let linkFluig=d.fluiglink;
   if(linkFluig&&!/^https?:\/\//i.test(linkFluig))linkFluig="https://"+linkFluig;
-  const o={id:uid(),fluxoNovo:true,solicitante:d.solicitanteId||"",solicitanteNome:d.solicitanteNome||"",localPedido:d.local||"",lancamentoDireto:true,lancadoPor:d.lancadoPor,lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:(d.itens&&d.itens.length)?d.itens:(d.desc?[{nome:d.desc,quantidade:"1",obs:""}]:[]),valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:(d.temNota||d.notaExistId)?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
+  const o={id:uid(),fluxoNovo:true,solicitante:d.solicitanteId||"",solicitanteNome:d.solicitanteNome||"",localPedido:d.local||"",lancamentoDireto:true,lancadoPor:d.lancadoPor,lancadoPorId:(_usuarioLogadoId||""),lancadoEm:iso(today()),setor:d.setor,data:d.data,tipo:"Material",nivelUrgencia:"Normal",urgente:false,itensLista:(d.itens&&d.itens.length)?d.itens:(d.desc?[{nome:d.desc,quantidade:"1",obs:"",lista:d.listaItens||""}]:[]),valorEstimado:"",itemEstoque:"",contrato:"",anexos:[],foraDoDia:false,motivoExcecao:"",excecaoLiberada:true,status:(d.temNota||d.notaExistId)?"Nota fiscal gerada":"Pedido feito",pedidoFeitoData:d.data,statusHistorico:[{status:"Solicitado",data:d.data},{status:"Pedido feito",data:d.data}],obs:d.obs||("Lançamento direto (compra por fora) — registrado por "+d.lancadoPor)};
   const ocId=uid();
   if(d.regul){o.viaRegularizacao=true;o.origemCompra="Via regularização";if(!d.obs)o.obs="Via regularização — lançamento direto pra pagamento, registrado por "+d.lancadoPor;if(d.desc&&d.itens&&d.itens.length)o.obs+=" · "+d.desc;}
   o.ordensCompra=d.regul?[]:[{id:ocId,numero:d.ocnum,numeroFluig:d.fluignum,linkFluig,origemCompra:d.origem,fornecedor:d.fornecedor,tipoAquisicao:d.tipoaq,duracaoAluguel:"",prazoEstimado:"",dataCriacao:d.data,prazoNotaFiscal:iso(new Date(pd(d.data).getTime()+(DB.cfg.prazoNotaFiscalDias||5)*MS)),itensIncluidos:[],obs:""}];
@@ -3239,6 +3322,7 @@ function avisoNotaPedido(p){
   }
   if(p.itemEstoque&&!p.entradaEstoqueData&&["Pedido feito","Nota fiscal gerada","Finalizado"].includes(p.status))h+=`<button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="formEntradaEstoquePedido('${p.id}')">📦 Registrar chegada no estoque</button>`;
   {const nts=notasDoPedido(p.id);if(nts.length)h+=`<div class="hint" style="margin-bottom:10px"><b>Notas fiscais deste pedido (${nts.length}):</b> ${nts.map(n=>"NF "+esc(n.numero)+" · R$ "+valorDaNotaNoPedido(n,p.id).toLocaleString("pt-BR",{minimumFractionDigits:2})+(nPedidosDaNota(n)>1?" (compartilhada com "+(nPedidosDaNota(n)-1)+" outro(s) pedido(s))":"")).join(" — ")}</div>`;}
+  if(pedidoRastreadoPorItem(p)){const r=resumoCoberturaPedido(p);h+=`<div class="hint" style="margin-bottom:10px"><b>Itens com nota:</b> ${r.comNota} de ${r.itens}.${r.semNota.length?" Faltam: "+r.semNota.map(i=>esc(i.nome)).join(", ")+".":" Todos cobertos."}</div>`;}
   if(!p.viaRegularizacao){const nn=notasDoPedido(p.id).length;h+=`<button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="closeModal();formVincularNotas('${p.id}')">🔗 Vincular nota fiscal${nn?" ("+nn+")":""}</button> `;}
   return h;
 }
@@ -3319,9 +3403,9 @@ function verPedido(id){
    <p class="hint" style="margin-bottom:10px">Setor: <b>${esc(setorNome(p.setor))}</b> · Tipo: <b>${esc(p.tipo||"—")}</b> · Urgência: <span class="tag ${urgCls[p.nivelUrgencia]||'t-grey'}">${esc(p.nivelUrgencia||"Normal")}</span></p>
    <p class="hint" style="margin-bottom:10px">Quem fez: <b>${esc(nomeSolicitante(p)||"—")}</b> · Onde: <b>${esc(setorNome(p.setor))}${p.localPedido?" / "+esc(p.localPedido):""}</b> · Data: <b>${fmt(p.data)}</b> · Lançado por: <b>${esc(p.lancadoPor||"—")}</b>${p.lancadoEm?" em "+fmt(p.lancadoEm):""}</p>
    ${avisoNotaPedido(p)}<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-g btn-sm" onclick="imprimirPedidoOrcamento('${id}')">🖨 Pedido de Orçamento</button><button class="btn btn-g btn-sm" onclick="abrirEmailAprovacao('${id}')">📧 E-mail de aprovação</button><button class="btn btn-g btn-sm" onclick="abrirEmailChegada('${id}')">📧 E-mail de chegada</button></div>
-   ${bloqueado?`<div class="alert" style="background:var(--red-l);border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--red)"></span><div class="txt"><b>Fora do dia do setor — precisa liberação da engenharia</b><small>Justificativa: ${esc(p.motivoExcecao||"—")}</small></div></div><button class="btn btn-a" style="margin-bottom:14px" onclick="liberarExcecao('${id}')">Liberar exceção (engenharia)</button>`:p.foraDoDia?`<p class="hint" style="margin-bottom:14px">Exceção liberada em ${fmt(p.excecaoLiberadaData)}. Justificativa: ${esc(p.motivoExcecao||"—")}</p>`:""}
+   ${bloqueado?`<div class="alert" style="background:var(--red-l);border-radius:8px;margin-bottom:14px"><span class="dot" style="background:var(--red)"></span><div class="txt"><b>Entrada na lista desta semana depois de quarta — precisa de aprovação do engenheiro</b><small>Justificativa: ${esc(p.motivoExcecao||"—")}</small></div></div><button class="btn btn-a" style="margin-bottom:14px" onclick="liberarExcecao('${id}')">Aprovar exceção (engenheiro)</button>`:p.foraDoDia?`<p class="hint" style="margin-bottom:14px">Exceção aprovada${p.excecaoLiberadaPor?" por "+esc(p.excecaoLiberadaPor):""} em ${fmt(p.excecaoLiberadaData)}. Justificativa: ${esc(p.motivoExcecao||"—")}</p>`:""}
    <h3 style="font-size:14px;margin:14px 0 8px">Itens${p.status!=="Solicitado"?' <span style="font-weight:400;color:var(--muted);font-size:12px">🔒 travado</span>':''}</h3>
-   ${(p.itensLista&&p.itensLista.length)?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:14px"><thead><tr><th>Cód.</th><th>Item</th><th>Categoria</th><th>C.A.</th><th>Qtd.</th><th>Un.</th><th>Valor unit.</th></tr></thead><tbody>${p.itensLista.map(it=>`<tr><td>${esc(it.codigo||"—")}</td><td>${esc(it.nome)}</td><td>${it.categoria?`<span class="tag t-steel">${esc(it.categoria)}</span>`:"—"}</td><td>${esc(it.ca||"—")}</td><td class="num">${esc(it.quantidade||"—")}</td><td>${esc(it.unidade||"—")}</td><td class="num">${it.valorUnitario?"R$ "+(+it.valorUnitario).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td></tr>`).join("")}</tbody></table>`:`<p class="break" style="margin-bottom:14px">${esc(p.itens||"—")}</p>`}
+   ${(p.itensLista&&p.itensLista.length)?`<table class="tbl" style="border:1px solid #eef0ec;border-radius:8px;margin-bottom:14px"><thead><tr><th>Cód.</th><th>Item</th><th>Lista</th><th>Categoria</th><th>C.A.</th><th>Qtd.</th><th>Un.</th><th>Valor unit.</th></tr></thead><tbody>${p.itensLista.map(it=>`<tr><td>${esc(it.codigo||"—")}</td><td>${esc(it.nome)}</td><td><span class="tag t-grey">${esc(listaDoItem(it,p))}</span></td><td>${it.categoria?`<span class="tag t-steel">${esc(it.categoria)}</span>`:"—"}</td><td>${esc(it.ca||"—")}</td><td class="num">${esc(it.quantidade||"—")}</td><td>${esc(it.unidade||"—")}</td><td class="num">${it.valorUnitario?"R$ "+(+it.valorUnitario).toLocaleString('pt-BR',{minimumFractionDigits:2}):"—"}</td></tr>`).join("")}</tbody></table>`:`<p class="break" style="margin-bottom:14px">${esc(p.itens||"—")}</p>`}
    <p class="break"><b>Valor estimado:</b> R$ ${(+p.valorEstimado||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}<br><b>Data do pedido:</b> ${fmt(p.data)}${p.itemEstoque?`<br><b>Item do almoxarifado vinculado:</b> ${esc(itemEstoqueNome(p.itemEstoque))}`:""}${p.aprovadoPor?`<br><b>Aprovado por:</b> ${esc(p.aprovadoPor)} em ${fmt(p.aprovadoData)}`:""}${p.obs?`<br><b>Obs:</b> ${esc(p.obs)}`:""}</p>
    ${(p.anexos&&p.anexos.length)?`<h3 style="font-size:14px;margin:14px 0 8px">Anexos (${p.anexos.length})</h3><div style="border:1px solid #eef0ec;border-radius:8px;padding:8px 12px;margin-bottom:14px">${p.anexos.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f2f3f1">${iconeAnexo(a)}<span style="flex:1;font-size:13px">${esc(a.nome)}</span><a href="${a.dados}" target="_blank" download="${esc(a.nome)}" class="btn btn-g btn-sm">Ver</a></div>`).join("")}</div>`:""}
    <h3 style="font-size:14px;margin:14px 0 8px">Ordens de Compra <span class="tag t-steel">${ocs.length}</span></h3>
@@ -3340,11 +3424,23 @@ function verPedido(id){
 }
 function liberarExcecao(id){
   if(!confirmarSenhaSalvar())return;
-  if(!confirmarPermissaoArea("compras","Compras"))return;
-  const obs=prompt("Observação da liberação (opcional):","");
+  openModal(`<div class="modal-h"><h3>Aprovação da exceção — engenheiro</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Pedido feito depois de quarta, mas que precisa entrar na lista desta semana. Só o engenheiro aprova.</p>
+   <div class="fg"><label>Aprovado por *</label><select id="ex_eng"><option value="">—</option>${aprovadoresPedidos().map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select></div>
+   <div class="fg"><label>Senha pessoal *</label><input type="password" id="ex_senha" placeholder="Sua senha de aprovação" onkeydown="if(event.key==='Enter')confirmarLiberarExcecao('${id}')"></div>
+   <div class="fg"><label>Observação <span class="opt">(opcional)</span></label><input id="ex_obs"></div>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="confirmarLiberarExcecao('${id}')">Aprovar exceção</button></div>`);
+}
+function confirmarLiberarExcecao(id){
+  const engId=$("#ex_eng").value;
+  if(!engId){toast("Selecione o engenheiro que está aprovando.");return;}
+  const engF=DB.func.find(x=>x.id===engId);const eng=engF?engF.nome:"";
+  const senha=$("#ex_senha").value;const esperada=engF?senhaAprovacaoDe(engF):"";
+  if(!esperada&&(senha||"").trim()!==SENHA_MESTRA){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
+  if(!senhaOk(senha,esperada)){toast("Senha incorreta para "+eng+".");return;}
   const p=DB.compras_pedidos.find(x=>x.id===id);
-  p.excecaoLiberada=true;p.excecaoLiberadaData=iso(today());p.excecaoLiberadaObs=obs||"";
-  save("compras_pedidos");verPedido(id);toast("Exceção liberada.");
+  p.excecaoLiberada=true;p.excecaoLiberadaData=iso(today());p.excecaoLiberadaObs=$("#ex_obs").value.trim();p.excecaoLiberadaPor=eng;
+  save("compras_pedidos");closeModal();verPedido(id);toast("Exceção aprovada por "+eng+".");
 }
 function avancarStatus(id){
   const p=DB.compras_pedidos.find(x=>x.id===id);
@@ -3360,8 +3456,9 @@ function avancarStatus(id){
     toast("Pedido feito — ficou o aviso de nota fiscal sem lançamento em Notas Fiscais.");
     return;
   }
-  if(proximo==="Nota fiscal gerada"&&!(notasDoPedido(p.id).length>0)){
-    if(!confirm("Esse pedido ainda não tem nota fiscal lançada em Notas Fiscais. Avançar mesmo assim?"))return;
+  if(proximo==="Nota fiscal gerada"){
+    if(!(notasDoPedido(p.id).length>0)){if(!confirm("Esse pedido ainda não tem nota fiscal lançada em Notas Fiscais. Avançar mesmo assim?"))return;}
+    else if(pedidoRastreadoPorItem(p)&&resumoCoberturaPedido(p).semNota.length){const r=resumoCoberturaPedido(p);if(!confirm("Ainda há "+r.semNota.length+" item(ns) sem nota ("+r.semNota.map(i=>i.nome).join(", ")+"). Avançar mesmo assim?"))return;}
   }
   p.status=proximo;(p.statusHistorico=p.statusHistorico||[]).push({status:proximo,data:iso(today())});
   save("compras_pedidos");closeModal();render();toast("Status atualizado.");
@@ -3582,6 +3679,64 @@ let _itensApTemp=[];
 /* ============ PAINEL DE LANÇAMENTOS (pedido → OC → nota → pagamento, numa visão só) ============ */
 /* uma nota pode cobrir vários pedidos; um pedido pode ter várias notas.
    n.pedido + n.ordemCompraId = vínculo principal; n.vinculosExtras = [{pedidoId,ocId,valor}] = demais pedidos */
+/* ===== CICLO SEMANAL: pedido até a quarta entra na lista da semana; de quinta em diante, na próxima ===== */
+function diaCorteLista(){const c=DB.cfg.diaCorteLista;return(c===undefined||c===null||c==="")?3:+c;}
+function _segundaDe(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function _somaDias(d,n){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x;}
+function depoisDoCorte(dataISO){const d=pd(dataISO);if(!d)return false;const w=d.getDay();return w===0||w>diaCorteLista();}
+function semanaListaDe(dataISO,estaSemana){const d=pd(dataISO);if(!d)return"";let seg=_segundaDe(d);if(depoisDoCorte(dataISO)&&!estaSemana)seg=_somaDias(seg,7);return iso(seg);}
+function semanaDoPedido(p){return p.semanaLista||semanaListaDe(p.data,false);}
+function _ddmm(d){return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");}
+function rotuloSemana(segISO){const seg=pd(segISO);return seg?_ddmm(seg)+" a "+_ddmm(_somaDias(seg,6)):"—";}
+function rotuloJanelaPedidos(segISO){const seg=pd(segISO);if(!seg)return"";const c=diaCorteLista();const ini=_somaDias(seg,-(7-c)),fim=_somaDias(seg,c-1);return "pedidos de "+DIAS_ABREV3[ini.getDay()]+" "+_ddmm(ini)+" a "+DIAS_ABREV3[fim.getDay()]+" "+_ddmm(fim);}
+/* ===== LISTAS (segmentação dos itens) ===== */
+const LISTAS_PADRAO=["Material de obra","Material de alojamento","Serviço","EPI / Segurança","Ferramentas e equipamentos","Outros"];
+const MAPA_LISTA_TIPO={"Material":"Material de obra","Serviço":"Serviço","Locação":"Serviço","EPI/Segurança":"EPI / Segurança","Manutenção":"Serviço","Outro":"Outros"};
+function listasPedido(){return(Array.isArray(DB.cfg.listasPedido)&&DB.cfg.listasPedido.length)?DB.cfg.listasPedido:LISTAS_PADRAO;}
+function listaDoItem(it,p){return it.lista||MAPA_LISTA_TIPO[p&&p.tipo]||"Outros";}
+/* ===== COBERTURA DO ITEM POR NOTA (o administrativo escolhe os itens na nota) ===== */
+function qtdNum(x){const n=parseFloat(String(x==null?"":x).replace(",","."));return isNaN(n)?1:n;}
+function coberturaItem(p,it){
+  const total=qtdNum(it.quantidade);let qtd=0;const notas=[];let legado=false;
+  notasDoPedido(p.id).forEach(n=>{
+    const vs=(n.itensVinculados||[]).filter(v=>v.pedidoId===p.id);
+    if(!vs.length){legado=true;notas.push(n);return;}
+    const v=vs.find(x=>x.itemId===it.id);
+    if(v){qtd+=qtdNum(v.qtd);notas.push(n);}
+  });
+  if(legado)return{qtd:total,total,completa:true,notas,legado:true};
+  return{qtd,total,completa:qtd>0&&qtd>=total-1e-9,parcial:qtd>0&&qtd<total-1e-9,notas};
+}
+function restanteItem(p,it,ignoraNotaId){
+  const total=qtdNum(it.quantidade);let qtd=0;
+  for(const n of notasDoPedido(p.id)){
+    if(n.id===ignoraNotaId)continue;
+    const vs=(n.itensVinculados||[]).filter(v=>v.pedidoId===p.id);
+    if(!vs.length)return 0;
+    const v=vs.find(x=>x.itemId===it.id);if(v)qtd+=qtdNum(v.qtd);
+  }
+  return Math.max(0,total-qtd);
+}
+function pedidoRastreadoPorItem(p){return notasDoPedido(p.id).some(n=>(n.itensVinculados||[]).some(v=>v.pedidoId===p.id));}
+function resumoCoberturaPedido(p){
+  const its=p.itensLista||[];let com=0;const sem=[];
+  its.forEach(it=>{const c=coberturaItem(p,it);if(c.completa)com++;else sem.push(it);});
+  return{itens:its.length,comNota:com,semNota:sem};
+}
+function fornDoItem(p,it){
+  const c=coberturaItem(p,it);
+  const f=[...new Set(c.notas.map(n=>n.fornecedor).filter(Boolean))];
+  if(f.length)return f;
+  return [...new Set((p.ordensCompra||[]).map(o=>o.fornecedor).filter(Boolean))];
+}
+function situacaoItem(p,it){
+  const c=coberturaItem(p,it);
+  if(c.completa)return"Com nota";
+  if(c.parcial)return"Nota parcial";
+  if(p.foraDoDia&&!p.excecaoLiberada&&p.status==="Solicitado")return"Aguardando engenheiro";
+  if(["Pedido feito","Nota fiscal gerada","Finalizado"].includes(p.status))return"Comprado";
+  return"Pedido";
+}
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
 function vinculosDaNota(n){
   const out=[];
@@ -4661,7 +4816,7 @@ function bannerPedidosSemNota(){
   const linhas=lista.map(p=>{
     const oc=(p.ordensCompra||[]).find(o=>o.fornecedor)||{};const feito=dataPedidoFeito(p),prazo=prazoNotaPedido(p);
     const atrasado=prazo&&pd(prazo)<today();const dias=feito?diasEntre(pd(feito),today()):0;
-    return `<tr style="${atrasado?'background:#fbdbd6':''}"><td>${esc(setorNome(p.setor))}<br><small style="color:var(--muted)">${esc(resumoItensPedidoCurto(p)||"")}</small></td><td>${esc(oc.fornecedor||"—")}${oc.numero?`<br><small>OC ${esc(oc.numero)}</small>`:""}</td><td>${feito?fmt(feito):"—"}<br><small>${dias} dia(s)</small></td><td>${prazo?(atrasado?`<span class="tag t-red">🚨 atrasada ${diasEntre(pd(prazo),today())}d</span>`:`<span class="tag t-amber">até ${fmt(prazo)}</span>`):"—"}</td><td><button class="btn btn-a btn-sm" onclick="lancarNotaDoPedido('${p.id}')">Lançar nota</button> <button class="btn btn-g btn-sm" onclick="formVincularNotas('${p.id}')">🔗 Vincular nota</button></td></tr>`;
+    return `<tr style="${atrasado?'background:#fbdbd6':''}"><td>${esc(setorNome(p.setor))}<br><small style="color:var(--muted)">${esc(resumoItensPedidoCurto(p)||"")}</small></td><td>${esc(oc.fornecedor||"—")}${oc.numero?`<br><small>OC ${esc(oc.numero)}</small>`:""}</td><td>${feito?fmt(feito):"—"}<br><small>${dias} dia(s)</small>${pedidoRastreadoPorItem(p)?`<br><small>parcial: ${resumoCoberturaPedido(p).comNota}/${(p.itensLista||[]).length} itens com nota</small>`:""}</td><td>${prazo?(atrasado?`<span class="tag t-red">🚨 atrasada ${diasEntre(pd(prazo),today())}d</span>`:`<span class="tag t-amber">até ${fmt(prazo)}</span>`):"—"}</td><td><button class="btn btn-a btn-sm" onclick="lancarNotaDoPedido('${p.id}')">Lançar nota</button> <button class="btn btn-g btn-sm" onclick="formVincularNotas('${p.id}')">🔗 Vincular nota</button></td></tr>`;
   }).join("");
   return `<div class="panel" style="border:3px solid ${atrasados?'var(--red)':'var(--amber)'};background:${atrasados?'#fdf1ef':'#fdf8ee'};margin-bottom:16px"><div style="padding:14px 18px"><b style="font-size:16px;color:${atrasados?'var(--red)':'var(--amber-d)'}">📌 ${lista.length} pedido(s) feito(s) SEM nota fiscal lançada${atrasados?` — ${atrasados} com prazo vencido`:''}</b><p class="hint" style="margin:6px 0 10px">O prazo da nota é de ${DB.cfg.prazoNotaFiscalDias||5} dias depois do pedido feito. Quando a nota é lançada, o pedido avança sozinho pra "Nota fiscal gerada".</p><div class="tblwrap"><table class="tbl"><thead><tr><th>Pedido</th><th>Fornecedor</th><th>Pedido feito</th><th>Prazo da nota</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div></div></div>`;
 }
@@ -4704,10 +4859,55 @@ function nfModoAtualiza(quem){
   const ped=$("#nf_pedido");if(ped){if(regul||criar)ped.value="";ped.disabled=(regul||criar);}
   const ocw=$("#nf_ocwrap");if(ocw&&(regul||criar))ocw.style.display="none";
   const exw=$("#nf_exwrap");if(exw)exw.style.display=(regul||criar)?"none":"";
+  const itw=$("#nf_itwrap");if(itw)itw.style.display=(regul||criar)?"none":"";
   if(regul){const l=$("#nf_lancado");if(l){l.checked=true;const w=$("#nf_pagfluigwrap");if(w)w.style.display="block";}}
   if(regul||criar)previaItensTexto("nf_itens","nf_itens_info");
 }
+let _nfItSel={},_nfEditId="";
+function nfItemChave(pid,iid){return pid+"|"+iid;}
+function nfItensRender(){
+  const box=$("#nf_it_lista");if(!box)return;
+  const forn=normalizaNome(($("#nf_forn")?$("#nf_forn").value:"")||"");
+  const todos=!!($("#nf_it_todos")&&$("#nf_it_todos").checked);
+  const q=normalizaNome(($("#nf_it_busca")?$("#nf_it_busca").value:"")||"");
+  if(!forn&&!todos){box.innerHTML='<p class="hint" style="padding:8px">Digite o fornecedor da nota (ou marque "todos os fornecedores") pra ver os itens comprados.</p>';nfItensResumo();return;}
+  const statusOk=todos?["Solicitado","Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada"]:["Aprovado pelo engenheiro","Pedido feito","Nota fiscal gerada"];
+  const grupos=[];
+  DB.compras_pedidos.slice().sort((a,b)=>String(semanaDoPedido(a)).localeCompare(String(semanaDoPedido(b)))||String(a.data||"").localeCompare(String(b.data||""))).forEach(p=>{
+    if(pedidoAntigo(p)||p.viaRegularizacao||!statusOk.includes(p.status))return;
+    const ocs=p.ordensCompra||[];
+    const fornsPed=ocs.map(o=>normalizaNome(o.fornecedor||"")).filter(Boolean);
+    if(!todos&&fornsPed.length&&!fornsPed.some(f=>f===forn||f.includes(forn)||forn.includes(f)))return;
+    const linhas=[];
+    (p.itensLista||[]).forEach(it=>{
+      const chave=nfItemChave(p.id,it.id);const marcado=Object.prototype.hasOwnProperty.call(_nfItSel,chave);
+      const rest=restanteItem(p,it,_nfEditId);
+      if(rest<=0&&!marcado)return;
+      const txt=normalizaNome(it.nome+" "+nomeSolicitante(p)+" "+setorNome(p.setor)+" "+ocs.map(o=>(o.numero||"")+" "+(o.fornecedor||"")).join(" "));
+      if(q&&!txt.includes(q)&&!marcado)return;
+      linhas.push({it,chave,marcado,rest});
+    });
+    if(linhas.length)grupos.push({p,linhas,ocs});
+  });
+  box.innerHTML=grupos.length?grupos.map(g=>`<div style="background:#f3f6ef;padding:4px 8px;margin:6px 0 2px;font-weight:600;font-size:12.5px;border-radius:6px">${esc(nomeSolicitante(g.p)||"—")} · ${esc(setorNome(g.p.setor))} · ${_diaTxt(g.p.data)}${g.ocs.length?" · "+esc(g.ocs.map(o=>(o.numero?"OC "+o.numero:"OC s/nº")+(o.fornecedor?" ("+o.fornecedor+")":"")).join(", ")):" · sem OC ainda"} <span class="tag t-grey" style="font-size:10px">${esc(g.p.status)}</span></div>`+g.linhas.map(l=>`<label style="display:flex;gap:8px;align-items:center;padding:4px 4px;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="nf_it_chk" data-k="${l.chave}" data-rest="${l.rest}" ${l.marcado?"checked":""} onchange="nfItemMarca(this)" style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(l.it.nome)}</b> · pedido ${esc(l.it.quantidade||"1")}${l.it.unidade?" "+esc(l.it.unidade):""} · falta ${l.rest}${l.it.lista?` · <small>${esc(l.it.lista)}</small>`:""}</span><input class="nf_it_qtd" data-k="${l.chave}" value="${l.marcado?esc(_nfItSel[l.chave]):""}" ${l.marcado?"":"disabled"} placeholder="qtd" oninput="nfItemQtd(this)" style="width:70px;text-align:right"></label>`).join("")).join(""):'<p class="hint" style="padding:8px">Nenhum item aberto pra esse fornecedor. Use "todos os fornecedores" se o pedido ainda não tem OC.</p>';
+  nfItensResumo();
+}
+function nfItemMarca(el){
+  const k=el.dataset.k,q=document.querySelector('.nf_it_qtd[data-k="'+k+'"]');
+  if(el.checked){_nfItSel[k]=el.dataset.rest;if(q){q.disabled=false;q.value=el.dataset.rest;}}
+  else{delete _nfItSel[k];if(q){q.disabled=true;q.value="";}}
+  nfItensResumo();
+}
+function nfItemQtd(el){_nfItSel[el.dataset.k]=el.value;nfItensResumo();}
+function nfItensResumo(){
+  const r=$("#nf_it_resumo");if(!r)return;
+  const ks=Object.keys(_nfItSel);const peds=new Set(ks.map(k=>k.split("|")[0]));
+  r.innerHTML=ks.length?`✓ <b>${ks.length}</b> item(ns) marcado(s) em <b>${peds.size}</b> pedido(s). Os pedidos entram na nota automaticamente.`:"Nenhum item marcado. Se não marcar nenhum, a nota fica ligada só aos pedidos escolhidos acima (cobre o pedido inteiro).";
+}
 function formNota(id){
+  _nfEditId=id||"";_nfItSel={};
+  ((id?(DB.compras_notas.find(x=>x.id===id)||{}):{}).itensVinculados||[]).forEach(v=>{_nfItSel[nfItemChave(v.pedidoId,v.itemId)]=v.qtd;});
+  setTimeout(()=>{if($("#nf_it_lista"))nfItensRender();},0);
   const n=id?DB.compras_notas.find(x=>x.id===id):{};
   openModal(`<div class="modal-h"><h3>${id?"Editar":"Nova"} nota fiscal</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <div style="margin-bottom:14px"><button class="btn btn-g btn-sm" onclick="document.getElementById('nf_pdfinput').click()">📄 Ler PDF (extrai o texto pra copiar)</button><input type="file" id="nf_pdfinput" accept="application/pdf" style="display:none" onchange="lerPdfParaNota(event)"><p class="hint" style="margin-top:6px">Sobe o PDF da nota/pedido — não preenche os campos sozinho, mas mostra o texto de dentro do PDF pra você copiar rapidinho (número, itens, valores) sem digitar do zero.</p><div id="nf_pdftexto_wrap"></div></div>
@@ -4716,11 +4916,14 @@ function formNota(id){
      <div id="nf_criarwrap" style="display:none;margin-top:10px"><div class="row2"><div class="fg"><label>Setor do pedido *</label><select id="nf_cp_setor">${DB.compras_setores.map(x=>`<option value="${x.id}">${esc(x.nome)}</option>`).join("")}</select></div><div class="fg"><label>Quem fez o pedido *</label><input id="nf_cp_solic" list="nf_cp_soliclist" placeholder="nome de quem pediu"><datalist id="nf_cp_soliclist">${DB.func.filter(f=>ativo(f)).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div></div><div class="fg" style="margin-bottom:0"><label>Local / frente de serviço <span class="opt">(opcional)</span></label><input id="nf_cp_local" list="nf_cp_loclist"><datalist id="nf_cp_loclist">${DB.locais.map(l=>`<option value="${esc(l.nome)}">`).join("")}</datalist></div></div></div>`}
    <div id="nf_regulwrap" class="fg" style="display:${n.viaRegularizacao?"block":"none"}"><label>Itens <span class="opt">(um por linha, ou cole a mensagem do WhatsApp)</span></label><textarea id="nf_itens" rows="3" placeholder="40 - Luva anti impacto&#10;4x Martelete rompedor 15kg" oninput="previaItensTexto('nf_itens','nf_itens_info')">${esc(n.itensTexto||"")}</textarea><div id="nf_itens_info" class="hint"></div></div>
    <div class="row2"><div class="fg"><label>Número da NF *</label><input id="nf_num" value="${esc(n.numero)}"></div><div class="fg"><label>Tipo</label><select id="nf_tipo" onchange="document.getElementById('nf_freteinfo').style.display=this.value==='Nota de Frete'?'block':'none'"><option value="">—</option>${TIPOS_NOTA.map(t=>`<option ${n.tipoNota===t?"selected":""}>${t}</option>`).join("")}</select></div></div>
-   <div class="fg"><label>Fornecedor</label><input id="nf_forn" list="nf_fornlist" value="${esc(n.fornecedor)}"><datalist id="nf_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
+   <div class="fg"><label>Fornecedor</label><input id="nf_forn" list="nf_fornlist" oninput="nfItensRender()" value="${esc(n.fornecedor)}"><datalist id="nf_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
    <div class="row2"><div class="fg"><label>Pedido vinculado <span class="opt" id="nf_pedido_opt">(opcional, exceto pra Nota de Frete)</span></label><select id="nf_pedido" onchange="atualizarOcsDaNota()"><option value="">—</option>${DB.compras_pedidos.map(p=>`<option value="${p.id}" ${p.id===n.pedido?"selected":""}>${esc(setorNome(p.setor))} — ${esc((p.itens||"").slice(0,30))}</option>`).join("")}</select></div><div class="fg"><label>Contrato vinculado <span class="opt">(opcional)</span></label><select id="nf_contrato"><option value="">—</option>${DB.compras_contratos.map(c=>`<option value="${c.id}" ${c.id===n.contrato?"selected":""}>${esc(c.numero)} — ${esc(c.fornecedor)}</option>`).join("")}</select></div></div>
    <div class="fg" id="nf_exwrap"><label>Esta nota também cobre outros pedidos? <span class="opt">(uma nota pode cobrir vários pedidos; o pedido escolhido acima é o principal. Valor é opcional — serve pra ratear a nota entre os pedidos)</span></label>
      <input id="nf_ex_busca" placeholder="Filtrar pedidos..." oninput="filtrarExtrasNota()" style="margin-bottom:6px">
      <div id="nf_ex_lista" style="max-height:170px;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:4px 10px">${(()=>{const ex=new Map((n.vinculosExtras||[]).map(v=>[v.pedidoId,v]));const ps=DB.compras_pedidos.filter(pp=>!pedidoAntigo(pp)||ex.has(pp.id)).sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));return ps.length?ps.map(pp=>{const e=ex.get(pp.id);const txt=(nomeSolicitante(pp)+" "+setorNome(pp.setor)+" "+resumoItensPedido(pp)).toLowerCase();return `<label class="nf_ex_item" data-txt="${esc(txt)}" style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid #f3f4f2"><input type="checkbox" class="nf_ex_chk" value="${pp.id}" ${e?"checked":""} style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(nomeSolicitante(pp)||"—")}</b> · ${esc(setorNome(pp.setor))} · ${fmt(pp.data)}<br><small style="color:var(--muted)">${esc(resumoItensPedido(pp).slice(0,60))}</small></span><input class="nf_ex_val" data-pid="${pp.id}" type="number" step="0.01" placeholder="R$ (opcional)" value="${e&&e.valor!==undefined?esc(e.valor):""}" style="width:120px"></label>`;}).join(""):'<p class="hint">Nenhum pedido disponível.</p>';})()}</div></div>
+   <div class="fg" id="nf_itwrap" style="background:#f6f8fb;border-radius:8px;padding:10px 12px"><label style="margin:0"><b>Itens desta nota</b> <span class="opt">— o administrativo marca os itens que a nota cobre; assim não se perde o rastro entre pedido, nota e pagamento</span></label>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><input id="nf_it_busca" placeholder="Filtrar por item, pessoa, setor ou OC..." oninput="nfItensRender()" style="flex:1;min-width:200px"><label style="font-size:12.5px;white-space:nowrap;display:flex;align-items:center"><input type="checkbox" id="nf_it_todos" style="width:auto;margin-right:6px" onchange="nfItensRender()">Mostrar itens de todos os fornecedores</label></div>
+     <div id="nf_it_lista" style="max-height:280px;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:4px 10px;background:#fff"></div><div id="nf_it_resumo" class="hint" style="margin-top:6px"></div></div>
    <div class="fg" id="nf_ocwrap" style="display:none"><label>Ordem de Compra específica <span class="opt">(esse pedido tem mais de uma OC — escolhe qual essa nota cobre)</span></label><select id="nf_oc"></select></div>
    <p class="hint" id="nf_freteinfo" style="margin-top:-10px;margin-bottom:14px;display:${n.tipoNota==="Nota de Frete"?"block":"none"};color:var(--amber-d)">⚠ Nota de Frete precisa de um pedido vinculado, e esse pedido já precisa ter a Nota Fiscal de Material lançada — senão não tem como saber de onde veio o frete.</p>
    <div class="row2"><div class="fg"><label>Data de emissão *</label><input type="date" id="nf_emissao" value="${esc(n.dataEmissao)}" onchange="sugerirVencimentoNota()"></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="nf_valor" value="${esc(n.valor)}"></div></div>
@@ -4817,6 +5020,11 @@ function salvarNota(id){
   const lancadoAntes=id?(DB.compras_notas.find(x=>x.id===id)||{}).lancado:false;
   const regul=!!($("#nf_regul")&&$("#nf_regul").checked),itensTxt=$("#nf_itens")?$("#nf_itens").value:"";
   const criarPed=!!($("#nf_criarped")&&$("#nf_criarped").checked),cpSetor=$("#nf_cp_setor")?$("#nf_cp_setor").value:"";
+  const itensVinc=(regul||criarPed)?[]:Object.keys(_nfItSel).map(k=>{const [pid,iid]=k.split("|");return{pedidoId:pid,itemId:iid,qtd:String(_nfItSel[k]).replace(",",".")};}).filter(v=>qtdNum(v.qtd)>0&&String(v.qtd).trim()!=="");
+  for(const v of itensVinc){
+    const pe=DB.compras_pedidos.find(x=>x.id===v.pedidoId),ie=pe&&(pe.itensLista||[]).find(x=>x.id===v.itemId);
+    if(pe&&ie&&qtdNum(v.qtd)>restanteItem(pe,ie,id)+1e-9){toast('A quantidade de "'+ie.nome+'" passa do que falta ('+restanteItem(pe,ie,id)+').');return;}
+  }
   const extrasSel=(regul||criarPed)?[]:[...document.querySelectorAll("#nf_ex_lista .nf_ex_chk:checked")].map(c=>({pedidoId:c.value,valor:((document.querySelector('#nf_ex_lista .nf_ex_val[data-pid="'+c.value+'"]')||{}).value)||""})).filter(v=>v.pedidoId!==pedido);
   if(!numero||!valor||!dataEmissao){toast("Preencha número, valor e emissão.");return;}
   if(!dataPrevista){toast("Preencha a data de vencimento.");return;}
@@ -4845,10 +5053,17 @@ function salvarNota(id){
   const o={id:id||uid(),numero,tipoNota,fornecedor:$("#nf_forn").value.trim(),pedido:regul?"":pedido,ordemCompraId:regul?"":($("#nf_oc")?.value||""),viaRegularizacao:regul,itens:regul?parsearItensDeTexto(itensTxt):[],itensTexto:regul?itensTxt:"",contrato:$("#nf_contrato").value,dataEmissao,valor,numeroFluig:$("#nf_fluig").value.trim(),linkFluig,dataPrevista,formaPagamento,lancado:lancadoAgora,fluigPagamentoNumero:$("#nf_pagfluig")?.value.trim()||"",fluigPagamentoLink:linkFluigPag,dataRealizada:$("#nf_realizada").value,notaRemessaNumero:$("#nf_temremessa").checked?$("#nf_remessanum").value.trim():"",notaRemessaData:$("#nf_temremessa").checked?$("#nf_remessadata").value:"",anexos:_anexosTemp.slice(),obs:$("#nf_obs").value.trim()};
   o.vinculosExtras=extrasSel.map(v=>{const pe=DB.compras_pedidos.find(x=>x.id===v.pedidoId);return{pedidoId:v.pedidoId,ocId:pe?ocDoPedidoParaNota(pe,o):"",valor:v.valor};});
   if(!o.pedido&&o.vinculosExtras.length){const f0=o.vinculosExtras.shift();o.pedido=f0.pedidoId;o.ordemCompraId=f0.ocId;}
+  [...new Set(itensVinc.map(v=>v.pedidoId))].forEach(pid=>{
+    if(vinculosDaNota(o).some(v=>v.pedidoId===pid))return;
+    const pe=DB.compras_pedidos.find(x=>x.id===pid);const ocId=pe?ocDoPedidoParaNota(pe,o):"";
+    if(!o.pedido){o.pedido=pid;o.ordemCompraId=ocId;}else o.vinculosExtras.push({pedidoId:pid,ocId,valor:""});
+  });
+  o.itensVinculados=itensVinc;
   if(o.vinculosExtras.length||o.pedido)save("compras_pedidos");
   if(criarPed){const _sn=$("#nf_cp_solic").value.trim(),_sf=DB.func.find(f=>ativo(f)&&normalizaNome(f.nome)===normalizaNome(_sn));const r=_novoPedidoDeNota(o,cpSetor,parsearItensDeTexto(itensTxt),_sn,_sf?_sf.id:"",($("#nf_cp_local")?$("#nf_cp_local").value.trim():""));DB.compras_pedidos.push(r.ped);o.pedido=r.ped.id;o.ordemCompraId=r.ocId;save("compras_pedidos");}
   if(id){const i=DB.compras_notas.findIndex(x=>x.id===id);DB.compras_notas[i]=o;}else DB.compras_notas.push(o);
-  vinculosDaNota(o).forEach(v=>{const pedNF=DB.compras_pedidos.find(x=>x.id===v.pedidoId);if(pedNF&&pedNF.status==="Pedido feito"){pedNF.status="Nota fiscal gerada";(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});save("compras_pedidos");}});
+  vinculosDaNota(o).forEach(v=>{const pedNF=DB.compras_pedidos.find(x=>x.id===v.pedidoId);if(pedNF&&pedNF.status==="Aprovado pelo engenheiro"&&(o.itensVinculados||[]).some(i=>i.pedidoId===pedNF.id)){pedNF.status="Pedido feito";if(!pedNF.pedidoFeitoData)pedNF.pedidoFeitoData=iso(today());(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Pedido feito",data:iso(today())});}
+    if(pedNF&&pedNF.status==="Pedido feito"&&(!(o.itensVinculados||[]).some(i=>i.pedidoId===pedNF.id)||resumoCoberturaPedido(pedNF).semNota.length===0)){pedNF.status="Nota fiscal gerada";(pedNF.statusHistorico=pedNF.statusHistorico||[]).push({status:"Nota fiscal gerada",data:iso(today())});save("compras_pedidos");}});
   save("compras_notas");closeModal();render();
   toast((!lancadoAntes&&lancadoAgora)?"Nota salva — marcada como enviada pra pagamento.":"Nota salva.");
 }
