@@ -634,7 +634,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.21";
+const APP_VERSAO="v2026-10-02.22";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU;
   if(_usuarioLogadoId){
@@ -2401,9 +2401,9 @@ function destinoTxt(a){
   if(a.destinoMaquina)return `⚙ ${esc(a.destinoMaquina)}`;
   return "—";
 }
-function consumoPorEquipamento(){
+function consumoPorEquipamento(de,ate){
   const porTag={};
-  DB.abastecimentos.filter(a=>a.movimento==="Saída"&&a.tag).forEach(a=>{
+  DB.abastecimentos.filter(a=>a.movimento==="Saída"&&a.tag&&(!de||String(a.data||"")>=de)&&(!ate||String(a.data||"")<=ate)).forEach(a=>{
     const tag=a.tag;
     if(!porTag[tag])porTag[tag]={tag,litros:0,qtd:0,horimetros:[],ultimaData:""};
     porTag[tag].litros+=+a.litros||0;
@@ -2476,14 +2476,15 @@ function vAbastecimento(){
   const litEnt=ent.reduce((x,a)=>x+(+a.litros||0),0),valEnt=ent.reduce((x,a)=>x+(+a.valorTotal||((+a.litros||0)*(+a.precoLitro||0))),0);
   const litComPreco=ent.filter(a=>+a.precoLitro||+a.valorTotal).reduce((x,a)=>x+(+a.litros||0),0);
   const litSai=sai.reduce((x,a)=>x+(+a.litros||0),0);
-  const perda=aj.reduce((x,a)=>x+Math.min(0,+a.ajusteLitros||0),0)*-1;
+  const perda=aj.filter(a=>!a.zeragem).reduce((x,a)=>x+Math.min(0,+a.ajusteLitros||0),0)*-1;
   let lista=DB.abastecimentos.slice();
   if(_abTanque)lista=lista.filter(a=>envolveTanque(a,_abTanque));
   if(_abMov)lista=lista.filter(a=>a.movimento===_abMov);
   if(_abDe)lista=lista.filter(a=>String(a.data||"")>=_abDe);
   if(_abAte)lista=lista.filter(a=>String(a.data||"")<=_abAte);
   lista.sort((a,b)=>String(b.data||"").localeCompare(String(a.data||""))||(b.criadoEm||0)-(a.criadoEm||0));
-  const consumo=consumoPorEquipamento();
+  const perC=abConsumoPeriodo();const consumo=consumoPorEquipamento(perC.de,perC.ate);
+  const litConsumo=consumo.reduce((x,c)=>x+c.litros,0),qtdConsumo=consumo.reduce((x,c)=>x+c.qtd,0);
   const cls={"Entrada":"t-green","Saída":"t-steel","Transferência":"t-amber","Ajuste":"t-grey"};
   const rotulo={"Entrada":"Entrada","Saída":"Abastecimento","Transferência":"Transferência","Ajuste":"Medição/ajuste"};
   const linhas=lista.map(a=>{
@@ -2496,10 +2497,12 @@ function vAbastecimento(){
   }).join("");
   const filtrando=_abTanque||_abMov||_abDe||_abAte;
   main.innerHTML=`<div class="head"><div><h1>⛽ Abastecimento & Tanques</h1><p>Estoque por tanque, sobra do anterior, preço por litro e relatório do ciclo. O canhoto físico fica arquivado como respaldo — este registro é a fonte oficial.</p></div>
-    <div class="acts"><button class="btn btn-g" onclick="formTanques()">⚙ Tanques</button><button class="btn btn-g" onclick="abrirRelatorioCombustivel()">📄 Relatório do ciclo</button><button class="btn btn-g" onclick="formAbastecimento('Ajuste')">📏 Medição</button><button class="btn btn-g" onclick="formAbastecimento('Transferência')">⇄ Transferência</button><button class="btn btn-g" onclick="formAbastecimento('Entrada')">⬇ Entrada (compra)</button><button class="btn btn-a" onclick="formAbastecimento('Saída')">⛽ Abastecimento</button></div></div>
+    <div class="acts"><button class="btn btn-g" onclick="formPontoPartida()">🔄 Novo ponto de partida</button><button class="btn btn-g" onclick="formTanques()">⚙ Tanques</button><button class="btn btn-g" onclick="abrirRelatorioCombustivel()">📄 Relatório do ciclo</button><button class="btn btn-g" onclick="formAbastecimento('Ajuste')">📏 Medição</button><button class="btn btn-g" onclick="formAbastecimento('Transferência')">⇄ Transferência</button><button class="btn btn-g" onclick="formAbastecimento('Entrada')">⬇ Entrada (compra)</button><button class="btn btn-a" onclick="formAbastecimento('Saída')">⛽ Abastecimento</button></div></div>
    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px">${cards||'<p class="hint">Nenhum tanque ativo. Ative em ⚙ Tanques.</p>'}</div>
    <div class="grid stats"><div class="stat steel"><div class="n">${abFmtL(litEnt)}</div><div class="l">Comprado no mês</div></div><div class="stat"><div class="n">${abBrl(valEnt)}</div><div class="l">Gasto no mês${litComPreco?" · médio "+abPreco(valEnt/litComPreco)+"/L":""}</div></div><div class="stat green"><div class="n">${abFmtL(litSai)}</div><div class="l">Abastecido nos equipamentos (mês)</div></div><div class="stat ${perda&&litEnt&&(perda/litEnt*100)>toleranciaPerda()?'amber':''}"><div class="n">${abFmtL(perda)}</div><div class="l">Perda/evaporação no mês (tolerância ${toleranciaPerda()}%)</div></div></div>
-   <div class="panel"><h2><span class="t">⛽ Consumo por equipamento</span></h2><p class="hint" style="padding:0 18px;margin-top:10px">Consumo médio calculado quando há pelo menos 2 lançamentos com horímetro preenchido pro mesmo equipamento.</p>
+   <div class="panel"><h2><span class="t">⛽ Consumo por equipamento</span></h2>
+     <div style="padding:10px 18px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><select onchange="_abConsumoPer=this.value;render()"><option value="ultima" ${_abConsumoPer==="ultima"?"selected":""}>Desde a última entrada</option><option value="mes" ${_abConsumoPer==="mes"?"selected":""}>Mês atual</option><option value="tudo" ${_abConsumoPer==="tudo"?"selected":""}>Tudo</option></select><span class="hint"><b>${esc(perC.rotulo)}</b> · ${qtdConsumo} abastecimento(s) · <b>${abFmtL(litConsumo)}</b> consumidos · sobra atual no ${esc(nomeTanque(tanquePadraoId()))}: <b>${abFmtL(estoqueTanque(tanquePadraoId()))}</b></span></div>
+     <p class="hint" style="padding:0 18px;margin-top:6px">Consumo médio calculado quando há pelo menos 2 lançamentos com horímetro preenchido pro mesmo equipamento.</p>
      <div class="tblwrap">${consumo.length?`<table class="tbl"><thead><tr><th>Equipamento</th><th>Abastecimentos</th><th>Total litros</th><th>Horas rodadas</th><th>Consumo médio</th><th>Último</th></tr></thead><tbody>${consumo.map(c=>`<tr><td><b>${esc(c.tag)}</b></td><td class="num">${c.qtd}</td><td class="num">${c.litros.toLocaleString("pt-BR")} L</td><td class="num">${c.horasRodadas!=null?c.horasRodadas+"h":'<span style="color:var(--muted)">sem dados</span>'}</td><td class="num">${c.consumoMedio!=null?`<b>${c.consumoMedio.toLocaleString("pt-BR")} L/h</b>`:"—"}</td><td>${fmt(c.ultimaData)}</td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhum abastecimento de equipamento registrado ainda.</p></div>`}</div></div>
    <div class="toolbar"><select onchange="_abTanque=this.value;render()"><option value="">Todos os tanques</option>${tanquesCfg().map(t=>`<option value="${t.id}" ${_abTanque===t.id?"selected":""}>${esc(t.nome)}</option>`).join("")}</select><select onchange="_abMov=this.value;render()"><option value="">Todos os movimentos</option>${["Entrada","Saída","Transferência","Ajuste"].map(m=>`<option value="${m}" ${_abMov===m?"selected":""}>${rotulo[m]}</option>`).join("")}</select><span class="hint">de</span><input type="date" value="${_abDe}" onchange="_abDe=this.value;render()"><span class="hint">até</span><input type="date" value="${_abAte}" onchange="_abAte=this.value;render()">${filtrando?'<button class="btn btn-g btn-sm" onclick="_abTanque=_abMov=_abDe=_abAte=\'\';render()">Limpar</button>':""}<button class="btn btn-g btn-sm" onclick="exportAbastecimentos()">⭳ Excel</button></div>
    <div class="panel"><h2><span class="t">Lançamentos</span></h2><div class="tblwrap">${lista.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Data</th><th>Movimento</th><th>Tanque</th><th>Detalhe</th><th>Litros</th><th>Preço/L</th><th>Total</th><th>Canhoto/NF</th><th></th></tr></thead><tbody>${linhas}</tbody></table>`:`<div class="empty"><div class="big">⛽</div><p>Nenhum lançamento${filtrando?" com esses filtros":" ainda"}.</p></div>`}</div></div>`;
@@ -2565,7 +2568,7 @@ function refreshAbastForm(){
   if(mov==="Ajuste"){
     el.innerHTML=`<p class="hint" style="margin-bottom:10px">Medição física do tanque (régua/medidor). O sistema compara com o estoque calculado e registra a diferença como perda/evaporação ou sobra. O estoque passa a ser o medido.</p>
      <div class="row2"><div class="fg"><label>Tanque *</label><select id="a_tanque" onchange="abAjusteAtualiza()">${_abOptsTanques(tanqueSel,false)}</select></div><div class="fg"><label>Litros medidos agora *</label><input type="number" step="0.1" id="a_medido" value="${esc(a.medido)}" oninput="abAjusteAtualiza()"></div></div>
-     <div class="fg"><label>Motivo</label><select id="a_motivo">${["Evaporação / perda natural","Erro de leitura ou de lançamento","Fechamento do ciclo","Acerto do estoque inicial","Outro"].map(m=>`<option ${(a.motivo||"Evaporação / perda natural")===m?"selected":""}>${m}</option>`).join("")}</select></div><div id="a_ajustedif" style="font-size:13px;margin-bottom:8px"></div>`;
+     <div class="fg"><label>Motivo</label><select id="a_motivo">${["Evaporação / perda natural","Erro de leitura ou de lançamento","Fechamento do ciclo","Acerto do estoque inicial","Zeragem — novo ponto de partida","Outro"].map(m=>`<option ${(a.motivo||"Evaporação / perda natural")===m?"selected":""}>${m}</option>`).join("")}</select></div><div id="a_ajustedif" style="font-size:13px;margin-bottom:8px"></div>`;
     abAjusteAtualiza();return;
   }
   el.innerHTML=`<div class="row2"><div class="fg"><label>Tanque de origem *</label><select id="a_tanque" onchange="abEstoqueHint()">${_abOptsTanques(tanqueSel,true)}</select></div><div class="fg"><label>Hodômetro/horímetro do tanque <span class="opt">(opcional)</span></label><input id="a_horitanque" value="${esc(a.horimetroTanque)}"></div></div>
@@ -2634,7 +2637,7 @@ function salvarAbastecimento(id){
   }else{
     const medido=$("#a_medido").value;if(medido===""){toast("Informe os litros medidos.");return;}
     const tid=$("#a_tanque").value;const teo=estoqueTanque(tid,data,null,id);const dif=+medido-teo;
-    Object.assign(base,{tanque:tid,litros:Math.abs(dif).toFixed(1),ajusteLitros:+dif.toFixed(1),medido:+(+medido).toFixed(1),teorico:+teo.toFixed(1),motivo:$("#a_motivo").value});
+    Object.assign(base,{tanque:tid,litros:Math.abs(dif).toFixed(1),ajusteLitros:+dif.toFixed(1),medido:+(+medido).toFixed(1),teorico:+teo.toFixed(1),motivo:$("#a_motivo").value,zeragem:/^Zeragem/.test($("#a_motivo").value)});
   }
   DB.abastecimentos=DB.abastecimentos.filter(x=>x.id!==base.id&&!(id&&x.entradaId===id));
   DB.abastecimentos.push(base);if(ajusteLigado)DB.abastecimentos.push(ajusteLigado);
@@ -2644,6 +2647,71 @@ function delAbastecimento(id){
   if(!confirm("Excluir este lançamento?"))return;
   DB.abastecimentos=DB.abastecimentos.filter(x=>x.id!==id&&x.entradaId!==id);
   save("abastecimentos");closeModal();render();toast("Excluído.");
+}
+let _abConsumoPer="ultima";
+function abConsumoPeriodo(){
+  const hoje=iso(today());
+  if(_abConsumoPer==="tudo")return{de:"",ate:"",rotulo:"Tudo"};
+  if(_abConsumoPer==="mes"){const t=today();return{de:iso(new Date(t.getFullYear(),t.getMonth(),1)),ate:hoje,rotulo:"Mês atual"};}
+  const ds=abDatasEntradas(tanquePadraoId());
+  const todas=[...new Set(DB.abastecimentos.filter(a=>a.movimento==="Entrada").map(a=>a.data).filter(Boolean))].sort();
+  const de=ds.length?ds[ds.length-1]:(todas.length?todas[todas.length-1]:"");
+  return{de,ate:hoje,rotulo:de?"Desde a última entrada ("+fmt(de)+")":"Tudo (ainda não há entrada)"};
+}
+function formPontoPartida(){
+  const tid=tanquePadraoId(),ds=abDatasEntradas(tid),ultData=ds.length?ds[ds.length-1]:"";
+  const ultL=ultData?DB.abastecimentos.filter(a=>a.movimento==="Entrada"&&a.data===ultData&&tqEf(a.tanque)===tid).reduce((x,a)=>x+(+a.litros||0),0):0;
+  openModal(`<div class="modal-h"><h3>🔄 Novo ponto de partida</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:12px">Recomeça a contagem a partir de uma recarga: o consumo e a sobra passam a valer <b>só desde ela</b>, e os saldos de antes ficam <b>zerados</b>. A zeragem não conta como perda no relatório.</p>
+   <div class="fg"><label>Tanque que recebeu a recarga *</label><select id="pp_tanque" onchange="ppResumo()">${tanquesCfg().map(t=>`<option value="${t.id}" ${t.id===tid?"selected":""}>${esc(t.nome)}</option>`).join("")}</select></div>
+   <div class="fg"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="radio" name="pp_modo" value="novo" style="width:auto" checked onchange="ppModoMudou()"> <b>Lançar a recarga agora</b></label>
+    <label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-top:6px"><input type="radio" name="pp_modo" value="existente" style="width:auto" ${ultData?"":"disabled"} onchange="ppModoMudou()"> <b>Já lancei:</b> usar a última entrada ${ultData?`(${fmt(ultData)} · ${abFmtL(ultL)})`:"(nenhuma entrada ainda)"}</label></div>
+   <div id="pp_novo" style="background:#f6f8fb;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+    <div class="row3"><div class="fg"><label>Data da recarga *</label><input type="date" id="pp_data" value="${iso(today())}" onchange="ppResumo()"></div><div class="fg"><label>Quantidade (L) *</label><input type="number" step="0.1" id="pp_litros" value="4000" oninput="ppTotal();ppResumo()"></div><div class="fg"><label>Combustível</label><select id="pp_comb">${COMBUSTIVEIS.map(c=>`<option>${c}</option>`).join("")}</select></div></div>
+    <div class="row2"><div class="fg"><label>Fornecedor</label><input id="pp_forn" list="pp_fornlist"><datalist id="pp_fornlist">${DB.compras_fornecedores.map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div><div class="fg"><label>Posto</label><input id="pp_posto"></div></div>
+    <div class="row2"><div class="fg" style="margin-bottom:0"><label>Preço por litro (R$)</label><input type="number" step="0.001" id="pp_preco" oninput="ppTotal()"></div><div class="fg" style="margin-bottom:0"><label>Total (R$)</label><input type="number" step="0.01" id="pp_total"></div></div></div>
+   <label style="display:flex;gap:8px;align-items:center;cursor:pointer;margin-bottom:10px"><input type="checkbox" id="pp_zerar" style="width:auto" checked onchange="ppResumo()"> <b>Zerar os saldos anteriores de todos os tanques</b> <span class="opt">(o dia anterior à recarga fica com 0 L)</span></label>
+   <div id="pp_resumo" class="hint" style="background:#fff;border:1px solid #e3e8ef;border-radius:8px;padding:10px 12px"></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarPontoPartida()">Recomeçar a contagem</button></div>`);
+  ppModoMudou();
+}
+function ppModoMudou(){const m=document.querySelector('input[name="pp_modo"]:checked');$("#pp_novo").style.display=(m&&m.value==="novo")?"block":"none";ppResumo();}
+function ppTotal(){const l=+$("#pp_litros").value||0,pr=+$("#pp_preco").value||0;if(l&&pr)$("#pp_total").value=(l*pr).toFixed(2);}
+function ppDados(){
+  const tid=$("#pp_tanque").value,modo=document.querySelector('input[name="pp_modo"]:checked').value;
+  const ds=abDatasEntradas(tid);
+  const inicio=modo==="existente"?(ds.length?ds[ds.length-1]:""):$("#pp_data").value;
+  const litros=modo==="existente"?DB.abastecimentos.filter(a=>a.movimento==="Entrada"&&a.data===inicio&&tqEf(a.tanque)===tid).reduce((x,a)=>x+(+a.litros||0),0):(+$("#pp_litros").value||0);
+  return{tid,modo,inicio,litros,zerar:$("#pp_zerar").checked};
+}
+function ppResumo(){
+  const el=$("#pp_resumo");if(!el)return;
+  const d=ppDados();if(!d.inicio){el.innerHTML="Escolha a data da recarga.";return;}
+  const antes=iso(_somaDias(pd(d.inicio),-1));
+  const zer=d.zerar?tanquesCfg().map(t=>({t,est:estoqueTanque(t.id,antes)})).filter(x=>Math.abs(x.est)>0.05):[];
+  const consumoDesde=DB.abastecimentos.filter(a=>a.movimento==="Saída"&&tqEf(a.tanque)===d.tid&&String(a.data||"")>=d.inicio).reduce((x,a)=>x+(+a.litros||0),0);
+  const estAntesT=estoqueTanque(d.tid,antes);
+  const final=estoqueTanque(d.tid)+(d.zerar?-estAntesT:0)+(d.modo==="novo"?d.litros:0);
+  el.innerHTML=`${zer.length?`<b>Vai zerar (${fmt(antes)}):</b> ${zer.map(x=>esc(x.t.nome)+" ("+abFmtL(x.est)+" → 0)").join(" · ")}<br>`:(d.zerar?"Os saldos anteriores já estão em 0 L.<br>":"Os saldos anteriores serão mantidos.<br>")}<b>Depois:</b> ${esc(nomeTanque(d.tid))} fica com <b>${abFmtL(final)}</b>${d.zerar?` (recarga de ${abFmtL(d.litros)} − ${abFmtL(consumoDesde)} abastecidos desde ${fmt(d.inicio)})`:""}.`;
+}
+function salvarPontoPartida(){
+  const d=ppDados();
+  if(!d.inicio){toast("Informe a data da recarga.");return;}
+  if(d.modo==="novo"&&!(d.litros>0)){toast("Informe a quantidade em litros.");return;}
+  const antes=iso(_somaDias(pd(d.inicio),-1)),agora=Date.now(),novos=[];
+  if(d.zerar){
+    tanquesCfg().forEach(t=>{
+      const est=estoqueTanque(t.id,antes);
+      if(Math.abs(est)>0.05)novos.push({id:uid(),movimento:"Ajuste",data:antes,tanque:t.id,litros:Math.abs(est).toFixed(1),ajusteLitros:+(-est).toFixed(1),medido:0,teorico:+est.toFixed(1),motivo:"Zeragem — novo ponto de partida",zeragem:true,responsavel:nomeUsuarioLogado(),criadoEm:agora-2});
+    });
+  }
+  if(d.modo==="novo"){
+    const preco=$("#pp_preco").value;
+    novos.push({id:uid(),movimento:"Entrada",data:d.inicio,tanque:d.tid,litros:String(d.litros),combustivel:$("#pp_comb").value,fornecedor:$("#pp_forn").value.trim(),posto:$("#pp_posto").value.trim(),precoLitro:preco,valorTotal:$("#pp_total").value||(preco?(d.litros*preco).toFixed(2):""),sobraTeorica:0,responsavel:nomeUsuarioLogado(),obs:"Recarga que abre o novo ponto de partida",anexos:[],criadoEm:agora});
+  }
+  DB.abastecimentos.push(...novos);save("abastecimentos");
+  _abConsumoPer="ultima";closeModal();render();
+  toast("Contagem recomeçada em "+fmt(d.inicio)+(novos.filter(x=>x.zeragem).length?" · "+novos.filter(x=>x.zeragem).length+" saldo(s) zerado(s)":"")+".");
 }
 /* ---- tanques ---- */
 function formTanques(){
@@ -2685,14 +2753,14 @@ function dadosRelatorioCombustivel(tid,de,ate){
   const soma=(l,f)=>l.reduce((x,a)=>x+f(a),0);
   const litEnt=soma(entradas,a=>+a.litros||0),litSai=soma(saidas,a=>+a.litros||0);
   const transIn=soma(transf.filter(a=>(a.tanque||tanquePadraoId())===tid),a=>+a.litros||0),transOut=soma(transf.filter(a=>a.tanqueOrigem===tid),a=>+a.litros||0);
-  const ajusteTot=soma(ajustes,a=>+a.ajusteLitros||0),perdaL=soma(ajustes,a=>Math.max(0,-(+a.ajusteLitros||0)));
+  const ajusteTot=soma(ajustes,a=>+a.ajusteLitros||0),zeragemTot=soma(ajustes.filter(a=>a.zeragem),a=>+a.ajusteLitros||0),perdaL=soma(ajustes.filter(a=>!a.zeragem),a=>Math.max(0,-(+a.ajusteLitros||0)));
   const valorEnt=soma(entradas,a=>+a.valorTotal||((+a.litros||0)*(+a.precoLitro||0)));
   const litComPreco=soma(entradas.filter(a=>+a.precoLitro||+a.valorTotal),a=>+a.litros||0);
   const base=inicial+litEnt+transIn;const perdaPct=base>0?perdaL/base*100:0;
   const porEq={};
   saidas.forEach(a=>{const k=a.tag||"(sem tag)";const e=porEq[k]=porEq[k]||{tag:k,qtd:0,litros:0,hs:[]};e.qtd++;e.litros+=+a.litros||0;if(a.horimetroEquip&&!isNaN(+a.horimetroEquip))e.hs.push(+a.horimetroEquip);});
   const equipamentos=Object.values(porEq).map(e=>{const h=e.hs.length>=2?Math.max(...e.hs)-Math.min(...e.hs):null;return{tag:e.tag,qtd:e.qtd,litros:e.litros,horas:h,consumo:(h&&h>0)?+(e.litros/h).toFixed(2):null};}).sort((a,b)=>b.litros-a.litros);
-  return{tid,tanque:tanquePorId(tid)||{nome:tid},de,ate,inicial,final,entradas,saidas,ajustes,transf,litEnt,litSai,transIn,transOut,ajusteTot,perdaL,perdaPct,valorEnt,precoMedio:litComPreco?valorEnt/litComPreco:0,equipamentos,tol:toleranciaPerda(),confere:Math.abs(inicial+litEnt+transIn-litSai-transOut+ajusteTot-final)<0.5};
+  return{tid,tanque:tanquePorId(tid)||{nome:tid},de,ate,inicial,final,entradas,saidas,ajustes,transf,litEnt,litSai,transIn,transOut,ajusteTot,zeragemTot,perdaL,perdaPct,valorEnt,precoMedio:litComPreco?valorEnt/litComPreco:0,equipamentos,tol:toleranciaPerda(),confere:Math.abs(inicial+litEnt+transIn-litSai-transOut+ajusteTot-final)<0.5};
 }
 function htmlRelatorioCombustivel(d){
   const th=c=>`<th>${c}</th>`,td=(v,cl)=>`<td${cl?` class="${cl}"`:""}>${v}</td>`;
@@ -2703,7 +2771,8 @@ function htmlRelatorioCombustivel(d){
     ${d.transIn?`<tr><td>+ Recebido por transferência</td>${td(abFmtL(d.transIn),"num")}</tr>`:""}
     <tr><td>− Abastecimentos de equipamentos</td>${td(abFmtL(d.litSai),"num")}</tr>
     ${d.transOut?`<tr><td>− Enviado por transferência</td>${td(abFmtL(d.transOut),"num")}</tr>`:""}
-    <tr><td>± Medições / perdas / evaporação</td>${td((d.ajusteTot>0?"+":"")+abFmtL(d.ajusteTot),"num")}</tr>
+    <tr><td>± Medições / perdas / evaporação</td>${td(((d.ajusteTot-d.zeragemTot)>0?"+":"")+abFmtL(d.ajusteTot-d.zeragemTot),"num")}</tr>
+    ${d.zeragemTot?`<tr><td>− Zeragem (novo ponto de partida)</td>${td(abFmtL(d.zeragemTot),"num")}</tr>`:""}
     <tr style="font-weight:700"><td>= Sobra final (estoque)</td>${td(abFmtL(d.final),"num")}</tr>
     <tr><td>Perda no período</td>${td(abFmtL(d.perdaL)+" ("+d.perdaPct.toFixed(1)+"%) — "+(dentro?"dentro":"ACIMA")+" da tolerância de "+d.tol+"%","num")}</tr>
     <tr><td>Gasto com compras / preço médio</td>${td(abBrl(d.valorEnt)+(d.precoMedio?" · "+abPreco(d.precoMedio)+"/L":""),"num")}</tr></tbody></table>${d.confere?"":'<p class="hint" style="color:var(--red)">⚠ Os números não fecham: confira os lançamentos.</p>'}`;
@@ -2748,7 +2817,7 @@ function exportRelatorioCombustivel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
   const d=dadosRelatorioCombustivel(_rcTanque,_rcDe,_rcAte),wb=XLSX.utils.book_new();
   const add=(nome,rows)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),nome);
-  add("Resumo",[{Item:"Tanque",Valor:d.tanque.nome},{Item:"Período",Valor:(d.de?fmt(d.de):"início")+" a "+(d.ate?fmt(d.ate):"hoje")},{Item:"Sobra do anterior (L)",Valor:+d.inicial.toFixed(1)},{Item:"Entradas (L)",Valor:+d.litEnt.toFixed(1)},{Item:"Transferências recebidas (L)",Valor:+d.transIn.toFixed(1)},{Item:"Abastecimentos (L)",Valor:+d.litSai.toFixed(1)},{Item:"Transferências enviadas (L)",Valor:+d.transOut.toFixed(1)},{Item:"Medições/perdas (L)",Valor:+d.ajusteTot.toFixed(1)},{Item:"Sobra final (L)",Valor:+d.final.toFixed(1)},{Item:"Perda (%)",Valor:+d.perdaPct.toFixed(2)},{Item:"Tolerância (%)",Valor:d.tol},{Item:"Gasto com compras (R$)",Valor:+d.valorEnt.toFixed(2)},{Item:"Preço médio (R$/L)",Valor:+d.precoMedio.toFixed(3)}]);
+  add("Resumo",[{Item:"Tanque",Valor:d.tanque.nome},{Item:"Período",Valor:(d.de?fmt(d.de):"início")+" a "+(d.ate?fmt(d.ate):"hoje")},{Item:"Sobra do anterior (L)",Valor:+d.inicial.toFixed(1)},{Item:"Entradas (L)",Valor:+d.litEnt.toFixed(1)},{Item:"Transferências recebidas (L)",Valor:+d.transIn.toFixed(1)},{Item:"Abastecimentos (L)",Valor:+d.litSai.toFixed(1)},{Item:"Transferências enviadas (L)",Valor:+d.transOut.toFixed(1)},{Item:"Medições/perdas (L)",Valor:+(d.ajusteTot-d.zeragemTot).toFixed(1)},{Item:"Zeragem / novo ponto de partida (L)",Valor:+d.zeragemTot.toFixed(1)},{Item:"Sobra final (L)",Valor:+d.final.toFixed(1)},{Item:"Perda (%)",Valor:+d.perdaPct.toFixed(2)},{Item:"Tolerância (%)",Valor:d.tol},{Item:"Gasto com compras (R$)",Valor:+d.valorEnt.toFixed(2)},{Item:"Preço médio (R$/L)",Valor:+d.precoMedio.toFixed(3)}]);
   add("Entradas",d.entradas.map(a=>({Data:fmt(a.data),Fornecedor:a.fornecedor||"",Posto:a.posto||"",Combustível:a.combustivel||"",Litros:+a.litros||0,"Preço por litro":+a.precoLitro||"",Total:+a.valorTotal||((+a.precoLitro&&+a.litros)?+(a.litros*a.precoLitro).toFixed(2):""),"NF/cupom":a.nCanhoto||"","Sobra do anterior":(a.sobraMedida!==undefined&&a.sobraMedida!=="")?+a.sobraMedida:(a.sobraTeorica!==undefined?+a.sobraTeorica:"")})));
   add("Por equipamento",d.equipamentos.map(e=>({Equipamento:e.tag,Abastecimentos:e.qtd,Litros:+e.litros.toFixed(1),Horas:e.horas==null?"":e.horas,"Consumo médio (L/h)":e.consumo==null?"":e.consumo})));
   add("Abastecimentos",d.saidas.map(a=>({Data:fmt(a.data),Equipamento:a.tag||"",Operador:a.operador||"",Horímetro:a.horimetroEquip||"",Litros:+a.litros||0,Canhoto:a.nCanhoto||""})));
