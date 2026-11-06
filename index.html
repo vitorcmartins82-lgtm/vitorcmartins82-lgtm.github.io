@@ -308,7 +308,7 @@ function tickAtualizacao(){
   const modo=modoAtualizacao();
   if(modo!=="manual"&&agora-_ultimaCargaTs>=(+modo)*60000)loadFromSupabase();
 }
-const NOMES_TABELAS={func:"Funcionários",locais:"Locais",mov:"Movimentações",faltas:"Ponto/Ocorrências",ferias:"Férias",baixadas:"Baixadas",reemb:"Reembolsos",veiculos:"Veículos",rotas:"Rotas",abastecimentos:"Abastecimentos",mobilizacoes:"Mobilizações",vagas:"Vagas",compras_setores:"Setores",compras_pedidos:"Pedidos",compras_despesas:"Despesas",compras_estoque:"Estoque",compras_contratos:"Contratos",compras_notas:"Notas fiscais",compras_estoque_mov:"Mov. de estoque",compras_fornecedores:"Fornecedores",almox_pedidos:"Pedidos de almoxarifado",vagas_abertas:"Vagas abertas"};
+const NOMES_TABELAS={func:"Funcionários",locais:"Locais",mov:"Movimentações",faltas:"Ponto/Ocorrências",ferias:"Férias",baixadas:"Baixadas",reemb:"Fluig (lançamentos)",veiculos:"Veículos",rotas:"Rotas",abastecimentos:"Abastecimentos",mobilizacoes:"Mobilizações",vagas:"Vagas",compras_setores:"Setores",compras_pedidos:"Pedidos",compras_despesas:"Despesas",compras_estoque:"Estoque",compras_contratos:"Contratos",compras_notas:"Notas fiscais",compras_estoque_mov:"Mov. de estoque",compras_fornecedores:"Fornecedores",almox_pedidos:"Pedidos de almoxarifado",vagas_abertas:"Vagas abertas"};
 const _errTab={},_motivoTab={},_corpoErro={};
 function descErroTab(t){return _motivoTab[t]?" ("+_motivoTab[t]+")":(_errTab[t]?" (erro "+_errTab[t]+")":"");}
 async function dbFetchTableComRetry(k){
@@ -599,7 +599,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Reembolsos"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Fluig"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -634,7 +634,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.23";
+const APP_VERSAO="v2026-10-02.24";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -689,7 +689,7 @@ function renderDetalhePermissoes(){
    <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")} · ${esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
    ${SECOES_PERMISSAO.map(linhaSecao).join("")}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
-   <p class="hint" style="margin-top:14px">🔒 Reembolsos e Recrutamento não entram nessa lista — essas duas áreas só abrem com a senha mestra, direto na tela delas (não dependem de liberação por pessoa).</p>
+   <p class="hint" style="margin-top:14px">🔒 Fluig e Recrutamento não entram nessa lista — essas duas áreas só abrem com a senha mestra, direto na tela delas (não dependem de liberação por pessoa).</p>
    <div style="padding:14px 0;border-top:1px solid #eef0ec;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><div><b style="font-size:14.5px">Aprovador de pedidos de compra</b><br><small style="color:var(--muted)">Pode aprovar pedidos (aparece na lista de "Aprovado por" com senha própria) e ganha o menu ✅ Aprovações, mesmo sem acesso à tela de Pedidos</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','aprovadorPedidos',this.checked)" ${f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id))?"checked":""} style="width:22px;height:22px"></div>
      ${(f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id)))?`<div class="fg" style="margin:10px 0 0"><label>Senha de aprovação desta pessoa</label><input type="text" value="${esc(senhaAprovacaoDe(f))}" placeholder="defina uma senha (só números, ex.: 4 dígitos)" onchange="salvarSenhaAprovacao('${f.id}',this.value)"></div>`:''}
    </div>
@@ -773,7 +773,8 @@ function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,aniversariant
 function vPainel(){const ativos=DB.func.filter(ativo);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];ativos.forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
-  main.innerHTML=`<div class="head"><div><h1>Painel da Obra</h1><p>GM.MG.00083 — Vale — Nova Lima · Situação de hoje — ${fmt(iso(today()))}</p></div><div class="acts"><button class="btn btn-g" onclick="doBackup()">⭳ Backup</button><button class="btn btn-g" onclick="exportExcel()">⭳ Excel</button><button class="btn btn-a" onclick="formFunc()">＋ Novo funcionário</button></div></div>
+  {const fl=DB.reemb.filter(prontoParaFinalizar).length;if(fl)alerts.push({c:"var(--steel)",b:"Fluig — "+fl+" lançamento(s) pago(s) há mais de "+diasFinalizarFluig()+" dias",s:"Aguardando finalização com a observação da confirmação."});}
+ main.innerHTML=`<div class="head"><div><h1>Painel da Obra</h1><p>GM.MG.00083 — Vale — Nova Lima · Situação de hoje — ${fmt(iso(today()))}</p></div><div class="acts"><button class="btn btn-g" onclick="doBackup()">⭳ Backup</button><button class="btn btn-g" onclick="exportExcel()">⭳ Excel</button><button class="btn btn-a" onclick="formFunc()">＋ Novo funcionário</button></div></div>
    <div class="grid stats"><div class="stat steel"><div class="n">${ativos.length}</div><div class="l">Ativos na obra</div></div><div class="stat"><div class="n">${emAloj}</div><div class="l">Em alojamento</div></div><div class="stat"><div class="n">${emHotel}</div><div class="l">Em hotel</div></div><div class="stat amber"><div class="n">${alerts.filter(a=>a.c.includes("amber")).length}</div><div class="l">Baixadas p/ programar</div></div></div>
    <div class="grid stats"><div class="stat"><div class="n">${locaisCount}</div><div class="l">Locais (${pctLocal}%)</div></div><div class="stat green"><div class="n">${alojadosCount}</div><div class="l">Alojados/Hotel (${pctAlojado}%)</div></div><div class="stat steel"><div class="n">${modCount}</div><div class="l">MOD — mão de obra direta</div></div><div class="stat amber"><div class="n">${moiCount}</div><div class="l">MOI — mão de obra indireta</div></div></div>
    <div class="panel"><h2><span class="t">⚑ Quem está onde <span class="tag t-grey">${ativos.length} ativos</span></span><button class="btn btn-a btn-sm" onclick="formMov()">＋ Nova movimentação</button></h2><div class="tblwrap">${tabelaQuemOnde(ativos)}</div></div>
@@ -1895,43 +1896,58 @@ function telaAreaRestrita(titulo,campoAcesso,funcaoDesbloquear){
    <input type="password" id="area_restrita_senha" placeholder="Senha mestra" style="width:100%;padding:10px;border:1px solid #dcdfe3;border-radius:8px;text-align:center;margin-bottom:10px" onkeydown="if(event.key==='Enter')${funcaoDesbloquear}()"><button class="btn btn-a" style="width:100%" onclick="${funcaoDesbloquear}()">Entrar com senha</button></div>`;
 }
 const TIPOS_REEMB=["Vale Combustível","Reembolso - Passagem","Reembolso - Alimentação","Reembolso - Deslocamento","Reembolso - Outro","Férias","Demissão","PAF","Quebra de obra","Adiantamento"];
-let _reembFiltroFunc="",_reembFiltroDe="",_reembFiltroAte="",_reembFiltroTipo="",_reembFiltroLancadoPor="",_reembFiltroStatus="";
+let _reembFiltroFunc="",_reembFiltroDe="",_reembFiltroAte="",_reembFiltroTipo="",_reembFiltroLancadoPor="",_reembFiltroStatus="",_reembFiltroFreq="";
+function reembFiltrados(){
+  let list=DB.reemb.slice();
+  if(_reembFiltroFunc)list=list.filter(r=>r.func===_reembFiltroFunc);
+  if(_reembFiltroDe)list=list.filter(r=>String(r.data||"")>=_reembFiltroDe);
+  if(_reembFiltroAte)list=list.filter(r=>String(r.data||"")<=_reembFiltroAte);
+  if(_reembFiltroTipo)list=list.filter(r=>r.tipo===_reembFiltroTipo);
+  if(_reembFiltroLancadoPor)list=list.filter(r=>r.lancadoPor===_reembFiltroLancadoPor);
+  if(_reembFiltroFreq)list=list.filter(r=>(r.frequencia||"Esporádico")===_reembFiltroFreq);
+  if(_reembFiltroStatus==="__pronto")list=list.filter(prontoParaFinalizar);
+  else if(_reembFiltroStatus)list=list.filter(r=>r.status===_reembFiltroStatus);
+  list.sort((a,b)=>String(b.data||"").localeCompare(String(a.data||"")));
+  return list;
+}
 function vReemb(){
-  if(!_reembUnlocked){
-    main.innerHTML=telaSenhaMestra("Reembolsos e lançamentos","desbloquearReemb");
-    return;
-  }
+  if(!_reembUnlocked){main.innerHTML=telaSenhaMestra("Fluig — lançamentos","desbloquearReemb");return;}
   const lancadores=[...new Set(DB.reemb.map(r=>r.lancadoPor).filter(Boolean))].sort();
-  main.innerHTML=`<div class="head"><div><h1>Reembolsos</h1><p>Reembolso, férias, demissão, PAF, quebra de obra, adiantamento. Pagamento via Caixa (Vitor/Arthur) ou Fluig.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirImportarValeCombustivel()">📋 Importar dados (colar do Excel)</button><button class="btn btn-g" onclick="abrirGeradorValeCombustivel()">🚌 Gerar Vale Combustível do mês</button><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div></div>
+  const filtrando=_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus||_reembFiltroFreq;
+  const prontos=DB.reemb.filter(prontoParaFinalizar);
+  main.innerHTML=`<div class="head"><div><h1>Fluig</h1><p>Lançamentos de reembolso, férias, demissão, PAF, quebra de obra e adiantamento — cada um com a sua explicação. Pagamento via Caixa (Vitor/Arthur) ou Fluig. Pago há ${diasFinalizarFluig()} dias ou mais, o lançamento é finalizado com a observação da confirmação.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirResumoFluig()">✉ Resumo p/ e-mail</button><button class="btn btn-g" onclick="exportFluigExcel()">⭳ Excel</button><button class="btn btn-g" onclick="abrirImportarValeCombustivel()">📋 Importar dados (colar do Excel)</button><button class="btn btn-g" onclick="abrirGeradorValeCombustivel()">🚌 Gerar Vale Combustível do mês</button><button class="btn btn-a" onclick="formReemb()">＋ Novo lançamento</button></div></div>
+   ${prontos.length?`<div class="panel" style="border:2px solid var(--amber);margin-bottom:14px"><div style="padding:12px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>⏳ ${prontos.length} lançamento(s) pago(s) há ${diasFinalizarFluig()} dias ou mais, esperando finalização.</b><button class="btn btn-a btn-sm" onclick="abrirFinalizarFluigLote()">✔ Finalizar com observação</button><button class="btn btn-g btn-sm" onclick="_reembFiltroStatus='__pronto';render()">Ver só esses</button></div></div>`:""}
    <div class="toolbar">
-     <select id="rf_func" onchange="_reembFiltroFunc=this.value;renderReembTbl()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_reembFiltroFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select>
-     <select id="rf_tipo" onchange="_reembFiltroTipo=this.value;renderReembTbl()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_reembFiltroTipo===t?"selected":""}>${t}</option>`).join("")}</select>
-     <select id="rf_lancadopor" onchange="_reembFiltroLancadoPor=this.value;renderReembTbl()"><option value="">Lançado por qualquer um</option>${lancadores.map(l=>`<option value="${esc(l)}" ${_reembFiltroLancadoPor===l?"selected":""}>${esc(l)}</option>`).join("")}</select>
-     <select id="rf_status" onchange="_reembFiltroStatus=this.value;renderReembTbl()"><option value="">Todos os status</option><option ${_reembFiltroStatus==="Pendente"?"selected":""}>Pendente</option><option ${_reembFiltroStatus==="Aprovado"?"selected":""}>Aprovado</option><option ${_reembFiltroStatus==="Pago"?"selected":""}>Pago</option></select>
+    <select id="rf_func" onchange="_reembFiltroFunc=this.value;renderReembTbl()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_reembFiltroFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select>
+    <select id="rf_tipo" onchange="_reembFiltroTipo=this.value;renderReembTbl()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_reembFiltroTipo===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="rf_freq" onchange="_reembFiltroFreq=this.value;renderReembTbl()"><option value="">Qualquer frequência</option>${FREQ_REEMB.map(t=>`<option ${_reembFiltroFreq===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="rf_lancadopor" onchange="_reembFiltroLancadoPor=this.value;renderReembTbl()"><option value="">Lançado por qualquer um</option>${lancadores.map(l=>`<option value="${esc(l)}" ${_reembFiltroLancadoPor===l?"selected":""}>${esc(l)}</option>`).join("")}</select>
+    <select id="rf_status" onchange="_reembFiltroStatus=this.value;renderReembTbl()"><option value="">Todos os status</option>${STATUS_REEMB.map(t=>`<option ${_reembFiltroStatus===t?"selected":""}>${t}</option>`).join("")}<option value="__pronto" ${_reembFiltroStatus==="__pronto"?"selected":""}>Prontos p/ finalizar</option></select>
    </div>
-   <div class="toolbar">
-     <span class="hint">De</span><input type="date" id="rf_de" value="${_reembFiltroDe}" onchange="_reembFiltroDe=this.value;renderReembTbl()">
-     <span class="hint">até</span><input type="date" id="rf_ate" value="${_reembFiltroAte}" onchange="_reembFiltroAte=this.value;renderReembTbl()">
-     ${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?`<button class="btn btn-g btn-sm" onclick="limparFiltrosReemb()">Limpar filtro</button>`:''}
-   </div>
+   <div class="toolbar"><span class="hint">De</span><input type="date" id="rf_de" value="${_reembFiltroDe}" onchange="_reembFiltroDe=this.value;renderReembTbl()"><span class="hint">até</span><input type="date" id="rf_ate" value="${_reembFiltroAte}" onchange="_reembFiltroAte=this.value;renderReembTbl()">${filtrando?`<button class="btn btn-g btn-sm" onclick="limparFiltrosReemb()">Limpar filtro</button>`:''}</div>
    <div class="grid stats" id="rf_stats"></div>
    <div class="panel"><div class="tblwrap" id="rf_tbl"></div></div>`;
   renderReembTbl();
 }
-function limparFiltrosReemb(){_reembFiltroFunc="";_reembFiltroDe="";_reembFiltroAte="";_reembFiltroTipo="";_reembFiltroLancadoPor="";_reembFiltroStatus="";render();}
+function limparFiltrosReemb(){_reembFiltroFunc="";_reembFiltroDe="";_reembFiltroAte="";_reembFiltroTipo="";_reembFiltroLancadoPor="";_reembFiltroStatus="";_reembFiltroFreq="";render();}
 function renderReembTbl(){
-  let list=DB.reemb.slice();
-  if(_reembFiltroFunc)list=list.filter(r=>r.func===_reembFiltroFunc);
-  if(_reembFiltroDe)list=list.filter(r=>r.data>=_reembFiltroDe);
-  if(_reembFiltroAte)list=list.filter(r=>r.data<=_reembFiltroAte);
-  if(_reembFiltroTipo)list=list.filter(r=>r.tipo===_reembFiltroTipo);
-  if(_reembFiltroLancadoPor)list=list.filter(r=>r.lancadoPor===_reembFiltroLancadoPor);
-  if(_reembFiltroStatus)list=list.filter(r=>r.status===_reembFiltroStatus);
-  list.sort((a,b)=>a.data<b.data?1:-1);
-  const tot=list.reduce((s,r)=>s+(+r.valor||0),0);
-  const statsEl=$("#rf_stats");if(statsEl)statsEl.innerHTML=`<div class="stat green"><div class="n">R$ ${tot.toFixed(2)}</div><div class="l">Total (nesse filtro)</div></div><div class="stat amber"><div class="n">${list.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes (nesse filtro)</div></div><div class="stat steel"><div class="n">${list.length}</div><div class="l">Lançamentos (nesse filtro)</div></div>`;
+  const list=reembFiltrados();
+  const filtrando=_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus||_reembFiltroFreq;
+  const tot=list.reduce((x,r)=>x+(+r.valor||0),0);
+  const statsEl=$("#rf_stats");
+  if(statsEl)statsEl.innerHTML=`<div class="stat green"><div class="n">R$ ${tot.toLocaleString("pt-BR",{minimumFractionDigits:2})}</div><div class="l">Total (nesse filtro)</div></div><div class="stat amber"><div class="n">${list.filter(r=>r.status==="Pendente").length}</div><div class="l">Pendentes (nesse filtro)</div></div><div class="stat"><div class="n">${list.filter(prontoParaFinalizar).length}</div><div class="l">Prontos p/ finalizar</div></div><div class="stat steel"><div class="n">${list.length}</div><div class="l">Lançamentos (nesse filtro)</div></div>`;
   const el=$("#rf_tbl");if(!el)return;
-  el.innerHTML=list.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${list.map(r=>{return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}</td><td class="num">R$ ${(+r.valor||0).toFixed(2)}</td><td>${r.fluigNumero?(r.fluigLink?`<a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${r.status==='Pago'?'t-green':r.status==='Aprovado'?'t-steel':'t-amber'}">${esc(r.status)}</span></td><td><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button>${r.vcLinha?`<button class="btn btn-g btn-sm" onclick="imprimirReciboVale('${r.id}')">🖨 Recibo</button>`:""}</td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento encontrado${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?" com esse filtro":""}.</p>${(_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus)?"":'<button class="btn btn-a" onclick="formReemb()">Novo lançamento</button>'}</div>`;
+  const cls=st=>st==="Pago"?"t-green":st==="Aprovado"?"t-steel":st==="Finalizado"?"t-grey":"t-amber";
+  el.innerHTML=list.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo e explicação</th><th>Freq.</th><th>Valor</th><th>Fluig</th><th>Lançado por</th><th>Status</th><th></th></tr></thead><tbody>${list.map(r=>{
+    const det=r.detalhamento?esc(String(r.detalhamento).slice(0,110))+(String(r.detalhamento).length>110?"…":""):'<span style="color:var(--red)">sem explicação</span>';
+    const pronto=prontoParaFinalizar(r);
+    return `<tr><td>${esc(funcNome(r.func))}</td><td>${fmt(r.data)}</td><td>${esc(r.tipo)}<br><small style="color:var(--muted)">${det}</small></td><td><small>${esc(r.frequencia||"Esporádico")}</small></td><td class="num">R$ ${(+r.valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td><td>${r.fluigNumero?(fluigLinkSeguro(r.fluigLink)?`<a href="${esc(fluigLinkSeguro(r.fluigLink))}" target="_blank" rel="noopener" style="color:var(--steel);font-weight:600">${esc(r.fluigNumero)} ↗</a>`:esc(r.fluigNumero)):"—"}</td><td><small>${esc(r.lancadoPor||"—")}</small></td><td><span class="tag ${cls(r.status)}">${esc(r.status||"—")}</span>${pronto?`<br><span class="tag t-amber" style="font-size:10px">⏳ ${diasPagoFluig(r)}d — finalizar</span>`:""}${(r.status==="Finalizado"&&r.confirmacaoObs)?`<br><small style="color:var(--muted)" title="${esc(r.confirmacaoObs)}">✔ ${fmt(r.finalizadoEm)}</small>`:""}</td><td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="formReemb('${r.id}')">Editar</button>${r.status==="Pago"?` <button class="btn btn-g btn-sm" onclick="finalizarFluig('${r.id}')">✔ Finalizar</button>`:""}${r.vcLinha?` <button class="btn btn-g btn-sm" onclick="imprimirReciboVale('${r.id}')">🖨 Recibo</button>`:""}</td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><div class="big">＄</div><p>Nenhum lançamento encontrado${filtrando?" com esse filtro":""}.</p>${filtrando?"":'<button class="btn btn-a" onclick="formReemb()">Novo lançamento</button>'}</div>`;
+}
+function exportFluigExcel(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const rows=reembFiltrados().map(r=>({Funcionário:funcNome(r.func),Data:r.data?fmt(r.data):"",Tipo:r.tipo||"",Frequência:r.frequencia||"Esporádico","Valor (R$)":+r.valor||0,Status:r.status||"","Data do pagamento":r.dataPagamento?fmt(r.dataPagamento):"","Forma de pagamento":r.formaPag||"","Nº Fluig":r.fluigNumero||"","Link Fluig":fluigLinkSeguro(r.fluigLink),"Explicação":r.detalhamento||"",Observações:r.obs||"","Lançado por":r.lancadoPor||"","Finalizado em":r.finalizadoEm?fmt(r.finalizadoEm):"","Confirmação":r.confirmacaoObs||""}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),"Fluig");
+  XLSX.writeFile(wb,"fluig-lancamentos-"+iso(today())+".xlsx");toast("Exportado.");
 }
 function desbloquearReemb(){
   const v=$("#area_restrita_senha").value;
@@ -2034,7 +2050,7 @@ function gerarValeCombustivel(){
     const ida=+f.valeCombustivelIda,volta=+f.valeCombustivelVolta;
     const total=(ida+volta)*dias;
     DB.reemb.push({id:uid(),func:fid,data:periodoAte,tipo:"Vale Combustível",valor:total.toFixed(2),status:"Pendente",lancadoPor:nomeUsuarioLogado(),
-      vcLinha:f.valeCombustivelLinha,vcDias:dias,vcIda:ida,vcVolta:volta,vcPeriodoDe:periodoDe,vcPeriodoAte:periodoAte});
+      vcLinha:f.valeCombustivelLinha,vcDias:dias,vcIda:ida,vcVolta:volta,vcPeriodoDe:periodoDe,vcPeriodoAte:periodoAte,frequencia:"Mensal",detalhamento:"Vale combustível de "+mesRef.split("-")[1]+"/"+mesRef.split("-")[0]+": "+dias+" dia(s) × (ida R$ "+ida.toFixed(2)+" + volta R$ "+volta.toFixed(2)+")"+(f.valeCombustivelLinha?" — linha "+f.valeCombustivelLinha:"")+"."});
     n++;
   });
   save("reemb");closeModal();render();toast(n+" lançamento(s) de Vale Combustível gerado(s).");
@@ -2086,21 +2102,182 @@ function imprimirReciboVale(id){
    </body></html>`);
   w.document.close();
 }
-function formReemb(id){if(!DB.func.length){toast("Cadastre um funcionário.");return;}const r=id?DB.reemb.find(x=>x.id===id):{status:"Pendente",tipo:"Reembolso - Passagem",formaPag:"Caixa - Vitor"};openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="fg"><label>Funcionário *</label><select id="r_f" onchange="mostraPix()">${porNome(DB.func).map(f=>`<option value="${f.id}" ${f.id===r.func?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div><div id="r_pixinfo"></div><div class="row3"><div class="fg"><label>Data *</label><input type="date" id="r_d" value="${esc(r.data)}"></div><div class="fg"><label>Tipo</label><select id="r_t">${TIPOS_REEMB.map(x=>`<option ${r.tipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="r_v" value="${esc(r.valor)}"></div></div>
+function finalizarFluig(id){
+  const r=DB.reemb.find(x=>x.id===id);if(!r)return;
+  openModal(`<div class="modal-h"><h3>✔ Finalizar lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px"><b>${esc(funcNome(r.func))}</b> · ${esc(r.tipo)} · R$ ${(+r.valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})} · pago há ${diasPagoFluig(r)} dia(s).</p>
+   <div class="fg"><label>Observação da confirmação *</label><textarea id="fz_obs" rows="3">Confirmado por ${esc(nomeUsuarioLogado()||"—")} em ${fmt(iso(today()))}: pago e sem pendências.</textarea></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="confirmarFinalizarFluig('${id}')">Finalizar</button></div>`);
+}
+function _finalizaReemb(r,obs){r.status="Finalizado";r.confirmacaoObs=obs;r.finalizadoEm=iso(today());r.finalizadoPor=nomeUsuarioLogado()||r.lancadoPor||"";if(!r.dataPagamento)r.dataPagamento=r.data;}
+function confirmarFinalizarFluig(id){
+  const obs=$("#fz_obs").value.trim();if(!obs){toast("Escreva a observação da confirmação.");return;}
+  const r=DB.reemb.find(x=>x.id===id);if(!r)return;
+  _finalizaReemb(r,obs);save("reemb");closeModal();render();toast("Lançamento finalizado.");
+}
+function abrirFinalizarFluigLote(){
+  const l=DB.reemb.filter(prontoParaFinalizar).sort((a,b)=>String(a.data||"").localeCompare(String(b.data||"")));
+  if(!l.length){toast("Nenhum lançamento pronto pra finalizar.");return;}
+  openModal(`<div class="modal-h"><h3>✔ Finalizar lançamentos pagos há ${diasFinalizarFluig()} dias ou mais</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Desmarque o que ainda tiver pendência. A observação da confirmação vale pra todos os marcados.</p>
+   <div style="max-height:36vh;overflow:auto;border:1px solid #eef0ec;border-radius:8px;padding:4px 10px;margin-bottom:12px">${l.map(r=>`<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="fz_chk" value="${r.id}" checked style="width:auto;margin-top:3px"><span style="font-size:12.5px"><b>${esc(funcNome(r.func))}</b> · ${esc(r.tipo)} · R$ ${(+r.valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})} · ${fmt(r.data)} · pago há ${diasPagoFluig(r)}d${r.detalhamento?`<br><small style="color:var(--muted)">${esc(String(r.detalhamento).slice(0,90))}</small>`:""}</span></label>`).join("")}</div>
+   <div class="fg"><label>Observação da confirmação *</label><textarea id="fz_obs" rows="3">Confirmado por ${esc(nomeUsuarioLogado()||"—")} em ${fmt(iso(today()))}: pagos há mais de ${diasFinalizarFluig()} dias e sem pendências.</textarea></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFinalizarFluigLote()">Finalizar os marcados</button></div>`);
+}
+function salvarFinalizarFluigLote(){
+  const obs=$("#fz_obs").value.trim();if(!obs){toast("Escreva a observação da confirmação.");return;}
+  const ids=[...document.querySelectorAll(".fz_chk:checked")].map(c=>c.value);
+  if(!ids.length){toast("Marque pelo menos um lançamento.");return;}
+  ids.forEach(id=>{const r=DB.reemb.find(x=>x.id===id);if(r)_finalizaReemb(r,obs);});
+  save("reemb");closeModal();render();toast(ids.length+" lançamento(s) finalizado(s).");
+}
+let _fsPreset="semana",_fsDe="",_fsAte="",_fsTipo="",_fsFreq="",_fsStatus="",_fsFunc="",_fsPara="",_ultimoMailto="";
+function fsPeriodo(preset){
+  const t=today(),seg=_segundaDe(t);
+  if(preset==="semana")return{de:iso(seg),ate:iso(_somaDias(seg,6))};
+  if(preset==="anterior"){const a=_somaDias(seg,-7);return{de:iso(a),ate:iso(_somaDias(a,6))};}
+  if(preset==="quinzena")return{de:iso(_somaDias(t,-14)),ate:iso(t)};
+  if(preset==="mes")return{de:iso(new Date(t.getFullYear(),t.getMonth(),1)),ate:iso(t)};
+  return{de:_fsDe,ate:_fsAte};
+}
+function dadosResumoFluig(){
+  const {de,ate}=fsPeriodo(_fsPreset);
+  const lista=DB.reemb.filter(r=>{const d=String(r.data||"");return(!de||d>=de)&&(!ate||d<=ate)&&(!_fsTipo||r.tipo===_fsTipo)&&(!_fsFreq||(r.frequencia||"Esporádico")===_fsFreq)&&(!_fsStatus||r.status===_fsStatus)&&(!_fsFunc||r.func===_fsFunc);});
+  const ordemTipos=[...TIPOS_REEMB,...new Set(lista.map(r=>r.tipo).filter(t=>t&&!TIPOS_REEMB.includes(t)))];
+  const porTipo=ordemTipos.map(tipo=>{
+    const itens=lista.filter(r=>r.tipo===tipo);if(!itens.length)return null;
+    const funcs=[...new Set(itens.map(r=>r.func))].map(fid=>{const its=itens.filter(r=>r.func===fid).sort((a,b)=>String(a.data||"").localeCompare(String(b.data||"")));return{func:fid,nome:funcNome(fid),itens:its,total:its.reduce((x,r)=>x+(+r.valor||0),0)};}).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+    return{tipo,qtd:itens.length,total:itens.reduce((x,r)=>x+(+r.valor||0),0),pend:itens.filter(r=>r.status==="Pendente").length,funcs};
+  }).filter(Boolean);
+  const total=lista.reduce((x,r)=>x+(+r.valor||0),0);
+  const cont=st=>lista.filter(r=>r.status===st).length;
+  return{de,ate,lista,porTipo,total,pendentes:cont("Pendente"),aprovados:cont("Aprovado"),pagos:cont("Pago"),finalizados:cont("Finalizado")};
+}
+function htmlResumoFluig(d){
+  const brl=v=>"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+  const th='style="background:#eef0ec;border:1px solid #d5d9d3;padding:5px 8px;text-align:left;font-size:12px"',td='style="border:1px solid #d5d9d3;padding:5px 8px;font-size:12px;vertical-align:top"',tdn='style="border:1px solid #d5d9d3;padding:5px 8px;font-size:12px;text-align:right;white-space:nowrap;vertical-align:top"';
+  const per=(d.de?fmt(d.de):"início")+" a "+(d.ate?fmt(d.ate):"hoje");
+  let h=`<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1c2128;max-width:900px"><h2 style="margin:0 0 4px;font-size:18px">Resumo Fluig — ${esc(DB.cfg.obraNome||"GM.MG.00083 · Vale · Nova Lima")}</h2><div style="color:#6b7480;margin-bottom:12px">Período: <b>${per}</b> · emitido em ${fmt(iso(today()))}${nomeUsuarioLogado()?" por "+esc(nomeUsuarioLogado()):""}</div>`;
+  h+=`<table style="border-collapse:collapse;margin-bottom:14px"><tr><td ${td}><b>${d.lista.length}</b> lançamento(s)</td><td ${td}>Total <b>${brl(d.total)}</b></td><td ${td}>Pendentes <b>${d.pendentes}</b></td><td ${td}>Aprovados <b>${d.aprovados}</b></td><td ${td}>Pagos <b>${d.pagos}</b></td><td ${td}>Finalizados <b>${d.finalizados}</b></td></tr></table>`;
+  if(!d.lista.length)return h+`<p style="color:#6b7480">Nenhum lançamento no período e nos filtros escolhidos.</p></div>`;
+  h+=`<h3 style="font-size:14px;margin:6px 0">Resumo por tipo</h3><table style="border-collapse:collapse;margin-bottom:16px"><tr><th ${th}>Tipo</th><th ${th}>Lançamentos</th><th ${th}>Total</th><th ${th}>Pendentes</th></tr>${d.porTipo.map(t=>`<tr><td ${td}>${esc(t.tipo)}</td><td ${tdn}>${t.qtd}</td><td ${tdn}>${brl(t.total)}</td><td ${tdn}>${t.pend}</td></tr>`).join("")}<tr><td ${td}><b>Total</b></td><td ${tdn}><b>${d.lista.length}</b></td><td ${tdn}><b>${brl(d.total)}</b></td><td ${tdn}><b>${d.pendentes}</b></td></tr></table>`;
+  h+=`<h3 style="font-size:14px;margin:6px 0">Detalhamento por tipo e funcionário</h3>`;
+  d.porTipo.forEach(t=>{
+    h+=`<div style="background:#0f413e;color:#fff;padding:6px 10px;margin-top:12px;font-weight:700">${esc(t.tipo)} — ${t.qtd} lançamento(s) · ${brl(t.total)}</div>`;
+    t.funcs.forEach(f=>{
+      h+=`<div style="margin:10px 0 3px;font-weight:700">${esc(f.nome)} <span style="font-weight:400;color:#6b7480">— ${f.itens.length} lançamento(s) · ${brl(f.total)}</span></div><table style="border-collapse:collapse;width:100%"><tr><th ${th}>Data</th><th ${th}>Valor</th><th ${th}>Freq.</th><th ${th}>Status</th><th ${th}>Pgto</th><th ${th}>Fluig</th><th ${th}>Explicação</th></tr>${f.itens.map(r=>{const lk=fluigLinkSeguro(r.fluigLink);return `<tr><td ${td}>${fmt(r.data)}</td><td ${tdn}>${brl(r.valor)}</td><td ${td}>${esc(r.frequencia||"Esporádico")}</td><td ${td}>${esc(r.status||"—")}</td><td ${td}>${esc(r.formaPag||"—")}</td><td ${td}>${r.fluigNumero?(lk?`<a href="${esc(lk)}">${esc(r.fluigNumero)}</a>`:esc(r.fluigNumero)):(lk?`<a href="${esc(lk)}">abrir</a>`:"—")}</td><td ${td}>${esc(r.detalhamento||"(sem explicação)")}${r.obs?`<br><i style="color:#6b7480">${esc(r.obs)}</i>`:""}${r.confirmacaoObs?`<br><i style="color:#6b7480">Confirmação: ${esc(r.confirmacaoObs)}</i>`:""}</td></tr>`;}).join("")}</table>`;
+    });
+  });
+  return h+`<p style="margin-top:14px"><b>Total geral: ${brl(d.total)}</b></p></div>`;
+}
+function textoResumoFluig(d){
+  const brl=v=>"R$ "+(+v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+  return "Resumo Fluig — período "+(d.de?fmt(d.de):"início")+" a "+(d.ate?fmt(d.ate):"hoje")+"\n"+d.lista.length+" lançamento(s) · total "+brl(d.total)+" · pendentes "+d.pendentes+"\n\n"+d.porTipo.map(t=>"• "+t.tipo+": "+t.qtd+" · "+brl(t.total)).join("\n");
+}
+function abrirResumoFluig(){
+  _fsPara=_fsPara||aprovadoresPedidos().map(f=>f.email).filter(Boolean).join("; ");
+  openModal(`<div class="modal-h"><h3>✉ Resumo do Fluig pra enviar por e-mail</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Tabela organizada por tipo e por funcionário, com a explicação e o link do Fluig de cada lançamento. Use "Preparar e-mail": o sistema copia a tabela e abre o seu e-mail — é só colar (Ctrl+V).</p>
+   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${[["semana","Semana atual"],["anterior","Semana anterior"],["quinzena","Últimos 15 dias"],["mes","Mês atual"],["custom","Personalizado"]].map(([v,t])=>`<button class="btn ${_fsPreset===v?"btn-a":"btn-g"} btn-sm" onclick="fsPreset('${v}')">${t}</button>`).join("")}</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:10px"><div class="fg" style="margin:0"><label class="opt">De</label><input type="date" id="fs_de" value="${fsPeriodo(_fsPreset).de}" ${_fsPreset==="custom"?"":"disabled"} onchange="_fsDe=this.value;fsRender()"></div><div class="fg" style="margin:0"><label class="opt">Até</label><input type="date" id="fs_ate" value="${fsPeriodo(_fsPreset).ate}" ${_fsPreset==="custom"?"":"disabled"} onchange="_fsAte=this.value;fsRender()"></div>
+    <select onchange="_fsTipo=this.value;fsRender()"><option value="">Todos os tipos</option>${TIPOS_REEMB.map(t=>`<option ${_fsTipo===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select onchange="_fsFreq=this.value;fsRender()"><option value="">Qualquer frequência</option>${FREQ_REEMB.map(t=>`<option ${_fsFreq===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select onchange="_fsStatus=this.value;fsRender()"><option value="">Todos os status</option>${STATUS_REEMB.map(t=>`<option ${_fsStatus===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select onchange="_fsFunc=this.value;fsRender()"><option value="">Todas as pessoas</option>${porNome(DB.func).map(f=>`<option value="${f.id}" ${_fsFunc===f.id?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div>
+   <div class="fg"><label>Para <span class="opt">(e-mails separados por ponto e vírgula)</span></label><input id="fs_para" value="${esc(_fsPara)}" oninput="_fsPara=this.value" placeholder="engenheiro@empresa.com.br"></div>
+   <div id="fs_prev" style="max-height:38vh;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:12px;background:#fff"></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-a" onclick="emailResumoFluig()">✉ Preparar e-mail</button><button class="btn btn-g" onclick="copiarResumoFluig()">📋 Copiar tabela</button><button class="btn btn-g" onclick="exportResumoFluig()">⭳ Excel</button><button class="btn btn-g" onclick="imprimirResumoFluig()">🖨 Imprimir / PDF</button></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Fechar</button></div>`);
+  fsRender();
+}
+function fsPreset(v){_fsPreset=v;if(v==="custom"){const a=fsPeriodo("semana");if(!_fsDe)_fsDe=a.de;if(!_fsAte)_fsAte=a.ate;}abrirResumoFluig();}
+function fsRender(){const el=$("#fs_prev");if(el)el.innerHTML=htmlResumoFluig(dadosResumoFluig());}
+async function copiarResumoFluig(silencioso){
+  const d=dadosResumoFluig(),html=htmlResumoFluig(d),txt=textoResumoFluig(d);
+  try{
+    if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
+      await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([txt],{type:"text/plain"})})]);
+      if(!silencioso)toast("Tabela copiada — cole no e-mail com Ctrl+V.");return true;
+    }
+  }catch(e){}
+  try{
+    const box=document.createElement("div");box.contentEditable="true";box.style.cssText="position:fixed;left:-9999px;top:0;background:#fff";box.innerHTML=html;document.body.appendChild(box);
+    const rg=document.createRange();rg.selectNodeContents(box);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(rg);
+    const ok=document.execCommand("copy");sel.removeAllRanges();box.remove();
+    if(ok){if(!silencioso)toast("Tabela copiada — cole no e-mail com Ctrl+V.");return true;}
+  }catch(e){}
+  prompt("Não consegui copiar sozinho. Copie o texto:",txt);return false;
+}
+async function emailResumoFluig(){
+  const d=dadosResumoFluig();
+  await copiarResumoFluig(true);
+  const per=(d.de?fmt(d.de):"início")+" a "+(d.ate?fmt(d.ate):"hoje");
+  const corpo="Olá,\n\nsegue o resumo dos lançamentos do Fluig do período "+per+".\n\n"+d.lista.length+" lançamento(s) · total R$ "+d.total.toLocaleString("pt-BR",{minimumFractionDigits:2})+" · pendentes "+d.pendentes+"\n\n>>> Cole aqui a tabela completa (já copiada pelo sistema): Ctrl+V <<<\n\nAtenciosamente,\n"+(nomeUsuarioLogado()||"");
+  _ultimoMailto="mailto:"+(_fsPara||"").split(/[;,\s]+/).filter(Boolean).map(e=>encodeURIComponent(e).replace(/%40/g,"@")).join(",")+"?subject="+encodeURIComponent("Resumo Fluig — "+(DB.cfg.obraNome||"GM.MG.00083")+" — "+per)+"&body="+encodeURIComponent(corpo);
+  const a=document.createElement("a");a.href=_ultimoMailto;document.body.appendChild(a);a.click();a.remove();
+  toast("Tabela copiada. No e-mail que abriu, cole com Ctrl+V.");
+}
+function exportResumoFluig(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const d=dadosResumoFluig(),wb=XLSX.utils.book_new();
+  const add=(n,rows)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),n);
+  add("Resumo por tipo",d.porTipo.map(t=>({Tipo:t.tipo,Lançamentos:t.qtd,"Total (R$)":+t.total.toFixed(2),Pendentes:t.pend})));
+  add("Por funcionário",d.porTipo.flatMap(t=>t.funcs.map(f=>({Tipo:t.tipo,Funcionário:f.nome,Lançamentos:f.itens.length,"Total (R$)":+f.total.toFixed(2)}))));
+  add("Detalhe",d.porTipo.flatMap(t=>t.funcs.flatMap(f=>f.itens.map(r=>({Tipo:t.tipo,Funcionário:f.nome,Data:r.data?fmt(r.data):"",Frequência:r.frequencia||"Esporádico","Valor (R$)":+r.valor||0,Status:r.status||"","Forma de pagamento":r.formaPag||"","Nº Fluig":r.fluigNumero||"","Link Fluig":fluigLinkSeguro(r.fluigLink),Explicação:r.detalhamento||"",Observações:r.obs||"",Confirmação:r.confirmacaoObs||"","Lançado por":r.lancadoPor||""})))));
+  XLSX.writeFile(wb,"resumo-fluig-"+(d.de||"inicio")+"-a-"+(d.ate||"hoje")+".xlsx");toast("Exportado.");
+}
+function imprimirResumoFluig(){
+  const d=dadosResumoFluig();
+  const w=window.open("","_blank");if(!w){toast("O navegador bloqueou a janela — libere pop-ups pra esse site.");return;}
+  w.document.write("<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><title>Resumo Fluig</title><style>body{padding:24px;font-family:Arial,sans-serif}@media print{body{padding:8px}}</style></head><body>"+htmlResumoFluig(d)+"</body></html>");
+  w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+function reembStatusMudou(){
+  const st=$("#r_s").value;
+  const w=$("#r_confwrap");if(w)w.style.display=st==="Finalizado"?"block":"none";
+  const d=$("#r_dpag");if(d&&!d.value&&(st==="Pago"||st==="Finalizado"))d.value=iso(today());
+}
+function reembPlaceholderDet(){
+  const t=$("#r_t")?$("#r_t").value:"";
+  const ex={"Vale Combustível":"Ex.: vale combustível de outubro, 22 dias úteis, linha 3 (ida e volta).","Reembolso - Passagem":"Ex.: passagem Nova Lima → Belo Horizonte de 24/10, fim de semana, comprada pelo funcionário; recibo anexado no Fluig.","Reembolso - Alimentação":"Ex.: almoço de 3 dias em campo, sem refeitório; autorizado pelo engenheiro.","Reembolso - Deslocamento":"Ex.: táxi do alojamento à obra no dia 22/10, ônibus não passou.","Férias":"Ex.: férias de 01/11 a 30/11, pagamento no dia 30/10.","Demissão":"Ex.: verbas rescisórias de acordo com o TRCT, desligado em 20/10.","PAF":"Ex.: PAF referente a ...","Quebra de obra":"Ex.: ferramenta quebrada no serviço X, descontar/ressarcir ...","Adiantamento":"Ex.: adiantamento salarial pedido em 15/10, desconto na folha de novembro."}[t]||"Ex.: o que é, por que está sendo pago, período ou trecho, quem autorizou.";
+  const el=$("#r_det");if(el)el.placeholder=ex;
+}
+function formReemb(id){
+  if(!DB.func.length){toast("Cadastre um funcionário.");return;}
+  const r=id?DB.reemb.find(x=>x.id===id):{status:"Pendente",tipo:"Reembolso - Passagem",formaPag:"Caixa - Vitor",frequencia:"Esporádico",data:iso(today())};
+  openModal(`<div class="modal-h"><h3>${id?"Editar":"Novo"} lançamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="fg"><label>Funcionário *</label><select id="r_f" onchange="mostraPix()">${porNome(DB.func).map(f=>`<option value="${f.id}" ${f.id===r.func?"selected":""}>${esc(f.nome)}</option>`).join("")}</select></div><div id="r_pixinfo"></div>
+   <div class="row3"><div class="fg"><label>Data *</label><input type="date" id="r_d" value="${esc(r.data)}"></div><div class="fg"><label>Tipo</label><select id="r_t" onchange="reembPlaceholderDet()">${TIPOS_REEMB.map(x=>`<option ${r.tipo===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Valor (R$) *</label><input type="number" step="0.01" id="r_v" value="${esc(r.valor)}"></div></div>
+   <div class="row2"><div class="fg"><label>Frequência <span class="opt">(esporádico, semanal, quinzenal ou mensal)</span></label><select id="r_freq">${FREQ_REEMB.map(x=>`<option ${(r.frequencia||"Esporádico")===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="fg"><label>Data do pagamento <span class="opt">(preenche sozinha ao marcar Pago)</span></label><input type="date" id="r_dpag" value="${esc(r.dataPagamento)}"></div></div>
+   <div class="fg"><label>Explicação do lançamento * <span class="opt">(o que é, por que está sendo pago, período ou trecho, quem autorizou — é o que o engenheiro lê no resumo)</span></label><textarea id="r_det" rows="3">${esc(r.detalhamento||"")}</textarea></div>
    <div class="sub">Pagamento</div>
-   <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="r_pag"><option value="Caixa - Vitor" ${r.formaPag==="Caixa - Vitor"?"selected":""}>Caixa - Vitor</option><option value="Caixa - Arthur" ${r.formaPag==="Caixa - Arthur"?"selected":""}>Caixa - Arthur</option><option value="Fluig" ${r.formaPag==="Fluig"?"selected":""}>Fluig</option></select></div><div class="fg"><label>Status do pagamento</label><select id="r_s">${["Pendente","Aprovado","Pago"].map(x=>`<option ${r.status===x?"selected":""}>${x}</option>`).join("")}</select></div></div>
+   <div class="row2"><div class="fg"><label>Forma de pagamento</label><select id="r_pag"><option value="Caixa - Vitor" ${r.formaPag==="Caixa - Vitor"?"selected":""}>Caixa - Vitor</option><option value="Caixa - Arthur" ${r.formaPag==="Caixa - Arthur"?"selected":""}>Caixa - Arthur</option><option value="Fluig" ${r.formaPag==="Fluig"?"selected":""}>Fluig</option></select></div><div class="fg"><label>Status</label><select id="r_s" onchange="reembStatusMudou()">${STATUS_REEMB.map(x=>`<option ${r.status===x?"selected":""}>${x}</option>`).join("")}</select></div></div>
+   <div id="r_confwrap" class="fg" style="display:${r.status==="Finalizado"?"block":"none"}"><label>Observação da confirmação * <span class="opt">(obrigatória pra finalizar — quem confirmou e o quê)</span></label><textarea id="r_conf" rows="2">${esc(r.confirmacaoObs||"")}</textarea></div>
    <div class="row2"><div class="fg"><label>Número Fluig <span class="opt">(opcional)</span></label><input id="r_fluignum" value="${esc(r.fluigNumero)}" placeholder="ex.: 123456"></div><div class="fg"><label>Link Fluig</label><input id="r_fluiglink" value="${esc(r.fluigLink)}" placeholder="https://..."></div></div>
    <div class="fg"><label>Lançado por * <span class="opt">(quem está registrando esse lançamento)</span></label><input id="r_lancadopor" value="${esc(r.lancadoPor)||nomeUsuarioLogado()}" placeholder="seu nome"></div>
-   <div class="fg"><label>Observações</label><input id="r_o" value="${esc(r.obs)}"></div></div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delReemb('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarReemb('${id||""}')">Salvar</button></div>`);mostraPix();}
+   <div class="fg"><label>Observações</label><input id="r_o" value="${esc(r.obs)}"></div></div>
+   <div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delReemb('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarReemb('${id||""}')">Salvar</button></div>`);
+  mostraPix();reembPlaceholderDet();
+}
+
 function mostraPix(){const f=DB.func.find(x=>x.id===$("#r_f").value);const el=$("#r_pixinfo");if(!el)return;el.innerHTML=f&&f.pixChave?`<div class="picked" style="margin:0 0 14px"><b>PIX p/ pagamento:</b> ${esc(f.pixTipo||"")} — ${esc(f.pixChave)}${f.pixBanco?" ("+esc(f.pixBanco)+")":""}</div>`:`<div class="hint" style="margin:-6px 0 14px;color:var(--amber-d)">⚠ Sem PIX cadastrado. <a href="#" onclick="closeModal();formFunc('${f?f.id:''}');return false" style="color:var(--steel)">completar ficha</a></div>`;}
 function salvarReemb(id){
   const func=$("#r_f").value,data=$("#r_d").value,valor=$("#r_v").value,lancadoPor=$("#r_lancadopor").value.trim();
+  const det=$("#r_det").value.trim(),status=$("#r_s").value,conf=$("#r_conf")?$("#r_conf").value.trim():"";
   if(!data||!valor){toast("Informe data e valor.");return;}
+  if(det.length<8){toast("Escreva a explicação do lançamento: o que é, por que está sendo pago e quem autorizou.");return;}
   if(!lancadoPor){toast("Informe quem está lançando.");return;}
-  const o={id:id||uid(),func,data,tipo:$("#r_t").value,valor,status:$("#r_s").value,formaPag:$("#r_pag").value,fluigNumero:$("#r_fluignum").value.trim(),fluigLink:$("#r_fluiglink").value.trim(),lancadoPor,obs:$("#r_o").value.trim()};
+  if(status==="Finalizado"&&!conf){toast("Pra finalizar, escreva a observação da confirmação.");return;}
+  const prev=id?(DB.reemb.find(x=>x.id===id)||{}):{};
+  let dpag=$("#r_dpag").value;
+  if((status==="Pago"||status==="Finalizado")&&!dpag)dpag=prev.dataPagamento||iso(today());
+  const o={...prev,id:id||uid(),func,data,tipo:$("#r_t").value,valor,status,formaPag:$("#r_pag").value,fluigNumero:$("#r_fluignum").value.trim(),fluigLink:$("#r_fluiglink").value.trim(),lancadoPor,obs:$("#r_o").value.trim(),detalhamento:det,frequencia:$("#r_freq").value,dataPagamento:dpag};
+  if(status==="Finalizado"){o.confirmacaoObs=conf;o.finalizadoEm=prev.finalizadoEm||iso(today());o.finalizadoPor=prev.finalizadoPor||nomeUsuarioLogado()||lancadoPor;}
+  else if(prev.status==="Finalizado"){o.finalizadoEm="";o.finalizadoPor="";}
   if(id){const i=DB.reemb.findIndex(x=>x.id===id);DB.reemb[i]=o;}else DB.reemb.push(o);
   save("reemb");closeModal();render();toast("Lançamento salvo.");
 }
+
 function delReemb(id){if(!confirm("Excluir?"))return;DB.reemb=DB.reemb.filter(x=>x.id!==id);save("reemb");closeModal();render();}
 function listaAlojados(filtroLocal){
   return DB.mov.filter(m=>!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel")&&(!filtroLocal||m.local===filtroLocal)).map(m=>{const f=DB.func.find(x=>x.id===m.func);return f?{f,m}:null;}).filter(Boolean).sort((a,b)=>a.f.nome.localeCompare(b.f.nome,"pt-BR"));
@@ -2420,7 +2597,7 @@ function vAreas(){const ativos=DB.func.filter(ativo);const porFuncao={},porEmpre
 function miniCont(obj){const ent=Object.entries(obj).sort((a,b)=>b[1]-a[1]);if(!ent.length)return `<div class="empty"><p>—</p></div>`;return `<table class="tbl"><tbody>${ent.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num" style="text-align:right;font-weight:700">${v}</td></tr>`).join("")}</tbody></table>`;}
 function doBackup(){const data={_app:"central-obra",_versao:2,_data:iso(today()),cfg:DB.cfg};KEYS.forEach(k=>data[k]=DB[k]);const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup-central-obra-"+iso(today())+".json";a.click();toast("Backup baixado.");}
 $("#fileimport").addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d._app!=="central-obra")throw 0;if(!confirm("Restaurar este backup? Substitui os dados atuais."))return;KEYS.forEach(k=>{DB[k]=d[k]||[];save(k);});if(d.cfg){DB.cfg=d.cfg;save("cfg");}render();toast("Backup restaurado.");}catch(err){toast("Arquivo inválido.");}e.target.value="";};rd.readAsText(file);});
-function exportExcel(){if(typeof XLSX==="undefined"){toast("Excel indisponível offline — use Backup.");return;}const wb=XLSX.utils.book_new();const funcRows=DB.func.map(f=>{const s=saldoBaixada(f.id);const ex=expStatus(f);const m=estadiaAtual(f.id);return{Matrícula:f.matricula,Nome:f.nome,Função:f.funcao,Classificação:f.classificacao||"","Regime de folga":f.regimeFolga||"Não",Treinamento:f.treinamento||"",Empresa:f.empresa,RG:f.rg,CPF:f.cpf,Nascimento:f.nascimento||"",Telefone:f.telefone,Email:f.email||"","Cidade origem":f.cidade,"PIX tipo":f.pixTipo,"PIX chave":f.pixChave,"PIX banco":f.pixBanco,Admissão:f.admissao||"",Demissão:f.demissao||"","Motivo desligamento":f.motivoDesligamento||"",Status:ativo(f)?"Ativo":"Desligado","Tempo casa (dias)":f.admissao?diasEntre(pd(f.admissao),today()):"",Experiência:ex.txt,"Local atual":m?localNome(m.local):"","Tipo atual":m?m.tipo:"","Saldo baixada":s.saldo,"Saldo manual?":s.manual?"Sim":"Não","Baixada - início contagem":f.dataInicioBaixada||"",Observações:f.obs||""};});const movRows=DB.mov.map(m=>m.tipo==="Transferência"?({Funcionário:funcNome(m.func),Tipo:m.tipo,Local:"",Quarto:"",Entrada:m.entrada||"",Saída:"","Dias":"","Motivo":m.direcao||"","Diária":"","Obra origem":m.obraOrigem||"","Obra destino":m.obraDestino||""}):({Funcionário:funcNome(m.func),Tipo:m.tipo,Local:localNome(m.local),Quarto:m.quarto||"",Entrada:m.entrada||"",Saída:m.saida||"ATUAL","Dias":m.entrada?diasEntre(pd(m.entrada),m.saida?pd(m.saida):today())+1:"","Motivo":m.motivo,"Diária":m.diaria,"Obra origem":"","Obra destino":""}));const add=(rows,nome)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),nome);add(funcRows,"Efetivo");add(movRows,"Movimentações");add(DB.baixadas.map(b=>({Funcionário:funcNome(b.func),Início:b.dataInicio,Fim:b.dataFim||"","Dias":b.dias,Obs:b.obs})),"Baixadas");add(DB.faltas.map(f=>({Funcionário:funcNome(f.func),Data:f.data,Tipo:f.tipo,Motivo:f.motivo||""})),"Faltas");add(DB.ferias.map(f=>({Funcionário:funcNome(f.func),Início:f.inicio,Fim:f.fim})),"Férias");add(DB.reemb.map(r=>({Funcionário:funcNome(r.func),Data:r.data,Tipo:r.tipo,Valor:+r.valor||0,Status:r.status,"Forma pagamento":r.formaPag||"","Fluig nº":r.fluigNumero||"","Fluig link":r.fluigLink||"",Obs:r.obs})),"Reembolsos");add(DB.locais.map(l=>({Tipo:l.tipo,Nome:l.nome,Endereço:l.endereco,Latitude:l.lat||"",Longitude:l.lng||"",Capacidade:l.capacidade,Ocupação:ocupacao(l.id),"Diária":l.diaria})),"Locais");add(DB.veiculos.map(v=>({Tipo:v.tipo,Placa:v.placa,Capacidade:v.capacidade,Motorista:v.motorista})),"Veículos");add(DB.rotas.map(r=>{const v=DB.veiculos.find(x=>x.id===r.veiculo);return{Veículo:v?v.tipo+(v.placa?" "+v.placa:""):"",Rota:r.nome,Turno:r.turno,Paradas:r.paradas.map(p=>localNome(p.local)).join(" → "),Passageiros:r.passageiros.length};}),"Rotas");add(DB.abastecimentos.map(a=>({Data:a.data,Movimento:a.movimento,"Equipamento/Comboio":a.movimento==="Saída"?destinoTxt(a).replace(/<[^>]*>/g,""):(a.placaComboio||""),"Horímetro equipamento":a.horimetroEquip||"","Horímetro comboio inicial":a.horimetroInicial||"","Horímetro comboio final":a.horimetroFinal||"","Tanque inicial (L)":a.tanqueInicial||"","Tanque final (L)":a.tanqueFinal||"",Litros:+a.litros||0,Operador:a.operador||"",Motorista:a.motorista||"","Nº canhoto":a.nCanhoto||"",Responsável:a.responsavel||"",Obs:a.obs||""})),"Abastecimento");add(consumoPorEquipamento().map(c=>({Equipamento:c.tag,Abastecimentos:c.qtd,"Total litros":c.litros,"Horas rodadas":c.horasRodadas!=null?c.horasRodadas:"","Consumo médio (L/h)":c.consumoMedio!=null?c.consumoMedio:"","Último abastecimento":c.ultimaData})),"Consumo por equipamento");add(DB.mobilizacoes.map(m=>({Funcionário:m.func?funcNome(m.func):(m.nomeLivre||""),"Função prevista":m.funcaoPrevista||"",Tipo:m.tipo,Origem:m.origem||"",Destino:m.destino||"","Data prevista":m.dataPrevista||"","Data realizada":m.dataRealizada||"",Status:m.status,Obs:m.obs||""})),"Mobilização");add(DB.vagas.map(v=>({Função:v.funcao,"Vagas totais":+v.quantidadeTotal||0,Preenchidas:ativosPorFuncao(v.funcao),Disponíveis:Math.max(0,(+v.quantidadeTotal||0)-ativosPorFuncao(v.funcao)),Obs:v.obs||""})),"Vagas");XLSX.writeFile(wb,"central-obra-"+iso(today())+".xlsx");toast("Excel gerado.");}
+function exportExcel(){if(typeof XLSX==="undefined"){toast("Excel indisponível offline — use Backup.");return;}const wb=XLSX.utils.book_new();const funcRows=DB.func.map(f=>{const s=saldoBaixada(f.id);const ex=expStatus(f);const m=estadiaAtual(f.id);return{Matrícula:f.matricula,Nome:f.nome,Função:f.funcao,Classificação:f.classificacao||"","Regime de folga":f.regimeFolga||"Não",Treinamento:f.treinamento||"",Empresa:f.empresa,RG:f.rg,CPF:f.cpf,Nascimento:f.nascimento||"",Telefone:f.telefone,Email:f.email||"","Cidade origem":f.cidade,"PIX tipo":f.pixTipo,"PIX chave":f.pixChave,"PIX banco":f.pixBanco,Admissão:f.admissao||"",Demissão:f.demissao||"","Motivo desligamento":f.motivoDesligamento||"",Status:ativo(f)?"Ativo":"Desligado","Tempo casa (dias)":f.admissao?diasEntre(pd(f.admissao),today()):"",Experiência:ex.txt,"Local atual":m?localNome(m.local):"","Tipo atual":m?m.tipo:"","Saldo baixada":s.saldo,"Saldo manual?":s.manual?"Sim":"Não","Baixada - início contagem":f.dataInicioBaixada||"",Observações:f.obs||""};});const movRows=DB.mov.map(m=>m.tipo==="Transferência"?({Funcionário:funcNome(m.func),Tipo:m.tipo,Local:"",Quarto:"",Entrada:m.entrada||"",Saída:"","Dias":"","Motivo":m.direcao||"","Diária":"","Obra origem":m.obraOrigem||"","Obra destino":m.obraDestino||""}):({Funcionário:funcNome(m.func),Tipo:m.tipo,Local:localNome(m.local),Quarto:m.quarto||"",Entrada:m.entrada||"",Saída:m.saida||"ATUAL","Dias":m.entrada?diasEntre(pd(m.entrada),m.saida?pd(m.saida):today())+1:"","Motivo":m.motivo,"Diária":m.diaria,"Obra origem":"","Obra destino":""}));const add=(rows,nome)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),nome);add(funcRows,"Efetivo");add(movRows,"Movimentações");add(DB.baixadas.map(b=>({Funcionário:funcNome(b.func),Início:b.dataInicio,Fim:b.dataFim||"","Dias":b.dias,Obs:b.obs})),"Baixadas");add(DB.faltas.map(f=>({Funcionário:funcNome(f.func),Data:f.data,Tipo:f.tipo,Motivo:f.motivo||""})),"Faltas");add(DB.ferias.map(f=>({Funcionário:funcNome(f.func),Início:f.inicio,Fim:f.fim})),"Férias");add(DB.reemb.map(r=>({Funcionário:funcNome(r.func),Data:r.data,Tipo:r.tipo,Valor:+r.valor||0,Status:r.status,"Forma pagamento":r.formaPag||"","Fluig nº":r.fluigNumero||"","Fluig link":r.fluigLink||"",Obs:r.obs})),"Fluig");add(DB.locais.map(l=>({Tipo:l.tipo,Nome:l.nome,Endereço:l.endereco,Latitude:l.lat||"",Longitude:l.lng||"",Capacidade:l.capacidade,Ocupação:ocupacao(l.id),"Diária":l.diaria})),"Locais");add(DB.veiculos.map(v=>({Tipo:v.tipo,Placa:v.placa,Capacidade:v.capacidade,Motorista:v.motorista})),"Veículos");add(DB.rotas.map(r=>{const v=DB.veiculos.find(x=>x.id===r.veiculo);return{Veículo:v?v.tipo+(v.placa?" "+v.placa:""):"",Rota:r.nome,Turno:r.turno,Paradas:r.paradas.map(p=>localNome(p.local)).join(" → "),Passageiros:r.passageiros.length};}),"Rotas");add(DB.abastecimentos.map(a=>({Data:a.data,Movimento:a.movimento,"Equipamento/Comboio":a.movimento==="Saída"?destinoTxt(a).replace(/<[^>]*>/g,""):(a.placaComboio||""),"Horímetro equipamento":a.horimetroEquip||"","Horímetro comboio inicial":a.horimetroInicial||"","Horímetro comboio final":a.horimetroFinal||"","Tanque inicial (L)":a.tanqueInicial||"","Tanque final (L)":a.tanqueFinal||"",Litros:+a.litros||0,Operador:a.operador||"",Motorista:a.motorista||"","Nº canhoto":a.nCanhoto||"",Responsável:a.responsavel||"",Obs:a.obs||""})),"Abastecimento");add(consumoPorEquipamento().map(c=>({Equipamento:c.tag,Abastecimentos:c.qtd,"Total litros":c.litros,"Horas rodadas":c.horasRodadas!=null?c.horasRodadas:"","Consumo médio (L/h)":c.consumoMedio!=null?c.consumoMedio:"","Último abastecimento":c.ultimaData})),"Consumo por equipamento");add(DB.mobilizacoes.map(m=>({Funcionário:m.func?funcNome(m.func):(m.nomeLivre||""),"Função prevista":m.funcaoPrevista||"",Tipo:m.tipo,Origem:m.origem||"",Destino:m.destino||"","Data prevista":m.dataPrevista||"","Data realizada":m.dataRealizada||"",Status:m.status,Obs:m.obs||""})),"Mobilização");add(DB.vagas.map(v=>({Função:v.funcao,"Vagas totais":+v.quantidadeTotal||0,Preenchidas:ativosPorFuncao(v.funcao),Disponíveis:Math.max(0,(+v.quantidadeTotal||0)-ativosPorFuncao(v.funcao)),Obs:v.obs||""})),"Vagas");XLSX.writeFile(wb,"central-obra-"+iso(today())+".xlsx");toast("Excel gerado.");}
 function seed(){if(DB.func.length||DB.locais.length)return;const t=today();const d=n=>iso(new Date(t.getTime()-n*MS));DB.locais=[{id:"L1",tipo:"Alojamento",nome:"Alojamento Central",endereco:"Rua das Obras, 100 - Baixada",capacidade:40,diaria:""},{id:"L2",tipo:"Alojamento",nome:"Alojamento Norte",endereco:"Rod. BR-101, km 12",capacidade:25,diaria:""},{id:"L3",tipo:"Hotel",nome:"Hotel Executivo",endereco:"Av. Principal, 500 - Centro",capacidade:"",diaria:180},{id:"L4",tipo:"Ponto de coleta",nome:"Ponto Rodoviária",endereco:"Terminal Rodoviário - Centro"}];DB.func=[{id:"F1",matricula:"1001",nome:"João da Silva",funcao:"Pedreiro",empresa:"Empreiteira A",cpf:"111.111.111-11",cidade:"Feira de Santana",admissao:d(210),pixTipo:"CPF",pixChave:"111.111.111-11",pixBanco:"Caixa"},{id:"F2",matricula:"1002",nome:"Maria Oliveira",funcao:"Mestre de Obras",empresa:"Própria",cpf:"222.222.222-22",cidade:"Salvador",admissao:d(400),pixTipo:"Telefone",pixChave:"71 99999-0000",pixBanco:"Nubank"},{id:"F3",matricula:"1003",nome:"Carlos Souza",funcao:"Servente",empresa:"Empreiteira B",cpf:"333.333.333-33",cidade:"Vitória da Conquista",admissao:d(20)},{id:"F4",matricula:"1004",nome:"Antônio Lima",funcao:"Eletricista",empresa:"Empreiteira A",cpf:"444.444.444-44",cidade:"Ilhéus",admissao:d(95),moraPerto:"1"}];DB.mov=[{id:"M1",func:"F1",tipo:"Alojamento",local:"L1",entrada:d(200),saida:""},{id:"M2",func:"F2",tipo:"Hotel",local:"L3",entrada:d(120),saida:"",diaria:180},{id:"M3",func:"F4",tipo:"Alojamento",local:"L2",entrada:d(80),saida:""}];DB.faltas=[{id:"FA1",func:"F1",data:d(15),tipo:"Falta"}];KEYS.forEach(save);}
 /* ============ ABASTECIMENTO & COMBOIO ============ */
 function destinoTxt(a){
@@ -4106,6 +4283,14 @@ function situacaoItem(p,it){
   if(["Pedido feito","Nota fiscal gerada","Finalizado"].includes(p.status))return"Comprado";
   return"Pedido";
 }
+/* ===== FLUIG (antigo Reembolsos): frequência, detalhamento e finalização após 15 dias ===== */
+const FREQ_REEMB=["Esporádico","Semanal","Quinzenal","Mensal"];
+const STATUS_REEMB=["Pendente","Aprovado","Pago","Finalizado"];
+function diasFinalizarFluig(){const v=DB.cfg.diasFinalizarFluig;return(v===undefined||v===null||v==="")?15:+v;}
+function dataBaseFluig(r){return r.dataPagamento||r.data||"";}
+function diasPagoFluig(r){const d=pd(dataBaseFluig(r));return d?diasEntre(d,today()):0;}
+function prontoParaFinalizar(r){return r.status==="Pago"&&diasPagoFluig(r)>=diasFinalizarFluig();}
+function fluigLinkSeguro(l){return/^https?:\/\//i.test(String(l||""))?String(l):"";}
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
 function vinculosDaNota(n){
   const out=[];
