@@ -662,7 +662,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.31";
+const APP_VERSAO="v2026-10-02.32";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -1694,7 +1694,8 @@ function renderChamada(){
   const feriado=ehFeriado(data);
   const naoExigeRegistro=fimDeSemana||feriado;
   let rows=DB.func.filter(f=>{if(!efetivoObra(f)||f.regimePonto==="NaoBate"||f.regimePonto==="Manual"||afastadoNaData(f,data)||turnoIdDoDia(f.id,data)==="FOLGA")return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc<=data;}).map(f=>({f,s:statusDoDia(f.id,data)}));
-  if(naoExigeRegistro)rows=rows.filter(r=>r.s.tipo!=="Sem registro");
+  if(naoExigeRegistro)rows=rows.filter(r=>r.s.tipo!=="Sem registro"||turnoEspecialExplicitoDoDia(r.f.id,data));
+ rows=rows.filter(r=>passaFiltroTurnoChamada(r.f.id,data));
   const naoAdmitidos=DB.func.filter(f=>{if(!efetivoObra(f))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc>data;}).length;
   const naoBatem=DB.func.filter(f=>efetivoObra(f)&&(f.regimePonto==="NaoBate"||f.regimePonto==="Manual")).length;
   const afastados=DB.func.filter(f=>afastadoNaData(f,data)).length;
@@ -1713,7 +1714,7 @@ function renderChamada(){
 }
 function vPonto(){main.innerHTML=`<div class="head"><div><h1>Ponto & Ocorrências</h1><p>Falta desconta ${DB.cfg.faltaDesc} dia de baixada; férias pausam o acúmulo. Uso administrativo — não aparece no Painel Áreas.</p></div><div class="acts"><button class="btn btn-g" onclick="abrirGerenciarRegimePonto()">⚙ Quem bate ponto</button><button class="btn btn-g" onclick="abrirLancamentoMensalManual()">📅 Lançar mês (ponto manual)</button><button class="btn btn-g" onclick="abrirImportarMarcacoes()">📥 Importar marcações (Excel)</button><button class="btn btn-g" onclick="formFerias()">＋ Férias</button><button class="btn btn-g" onclick="formBaixada()">＋ Período de baixada</button><button class="btn btn-a" onclick="formFalta()">＋ Registrar ocorrência</button></div></div>
    <input type="file" id="marc_file" accept=".xlsx,.xls" style="display:none" onchange="processarArquivoMarcacoes(event)">
-   <div class="panel"><h2><span class="t">✓ Chamada do dia <span id="pp_contagem"></span></span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Data</span><input type="date" id="pp_data" value="${_chamadaData}" onchange="atualizarChamada()"><button class="btn btn-g btn-sm" onclick="$('#pp_data').value=iso(today());atualizarChamada()">Hoje</button><button class="btn btn-a btn-sm" onclick="marcarTodosPresentes()">✓ Marcar todos sem registro como presença</button><button class="btn btn-g btn-sm" onclick="exportChamadaExcel()">⭳ Exportar dia</button></div><div class="tblwrap" id="pp_chamada"></div><p class="hint" style="padding:0 18px 14px">Quem não tiver nada registrado nesse dia aparece como "Sem registro" — é o sinal pra ir atrás do motivo.</p></div>
+   <div class="panel"><h2><span class="t">✓ Chamada do dia <span id="pp_contagem"></span></span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Data</span><input type="date" id="pp_data" value="${_chamadaData}" onchange="atualizarChamada()"><button class="btn btn-g btn-sm" onclick="$('#pp_data').value=iso(today());atualizarChamada()">Hoje</button>${htmlSelectTurnoChamada()}<button class="btn btn-a btn-sm" onclick="marcarTodosPresentes()">✓ Marcar todos sem registro como presença</button><button class="btn btn-g btn-sm" onclick="exportChamadaExcel()">⭳ Exportar dia</button></div><div class="tblwrap" id="pp_chamada"></div><p class="hint" style="padding:0 18px 14px">Quem não tiver nada registrado nesse dia aparece como "Sem registro" — é o sinal pra ir atrás do motivo.</p></div>
    <div class="panel"><h2><span class="t">📆 Dia a dia do período</span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">De</span><input type="date" id="pp_de" value="${_pontoPeriodo.de}" onchange="atualizarPeriodoPonto()"><span class="hint">até</span><input type="date" id="pp_ate" value="${_pontoPeriodo.ate}" onchange="atualizarPeriodoPonto()"><button class="btn btn-g btn-sm" onclick="resetPeriodoPonto()">Período atual (16 a 15)</button></div><p class="hint" style="padding:0 18px 10px">Um bloco por dia, só quem não é presença simples (falta, sem registro, baixada, férias, atestado...). Clica em "sem registro" pra marcar falta na hora.</p><div id="pp_grade"></div></div>
    <div class="panel"><h2><span class="t">📊 Resumo do período (total por pessoa)</span></h2><div class="tblwrap" id="pp_tbl"></div><p class="hint" style="padding:0 18px 14px">Referência p/ desconto de vale-alimentação — confirme a regra final com o RH.</p></div>
    <div class="panel"><h2><span class="t">Faltas & ocorrências (lista)</span></h2><div class="tblwrap">${DB.faltas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Motivo</th><th>Reflexo</th><th></th></tr></thead><tbody>${DB.faltas.slice().sort((a,b)=>a.data<b.data?1:-1).map(f=>{const alojado=estadiaAtual(f.func);const tipo=f.tipo||"Falta";const descontaBaixada=tipo==="Falta";const cls=tipo==="Presença"?"t-green":tipo==="Falta"?"t-red":tipo==="Treinamento"?"t-steel":"t-amber";return `<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.data)}</td><td><span class="tag ${cls}">${esc(tipo)}</span></td><td><small style="color:var(--muted)">${esc(f.motivo||"—")}${f.turno&&turnoPorId(f.turno)?` <span class="tag t-grey" style="font-size:10px">${esc(siglaTurno(turnoPorId(f.turno)))}</span>`:""}</small></td><td><small>${descontaBaixada?(alojado?"Alojado: −1 dia de baixada":"Local: tira café + passagem"):"Não desconta baixada"}</small></td><td><button class="btn btn-g btn-sm" onclick="delFalta('${f.id}')">Excluir</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma ocorrência registrada.</p></div>`}</div></div>
@@ -4603,7 +4604,7 @@ function duracaoTurnoMin(t){const i=hmMin(t.ini),f=hmMin(t.fim);return f>i?f-i:f
 function turnoViraDia(t){return hmMin(t.fim)<=hmMin(t.ini);}
 function siglaTurno(t){return(t&&(t.sigla||String(t.nome||"").slice(0,3).toUpperCase()))||"?";}
 function blocosEscala(){const b=escalaCfg().blocos;return Array.isArray(b)?b.filter(x=>x&&x.func&&x.de&&x.ate):[];}
-function turnoIdDoDia(fid,data){let r="",t=-1;for(const b of blocosEscala()){if(b.func===fid&&b.de<=data&&b.ate>=data){const sc=(b.criado||0)*2+(b.periodo?0:1);if(sc>=t){r=b.turno||"";t=sc;}}}return r;}
+
 function turnoEspecialDoDia(fid,data){const id=turnoIdDoDia(fid,data);return(id&&id!=="FOLGA"&&turnoPorId(id))?turnoPorId(id):null;}
 function cancelamentosEscala(){const c=escalaCfg().cancelados;return Array.isArray(c)?c.filter(Boolean):[];}
 function turnoCancelado(data,turnoId){return cancelamentosEscala().find(c=>c.data===data&&c.turno===turnoId)||null;}
@@ -4653,7 +4654,7 @@ function saidaMaisUm(s,data){
   return !!((r.horaSaidaData&&r.horaSaidaData>data)||(s.horaEntrada&&s.horaSaida&&hmMin(s.horaEntrada)-hmMin(s.horaSaida)>=360));
 }
 function chipTurno(fid,data){
-  const id=turnoIdDoDia(fid,data);if(!id)return"";
+  const id=turnoExplicitoDoDia(fid,data);if(!id)return"";
   if(id==="FOLGA")return' <span class="tag t-grey" style="font-size:10px">folga</span>';
   const t=turnoPorId(id);if(!t)return"";
   return ` <span class="tag" style="font-size:10px;background:${esc(t.cor||"#5b7a8c")};color:#fff">${esc(siglaTurno(t))}</span>`;
@@ -4765,7 +4766,7 @@ function mostrarResumoImportacaoMarcacoes(lista,foraTurno,sugestoes){
     const existente=DB.faltas.find(fa=>fa.func===match.f.id&&fa.data===item.data);
     if(existente){
       const auto=autoImportado(existente);
-      const difere=(existente.horaEntrada||"")!==(item.entrada||"")||(existente.horaSaida||"")!==(item.saida||"")||(existente.turno||"")!==(item.turno||"")||(existente.horaSaidaData||"")!==saidaDataDe(item);
+      const difere=(existente.horaEntrada||"")!==(item.entrada||"")||(existente.horaSaida||"")!==(item.saida||"")||(existente.horaSaidaData||"")!==saidaDataDe(item);
       if(item.turno&&existente.tipo==="Presença"&&item.saida&&!existente.horaSaida&&existente.horaEntrada&&existente.horaEntrada===item.entrada&&(auto||!existente.horaSaida)){
         vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida,saidaData:saidaDataDe(item),turno:item.turno});return;
       }
@@ -4850,10 +4851,11 @@ function vEscala(){
   const dias=escDias(),hoje=iso(today()),turnos=turnosCfg();
   const efet=DB.func.filter(efetivoObra).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
   const q=normalizaNome(_escBusca);
-  const pessoas=efet.filter(f=>(_escTodos||dias.some(d=>turnoIdDoDia(f.id,d)!==""))&&(!q||normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))&&(!_escGrupo||gruposDoFunc(f.id).some(x=>x.frente.id===_escGrupo)));
+  const temTurno=f=>_escTurno==="__normal"?dias.every(d=>!turnoIdDoDia(f.id,d)):dias.some(d=>turnoIdDoDia(f.id,d)===_escTurno);
+  const pessoas=efet.filter(f=>(_escTurno?temTurno(f):(_escTodos||dias.some(d=>turnoExplicitoDoDia(f.id,d)!=="")))&&(!q||normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))&&(!_escGrupo||gruposDoFunc(f.id).some(x=>x.frente.id===_escGrupo)));
   const idxF=new Map();DB.faltas.forEach(r=>{if(r.data>=_escDe&&r.data<=_escAte)idxF.set(r.func+"|"+r.data,r);});
   const cel=(f,d)=>{
-    const id=turnoIdDoDia(f.id,d);const fds=[0,6].includes(pd(d).getDay());
+    const id=turnoExplicitoDoDia(f.id,d);const fds=[0,6].includes(pd(d).getDay());
     let inner;
     if(!id)inner=`<span class="escvazio" onclick="celulaEscala('${f.id}','${d}')">·</span>`;
     else if(id==="FOLGA")inner=`<span class="escfolga" onclick="celulaEscala('${f.id}','${d}')">F</span>`;
@@ -4865,7 +4867,7 @@ function vEscala(){
   const totais=turnos.map(t=>`<tr><td style="font-size:11.5px"><span class="escchip" style="background:${_escCor(t)};cursor:default">${esc(siglaTurno(t))}</span> ${esc(t.nome)} <small style="color:var(--muted)">escalados</small></td>${dias.map(d=>{const n=efet.filter(f=>turnoIdDoDia(f.id,d)===t.id).length;const c=turnoCancelado(d,t.id);return `<td style="font-weight:700;${c?"text-decoration:line-through;color:var(--red)":""}">${n||""}${c?'<div style="font-size:9px;font-weight:400">cancelado</div>':""}</td>`;}).join("")}</tr>`).join("");
   const cab=dias.map(d=>{const dt=pd(d),fds=[0,6].includes(dt.getDay());return `<th class="${d===hoje?"hoje":""} ${fds?"fds":""}">${DIAS_ABREV3[dt.getDay()]}<br>${_ddmm(dt)}<br><span style="cursor:pointer;opacity:.7" title="Cancelar turno deste dia e abonar" onclick="formCancelarTurno('${d}')">🚫</span></th>`;}).join("");
   const conf=[];
-  pessoas.forEach(f=>dias.forEach(d=>{if(d>hoje)return;const s=statusEscalaDia(f.id,d);if(s)conf.push({f,d,s});}));
+  pessoas.forEach(f=>dias.forEach(d=>{if(d>hoje)return;const s=statusEscalaDia(f.id,d);if(s&&(!_escTurno||_escTurno==="__normal"||_escTurno==="FOLGA"||s.turno.id===_escTurno))conf.push({f,d,s});}));
   const prob=conf.filter(x=>!["ok","ocorrencia"].includes(x.s.flag));
   const cont=k=>conf.filter(x=>x.s.flag===k).length;
   const lista=(_escSoProblemas?prob:conf).sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR")).slice(0,160);
@@ -4875,7 +4877,7 @@ function vEscala(){
    <div class="toolbar"><button class="btn btn-g btn-sm" onclick="escMuda(-1)">◀</button><input type="date" value="${_escDe}" onchange="_escDe=this.value;render()"><span class="hint">até</span><input type="date" value="${_escAte}" onchange="_escAte=this.value;render()"><button class="btn btn-g btn-sm" onclick="escMuda(1)">▶</button><button class="btn btn-g btn-sm" onclick="escHoje()">Semana atual</button>
     <input type="search" placeholder="Buscar nome ou função..." value="${esc(_escBusca)}" oninput="_escBusca=this.value;vEscalaTabela()" style="min-width:180px"><select onchange="_escGrupo=this.value;render()"><option value="">Todas as frentes e áreas</option>${optsGrupos(_escGrupo)}</select><label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escTodos?"checked":""} onchange="_escTodos=this.checked;render()">mostrar todo o efetivo</label></div>
    <div class="grid stats"><div class="stat steel"><div class="n">${pessoas.filter(f=>dias.some(d=>turnoEspecialDoDia(f.id,d))).length}</div><div class="l">Pessoas em turno especial</div></div><div class="stat red"><div class="n">${cont("sem")+cont("cancelado")}</div><div class="l">Sem registro / cancelado sem abono</div></div><div class="stat amber"><div class="n">${cont("so_entrada")}</div><div class="l">Só entrada (sem saída)</div></div><div class="stat amber"><div class="n">${cont("horas")}</div><div class="l">Horas fora do esperado</div></div></div>
-   <div class="escwrap" id="esc_wrap"><table class="esctbl"><thead><tr><th>Pessoa</th>${cab}</tr></thead><tbody>${linhas||`<tr><td colspan="${dias.length+1}" style="text-align:center;padding:18px;color:var(--muted)">Ninguém em turno especial neste período. Crie um período especial acima.</td></tr>`}${totais}</tbody></table></div><div class="hint" style="margin:6px 2px">${(()=>{const n=efet.filter(f=>!dias.some(d=>turnoIdDoDia(f.id,d)!=="")).length;return "Demais pessoas do efetivo ("+n+"): turno normal — não precisam ser lançadas.";})()}</div>
+   ${chipsTurnoHtml(efet,dias)}<div class="escwrap" id="esc_wrap"><table class="esctbl"><thead><tr><th>Pessoa</th>${cab}</tr></thead><tbody>${linhas||`<tr><td colspan="${dias.length+1}" style="text-align:center;padding:18px;color:var(--muted)">Ninguém em turno especial neste período. Crie um período especial acima.</td></tr>`}${totais}</tbody></table></div><div class="hint" style="margin:6px 2px">${(()=>{const n=efet.filter(f=>!dias.some(d=>turnoExplicitoDoDia(f.id,d)!=="")).length,pdz=padraoNoPeriodo(dias);return "Demais pessoas do efetivo ("+n+"): "+(pdz?"turno "+pdz.nome+" ("+pdz.ini+"–"+pdz.fim+")":"turno normal")+" — não precisam ser lançadas.";})()}</div>
    <div class="panel" style="margin-top:16px"><h2><span class="t">Conferência: escala × relógio <span class="tag t-grey">${prob.length} ponto(s) a ver</span></span><label style="font-size:12.5px;font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escSoProblemas?"checked":""} onchange="_escSoProblemas=this.checked;render()">só o que precisa de atenção</label></h2><div class="tblwrap">${lista.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Pessoa</th><th>Dia</th><th>Turno</th><th>Previsto</th><th>Marcado</th><th>Horas</th><th>Situação</th><th></th></tr></thead><tbody>${lista.map(({f,d,s})=>`<tr><td>${esc(f.nome)}</td><td>${_fmtDiaCurto(d)}</td><td><span class="escchip" style="background:${_escCor(s.turno)};cursor:default">${esc(siglaTurno(s.turno))}</span></td><td>${s.turno.ini}–${s.turno.fim}</td><td>${s.rec&&s.rec.horaEntrada?esc(s.rec.horaEntrada)+" → "+(s.rec.horaSaida?esc(s.rec.horaSaida)+(s.rec.horaSaidaData&&s.rec.horaSaidaData>d?" (+1)":""):"?"):"—"}</td><td class="num">${s.horas!=null?s.horas.toFixed(1).replace(".",","):"—"}</td><td><span class="tag ${tagFlag[s.flag]||"t-grey"}">${esc(s.txt)}</span></td><td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="formAjustePonto('${f.id}','${d}')">Ajustar</button> <button class="btn btn-g btn-sm" onclick="formCancelarTurno('${d}','${s.turno.id}')">Abonar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><div class="big">✅</div><p>${conf.length?"Nada a conferir: tudo bate com a escala.":"Sem dias de turno especial até hoje neste período."}</p></div>`}</div></div>`;
 }
 function vEscalaTabela(){render();setTimeout(()=>{const i=document.querySelector('.toolbar input[type=search]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},0);}
@@ -4938,6 +4940,7 @@ function formCancelarTurno(dataPre,turnoPre){
    <div id="cn_info" class="hint" style="margin-bottom:6px"></div>
    <div id="cn_lista" style="max-height:32vh;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:4px 10px"></div>
    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><input id="cn_add" list="cn_addlist" placeholder="＋ Incluir outra pessoa (não estava na escala)..." style="flex:1;min-width:200px" onchange="cnAdicionar()"><datalist id="cn_addlist">${DB.func.filter(efetivoObra).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
+   <div style="margin-top:6px"><button class="btn btn-g btn-sm" onclick="cnIncluirVespera()">＋ Incluir quem estava no turno na véspera</button></div>
    <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin-top:10px;cursor:pointer"><input type="checkbox" id="cn_marcar" checked style="width:auto">Marcar este turno como <b>cancelado</b> nesse dia na escala</label></div>
    <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarCancelarTurno()">Lançar abonos</button></div>`);
   cnRender(true);
@@ -5018,14 +5021,14 @@ function salvarAjustePonto(fid,data){
 let _trEdit=[];
 function formTurnos(){
   _trEdit=turnosCfg().map(t=>({...t}));const e=escalaCfg();
-  openModal(`<div class="modal-h"><h3>⚙ Turnos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Crie quantos turnos precisar (ex.: Turno A 14h–22h, Parada 24h...). Turno que termina antes de começar atravessa a meia-noite. A sigla é a que aparece na grade.</p><div id="tr_lista"></div><button class="btn btn-g btn-sm" onclick="trAdicionar()">＋ Novo turno</button>
+  openModal(`<div class="modal-h"><h3>⚙ Turnos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Crie quantos turnos precisar (ex.: Turno A 14h–22h, Parada 24h...). Turno que termina antes de começar atravessa a meia-noite. A sigla é a que aparece na grade.</p><div id="tr_lista"></div><button class="btn btn-g btn-sm" onclick="trAdicionar()">＋ Novo turno</button> <button class="btn btn-g btn-sm" onclick="trAdicionarRecesso()">＋ Normal + 1h (recesso)</button>
    <div class="row2" style="margin-top:14px"><div class="fg"><label>Tolerância antes do início (min) <span class="opt">p/ encaixar as batidas do relógio</span></label><input type="number" id="tr_tolA" value="${e.tolAntes!=null&&e.tolAntes!==""?e.tolAntes:120}"></div><div class="fg"><label>Tolerância depois do fim (min)</label><input type="number" id="tr_tolD" value="${e.tolDepois!=null&&e.tolDepois!==""&&+e.tolDepois!==180?e.tolDepois:300}"></div></div></div>
    <div class="modal-f"><button class="btn btn-g" style="margin-right:auto" onclick="trPadrao()">Restaurar padrão</button><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarTurnos()">Salvar</button></div>`);
   trRender();
 }
 function trRender(){
   const el=$("#tr_lista");if(!el)return;
-  el.innerHTML=_trEdit.map((t,i)=>`<div style="display:grid;grid-template-columns:1.5fr .7fr .8fr .8fr auto auto;gap:6px;align-items:end;margin-bottom:8px"><div class="fg" style="margin:0"><label class="opt">Nome</label><input value="${esc(t.nome)}" oninput="_trEdit[${i}].nome=this.value"></div><div class="fg" style="margin:0"><label class="opt">Sigla</label><input value="${esc(t.sigla||"")}" maxlength="4" oninput="_trEdit[${i}].sigla=this.value"></div><div class="fg" style="margin:0"><label class="opt">Início</label><input type="time" value="${esc(t.ini)}" oninput="_trEdit[${i}].ini=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Fim</label><input type="time" value="${esc(t.fim)}" oninput="_trEdit[${i}].fim=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Cor</label><input type="color" value="${esc(t.cor||"#5b7a8c")}" oninput="_trEdit[${i}].cor=this.value" style="padding:2px;height:36px;width:48px"></div><button class="btn btn-g btn-sm" style="color:var(--red)" title="Remover" onclick="trRemover(${i})">×</button></div><div class="hint" id="tr_dur${i}" style="margin:-4px 0 8px 2px">${trDurTxt(t)}</div>`).join("");
+  el.innerHTML=_trEdit.map((t,i)=>`<div style="display:grid;grid-template-columns:1.5fr .7fr .8fr .8fr auto auto;gap:6px;align-items:end;margin-bottom:8px"><div class="fg" style="margin:0"><label class="opt">Nome</label><input value="${esc(t.nome)}" oninput="_trEdit[${i}].nome=this.value"></div><div class="fg" style="margin:0"><label class="opt">Sigla</label><input value="${esc(t.sigla||"")}" maxlength="4" oninput="_trEdit[${i}].sigla=this.value"></div><div class="fg" style="margin:0"><label class="opt">Início</label><input type="time" value="${esc(t.ini)}" oninput="_trEdit[${i}].ini=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Fim</label><input type="time" value="${esc(t.fim)}" oninput="_trEdit[${i}].fim=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Cor</label><input type="color" value="${esc(t.cor||"#5b7a8c")}" oninput="_trEdit[${i}].cor=this.value" style="padding:2px;height:36px;width:48px"></div><button class="btn btn-g btn-sm" style="color:var(--red)" title="Remover" onclick="trRemover(${i})">×</button></div><div class="hint" id="tr_dur${i}" style="margin:-4px 0 2px 2px">${trDurTxt(t)}</div><div class="hint" style="margin:0 0 10px 2px">Horas normais do dia <span class="opt">(opcional: o que passar disso aparece como "além do normal" no Excel)</span> <input type="number" step="0.5" min="0" value="${t.base||""}" oninput="_trEdit[${i}].base=+this.value" style="width:70px;margin-left:4px"></div>`).join("");
 }
 function trDurTxt(t){const m=duracaoTurnoMin(t);return "Duração: "+Math.floor(m/60)+"h"+(m%60?String(m%60).padStart(2,"0"):"")+(turnoViraDia(t)?" · atravessa a meia-noite":"");}
 function trDur(i){const el=$("#tr_dur"+i);if(el)el.textContent=trDurTxt(_trEdit[i]);}
@@ -5042,7 +5045,7 @@ function salvarTurnos(){
   if(nomes.some(n=>!n)){toast("Há um turno sem nome.");return;}
   const k=nomes.map(n=>normalizaNome(n));if(new Set(k).size!==k.length){toast("Há turnos com o mesmo nome.");return;}
   if(_trEdit.some(t=>!t.ini||!t.fim||t.ini===t.fim)){toast("Confira início e fim (não podem ser iguais).");return;}
-  const lista=_trEdit.map(t=>({id:t.id||uid(),nome:String(t.nome).trim(),sigla:String(t.sigla||"").trim().toUpperCase()||String(t.nome).trim().slice(0,3).toUpperCase(),ini:t.ini,fim:t.fim,cor:t.cor||"#5b7a8c"}));
+  const lista=_trEdit.map(t=>({id:t.id||uid(),nome:String(t.nome).trim(),sigla:String(t.sigla||"").trim().toUpperCase()||String(t.nome).trim().slice(0,3).toUpperCase(),ini:t.ini,fim:t.fim,cor:t.cor||"#5b7a8c",base:+t.base>0?+t.base:0}));
   _escalaSalvar({turnos:lista,tolAntes:+$("#tr_tolA").value||0,tolDepois:+$("#tr_tolD").value||0});
   closeModal();render();toast("Turnos salvos.");
 }
@@ -5051,9 +5054,9 @@ function exportEscalaExcel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
   const dias=escDias(),hoje=iso(today());
   const efet=DB.func.filter(efetivoObra).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
-  const pessoas=efet.filter(f=>dias.some(d=>turnoIdDoDia(f.id,d)!==""));
+  const pessoas=efet.filter(f=>_escTurno?(_escTurno==="__normal"?dias.every(d=>!turnoIdDoDia(f.id,d)):dias.some(d=>turnoIdDoDia(f.id,d)===_escTurno)):dias.some(d=>turnoExplicitoDoDia(f.id,d)!==""));
   const grade=pessoas.map(f=>{const r={Pessoa:f.nome,Função:f.funcao||""};dias.forEach(d=>{const id=turnoIdDoDia(f.id,d);const t=id&&id!=="FOLGA"?turnoPorId(id):null;r[_fmtDiaCurto(d)]=id==="FOLGA"?"Folga":(t?siglaTurno(t)+(turnoCancelado(d,id)?" (cancelado)":""):"");});return r;});
-  const det=[];pessoas.forEach(f=>dias.forEach(d=>{const s=statusEscalaDia(f.id,d);if(!s)return;det.push({Pessoa:f.nome,Matrícula:f.matricula||"",Função:f.funcao||"",Data:fmt(d),Dia:DIAS_ABREV3[pd(d).getDay()],Turno:s.turno.nome,Previsto:s.turno.ini+" – "+s.turno.fim,"Horas previstas":+s.prev.toFixed(1),Entrada:s.rec&&s.rec.horaEntrada||"","Saída":s.rec&&s.rec.horaSaida||"","Saída no dia seguinte":s.rec&&s.rec.horaSaidaData&&s.rec.horaSaidaData>d?"Sim":"","Horas trabalhadas":s.horas!=null?+s.horas.toFixed(2):"",Situação:s.st.tipo==="Presença"?s.txt:s.st.tipo,"Turno cancelado":s.cancelado?"Sim":"",Motivo:s.rec&&s.rec.motivo||""});}));
+  const det=[];pessoas.forEach(f=>dias.forEach(d=>{const s=statusEscalaDia(f.id,d);if(!s)return;det.push({Pessoa:f.nome,Matrícula:f.matricula||"",Função:f.funcao||"",Data:fmt(d),Dia:DIAS_ABREV3[pd(d).getDay()],Turno:s.turno.nome,Previsto:s.turno.ini+" – "+s.turno.fim,"Horas previstas":+s.prev.toFixed(1),Entrada:s.rec&&s.rec.horaEntrada||"","Saída":s.rec&&s.rec.horaSaida||"","Saída no dia seguinte":s.rec&&s.rec.horaSaidaData&&s.rec.horaSaidaData>d?"Sim":"","Horas trabalhadas":s.horas!=null?+s.horas.toFixed(2):"","Horas normais do dia":s.turno.base||"","Horas além do normal":(s.turno.base&&s.horas!=null)?+Math.max(0,s.horas-s.turno.base).toFixed(2):"",Situação:s.st.tipo==="Presença"?s.txt:s.st.tipo,"Turno cancelado":s.cancelado?"Sim":"",Motivo:s.rec&&s.rec.motivo||""});}));
   const ab=DB.faltas.filter(r=>r.data>=_escDe&&r.data<=_escAte&&["Abono","Falta justificada"].includes(r.tipo)).sort((a,b)=>a.data<b.data?-1:1).map(r=>({Pessoa:funcNome(r.func),Data:fmt(r.data),Tipo:r.tipo,Turno:(turnoPorId(r.turno)||{}).nome||"",Motivo:r.motivo||"",Origem:r.origem==="escala"?"Turno cancelado":(r.origem||"")}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(grade.length?grade:[{"—":"sem escala no período"}]),"Escala");
@@ -5069,7 +5072,7 @@ function exigeEdicaoEscala(){
   if(!podeEditarEscala()){toast("Você não tem permissão de salvar em Escala de turnos.");return false;}
   return true;
 }
-function periodosEscala(){const p=escalaCfg().periodos;return Array.isArray(p)?p.filter(x=>x&&x.id&&x.de&&x.ate&&x.ate>=x.de).map(x=>({...x,dias:Array.isArray(x.dias)?x.dias.filter(n=>Number.isInteger(n)):null})):[];}
+function periodosEscala(){const p=escalaCfg().periodos;return Array.isArray(p)?p.filter(x=>x&&x.id&&x.de&&x.ate&&x.ate>=x.de).map(x=>({...x,dias:Array.isArray(x.dias)?x.dias.filter(n=>Number.isInteger(n)):null,padrao:typeof x.padrao==="string"?x.padrao:""})):[];}
 function periodoGrupos(per){const g=per&&per.grupos;return(g&&typeof g==="object"&&!Array.isArray(g))?g:{};}
 function periodoIdsDoGrupo(per,tid){const l=periodoGrupos(per)[tid];return Array.isArray(l)?l:[];}
 function blocosDe(fid,de,ate,turno,dias,criado,periodoId){
@@ -5109,7 +5112,7 @@ function htmlPeriodos(){
       const mem=periodoIdsDoGrupo(p,tid).map(id=>DB.func.find(x=>x.id===id)).filter(f=>f&&efetivoObra(f));
       return `<div style="margin-top:8px"><b style="font-size:12.5px">${turnoViraDia(t)?"🌙":"☀"} ${esc(t.nome)}</b> <small style="color:var(--muted)">${t.ini}–${t.fim} · ${mem.length} pessoa(s)</small>${ed?` <button class="btn btn-g btn-sm" style="padding:1px 8px" onclick="abrirPessoasPeriodo('${p.id}','${esc(tid)}')">＋ Pessoas</button>`:""}<div style="margin-top:4px">${mem.length?mem.map(f=>`<span class="chip ${afastado(f)?"afast":""}">${esc(frNomeCurto(f.nome))}${ed?`<small style="cursor:pointer" title="Tirar do turno (volta ao normal)" onclick="removerPessoaPeriodo('${p.id}','${esc(tid)}','${f.id}')">✕</small>`:""}</span>`).join(""):'<span style="color:var(--muted);font-size:12px">ninguém ainda</span>'}</div></div>`;
     }).join("");
-    return `<div class="perCard ${ativo?"perAtivo":""}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">${esc(p.nome||"Período especial")}</b><span class="tag ${est.cls}">${esc(est.txt)}</span><span style="font-size:12.5px">${fmt(p.de)} → <b>${fmt(p.ate)}</b></span>${p.dias&&p.dias.length?`<small style="color:var(--muted)">${p.dias.map(n=>DIAS_ABREV3[n]).join(", ")}</small>`:""}<span style="flex:1"></span><button class="btn btn-g btn-sm" onclick="escVerPeriodo('${p.id}')">Ver na grade</button>${ed?`<button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',-1)" title="Termina um dia antes">−1 dia</button><button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',1)" title="Termina um dia depois">+1 dia</button><button class="btn btn-g btn-sm" onclick="formDatasPeriodo('${p.id}')">✎ Datas</button>${p.ate>=hoje?`<button class="btn btn-a btn-sm" onclick="formDatasPeriodo('${p.id}','${iso(_somaDias(today(),-1))}')">↩ Voltar ao normal a partir de hoje</button>`:""}<button class="btn btn-g btn-sm" style="color:var(--red)" onclick="excluirPeriodo('${p.id}')">🗑</button>`:""}</div>${grupos}<div style="margin-top:8px;font-size:12px;color:var(--muted)">Demais pessoas do efetivo: <b>turno normal</b> — não precisam ser lançadas.${ed?` <button class="btn btn-g btn-sm" style="padding:1px 8px" onclick="abrirPessoasPeriodo('${p.id}','')">＋ Incluir outro turno</button>`:""}</div></div>`;
+    return `<div class="perCard ${ativo?"perAtivo":""}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">${esc(p.nome||"Período especial")}</b><span class="tag ${est.cls}">${esc(est.txt)}</span><span style="font-size:12.5px">${fmt(p.de)} → <b>${fmt(p.ate)}</b></span>${p.dias&&p.dias.length?`<small style="color:var(--muted)">${p.dias.map(n=>DIAS_ABREV3[n]).join(", ")}</small>`:""}<span style="flex:1"></span><button class="btn btn-g btn-sm" onclick="escVerPeriodo('${p.id}')">Ver na grade</button>${ed?`<button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',-1)" title="Termina um dia antes">−1 dia</button><button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',1)" title="Termina um dia depois">+1 dia</button><button class="btn btn-g btn-sm" onclick="formDatasPeriodo('${p.id}')">✎ Datas</button>${p.ate>=hoje?`<button class="btn btn-a btn-sm" onclick="formDatasPeriodo('${p.id}','${iso(_somaDias(today(),-1))}')">↩ Voltar ao normal a partir de hoje</button>`:""}<button class="btn btn-g btn-sm" style="color:var(--red)" onclick="excluirPeriodo('${p.id}')">🗑</button>`:""}</div>${grupos}<div style="margin-top:8px;font-size:12px;color:var(--muted)">${p.padrao&&turnoPorId(p.padrao)?`Todos os demais: <b>${esc(turnoPorId(p.padrao).nome)} (${turnoPorId(p.padrao).ini}–${turnoPorId(p.padrao).fim})</b>${p.dias&&p.dias.length?" · "+p.dias.map(n=>DIAS_ABREV3[n]).join(", "):""} — não precisam ser lançados.`:`Demais pessoas do efetivo: <b>turno normal</b> — não precisam ser lançadas.`}${ed?` <button class="btn btn-g btn-sm" style="padding:1px 8px" onclick="abrirPessoasPeriodo('${p.id}','')">＋ Incluir outro turno</button>`:""}</div></div>`;
   };
   return `<div class="panel"><h2><span class="t">Períodos especiais <span class="tag t-grey">${vivos.length} ativo(s)/futuro(s)</span></span>${ed?`<button class="btn btn-a btn-sm" onclick="formPeriodo()">＋ Novo período especial</button>`:""}</h2><div style="padding:12px 16px">${vivos.length||passados.length?[...vivos,...passados].map(card).join(""):`<div class="empty" style="padding:12px"><p>Nenhum período especial. Crie um pra parada, obra 24 horas etc.: você escolhe só quem foge do normal${ed?"":" (peça a permissão de salvar)"}.</p></div>`}${avulsos&&ed?`<div class="hint" style="margin-top:6px">Há <b>${avulsos}</b> lançamento(s) avulso(s) de turno (feitos por Atribuição avulsa). <button class="btn btn-g btn-sm" onclick="organizarAvulsos()">⚡ Organizar em períodos</button></div>`:""}</div></div>`;
 }
@@ -5141,7 +5144,8 @@ function formPeriodo(){
   openModal(`<div class="modal-h"><h3>＋ Novo período especial</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <p class="hint" style="margin-bottom:10px">Escolha só quem <b>foge do normal</b> (ex.: o noturno). Todo o resto do efetivo continua no turno normal, sem lançar nada. Depois do último dia, tudo volta ao normal sozinho.</p>
    <div class="fg"><label>Nome <span class="opt">(opcional)</span></label><input id="np_nome" placeholder="ex.: Parada da Vale"></div>
-   <div class="row3"><div class="fg"><label>De *</label><input type="date" id="np_de" value="${hoje}"></div><div class="fg"><label>Até *</label><input type="date" id="np_ate" value="${iso(_somaDias(today(),6))}"></div><div class="fg"><label>Turno dessas pessoas *</label><select id="np_turno">${turnos.map(t=>`<option value="${esc(t.id)}" ${t.id===padrao?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div></div>
+   <div class="row3"><div class="fg"><label>De *</label><input type="date" id="np_de" value="${hoje}"></div><div class="fg"><label>Até *</label><input type="date" id="np_ate" value="${iso(_somaDias(today(),6))}"></div><div class="fg"><label>Turno das pessoas marcadas</label><select id="np_turno">${turnos.map(t=>`<option value="${esc(t.id)}" ${t.id===padrao?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div></div>
+   <div class="fg"><label>Todos os demais ficam em <span class="opt">(opcional — ex.: Normal + 1h no recesso; vale pro efetivo todo, inclusive quem entrar depois)</span></label><select id="np_padrao" onchange="npPadraoMudou()"><option value="">Normal (não lançar nada)</option>${turnos.map(t=>`<option value="${esc(t.id)}">${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div>
    <details style="margin-bottom:10px"><summary style="cursor:pointer;color:var(--steel);font-weight:600;font-size:13px">Só em alguns dias da semana</summary><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">${[1,2,3,4,5,6,0].map(n=>`<label style="font-size:12.5px;display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" class="np_dia" value="${n}" checked style="width:auto">${DIAS_ABREV3[n]}</label>`).join("")}</div></details>
    ${pkHtml("np")}</div>
    <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarPeriodoNovo()">Criar período</button></div>`);
@@ -5151,12 +5155,12 @@ function salvarPeriodoNovo(){
   if(!exigeEdicaoEscala())return;
   const de=$("#np_de").value,ate=$("#np_ate").value,turno=$("#np_turno").value;
   if(!de||!ate||ate<de){toast("Confira as datas.");return;}
-  const ids=[..._pk.np.sel];if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
+  const padrao=$("#np_padrao")?$("#np_padrao").value:"",ids=[..._pk.np.sel];if(!ids.length&&!padrao){toast("Marque pelo menos uma pessoa ou escolha o turno padrão de todos.");return;}
   const dias=[...document.querySelectorAll(".np_dia:checked")].map(c=>+c.value);
   if(!dias.length){toast("Marque pelo menos um dia da semana.");return;}
-  const per={id:uid(),nome:$("#np_nome").value.trim()||"Período especial",de,ate,dias:dias.length===7?null:dias,criado:Date.now(),grupos:{[turno]:ids}};
+  const per={id:uid(),nome:$("#np_nome").value.trim()||"Período especial",de,ate,dias:dias.length===7?null:dias,criado:Date.now(),grupos:ids.length?{[turno]:ids}:{},padrao};
   periodoSalvar(per);_escDe=de;const lim=iso(_somaDias(pd(de),30));_escAte=ate<=lim?ate:lim;
-  closeModal();render();toast("Período criado: "+ids.length+" pessoa(s) em "+(turnoPorId(turno)||{nome:""}).nome+". As demais seguem no normal.");
+  closeModal();render();toast("Período criado"+(ids.length?": "+ids.length+" pessoa(s) em "+(turnoPorId(turno)||{nome:""}).nome:"")+(padrao?". Todos os demais: "+(turnoPorId(padrao)||{nome:""}).nome+".":". As demais seguem no normal."));
 }
 /* adicionar / mover / tirar pessoas */
 function abrirPessoasPeriodo(id,turnoFixo){
@@ -5217,7 +5221,7 @@ function formDatasPeriodo(id,ateSug){
   openModal(`<div class="modal-h"><h3>✎ Datas — ${esc(per.nome||"Período especial")}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
    <p class="hint" style="margin-bottom:10px">Mudar as datas ajusta a escala de <b>todo mundo</b> do período de uma vez. Os dias que saírem voltam ao turno normal.</p>
    <div class="row2"><div class="fg"><label>Começa em</label><input type="date" id="pd_de" value="${per.de}" onchange="pdPreview()"></div><div class="fg"><label>Termina em</label><input type="date" id="pd_ate" value="${ateSug||per.ate}" onchange="pdPreview()"></div></div>
-   <div id="pd_info"></div></div>
+   <div class="fg"><label>Todos os demais ficam em</label><select id="pd_padrao"><option value="">Normal (não lançar nada)</option>${turnosCfg().map(t=>`<option value="${esc(t.id)}" ${per.padrao===t.id?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div><div id="pd_info"></div></div>
    <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarDatasPeriodo()">Salvar datas</button></div>`);
   pdPreview();
 }
@@ -5257,7 +5261,7 @@ function salvarDatasPeriodo(){
     Object.keys(cont).forEach(k=>{const [d,t]=k.split("|");const i=canc.findIndex(c=>c.data===d&&c.turno===t);const reg={id:i>=0?canc[i].id:uid(),data:d,turno:t,motivo,por:nomeUsuarioLogado()||"",em:iso(today()),qtd:(i>=0?canc[i].qtd||0:0)+cont[k]};if(i>=0)canc[i]=reg;else canc.push(reg);});
     if(criados||subst){save("faltas");_escalaSalvar({cancelados:canc});}
   }
-  periodoSalvar({...per,de,ate});
+  periodoSalvar({...per,de,ate,padrao:$("#pd_padrao")?$("#pd_padrao").value:(per.padrao||"")});
   closeModal();render();
   toast("Datas salvas: "+fmt(de)+" a "+fmt(ate)+(abonar?" · "+criados+" abono(s)"+(subst?" e "+subst+" falta(s) trocada(s)":""):"")+".");
 }
@@ -5277,6 +5281,55 @@ function organizarAvulsos(){
   });
   _escalaSalvar({periodos:[...periodosEscala(),...novos],blocos});
   render();toast(novos.length+" período(s) criado(s).");
+}
+
+/* ===== TURNO PADRÃO PARA TODOS (ex.: Normal + 1h no recesso), FILTRO POR TURNO ===== */
+let _escTurno="",_chamadaTurno="";
+function _blocoDoDia(fid,data){let r="",t=-1,achou=false;for(const b of blocosEscala()){if(b.func===fid&&b.de<=data&&b.ate>=data){const sc=(b.criado||0)*2+(b.periodo?0:1);if(sc>=t){r=b.turno||"";t=sc;achou=true;}}}return achou?{turno:r}:null;}
+function turnoExplicitoDoDia(fid,data){const b=_blocoDoDia(fid,data);return b?b.turno:"";}
+function padraoDoDia(data){
+  const dd=pd(data);if(!dd||ehFeriado(data))return"";
+  let r="",t=-1;
+  periodosEscala().forEach(p=>{
+    if(!p.padrao||p.de>data||p.ate<data)return;
+    if(Array.isArray(p.dias)&&p.dias.length&&!p.dias.includes(dd.getDay()))return;
+    if((p.criado||0)>=t){r=p.padrao;t=p.criado||0;}
+  });
+  return(r&&turnoPorId(r))?r:"";
+}
+function padraoNoPeriodo(dias){for(const d of dias){const id=padraoDoDia(d);if(id)return turnoPorId(id);}return null;}
+function turnoIdDoDia(fid,data){const b=_blocoDoDia(fid,data);return b?b.turno:padraoDoDia(data);}
+function turnoEspecialExplicitoDoDia(fid,data){const id=turnoExplicitoDoDia(fid,data);return(id&&id!=="FOLGA"&&turnoPorId(id))?turnoPorId(id):null;}
+function chipsTurnoHtml(efet,dias){
+  const cont=id=>efet.filter(f=>dias.some(d=>turnoIdDoDia(f.id,d)===id)).length;
+  const btn=(val,html)=>`<button class="btn ${_escTurno===val?"btn-a":"btn-g"} btn-sm" onclick="_escTurno='${val}';render()">${html}</button>`;
+  const partes=[btn("","Todos")];
+  turnosCfg().forEach(t=>{const n=cont(t.id);if(n)partes.push(btn(t.id,`<span class="escchip" style="background:${_escCor(t)};cursor:pointer">${esc(siglaTurno(t))}</span> ${esc(t.nome)} <b>${n}</b>`));});
+  const nf=cont("FOLGA");if(nf)partes.push(btn("FOLGA",`Folga <b>${nf}</b>`));
+  const nn=efet.filter(f=>dias.every(d=>!turnoIdDoDia(f.id,d))).length;if(nn&&partes.length>1)partes.push(btn("__normal",`Sem turno especial <b>${nn}</b>`));
+  return `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0"><span class="hint">Ver só o turno:</span>${partes.join("")}</div>`;
+}
+function htmlSelectTurnoChamada(){
+  return `<select onchange="_chamadaTurno=this.value;renderChamada()" title="Filtrar a chamada por turno"><option value="">Todos os turnos</option>${turnosCfg().map(t=>`<option value="${esc(t.id)}" ${_chamadaTurno===t.id?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}<option value="__normal" ${_chamadaTurno==="__normal"?"selected":""}>Sem turno especial</option></select>`;
+}
+function passaFiltroTurnoChamada(fid,data){
+  if(!_chamadaTurno)return true;
+  const id=turnoIdDoDia(fid,data);
+  return _chamadaTurno==="__normal"?!id:id===_chamadaTurno;
+}
+function npPadraoMudou(){
+  const tem=!!$("#np_padrao").value;
+  document.querySelectorAll(".np_dia").forEach(c=>{c.checked=tem?![0,6].includes(+c.value):true;});
+  const det=document.querySelector("#np_padrao").closest(".fg").nextElementSibling;if(det&&det.tagName==="DETAILS"&&tem)det.open=true;
+}
+function trAdicionarRecesso(){
+  if(_trEdit.some(t=>normalizaNome(t.nome)===normalizaNome("Normal + 1h (recesso)"))){toast("Esse turno já está na lista.");return;}
+  _trEdit.push({id:uid(),nome:"Normal + 1h (recesso)",sigla:"N+1",ini:"07:00",fim:"18:00",cor:"#2f8f5b",base:10});trRender();
+}
+function cnIncluirVespera(){
+  const data=$("#cn_data").value,tid=$("#cn_turno").value,v=iso(_somaDias(pd(data),-1));let n=0;
+  DB.func.filter(efetivoObra).forEach(f=>{if(turnoIdDoDia(f.id,v)===tid&&turnoIdDoDia(f.id,data)!==tid){_cnExtra.add(f.id);_cnSel[f.id]=true;n++;}});
+  cnRender();toast(n?n+" pessoa(s) que estavam no turno na véspera foram incluídas.":"Ninguém estava nesse turno na véspera fora da lista.");
 }
 
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
