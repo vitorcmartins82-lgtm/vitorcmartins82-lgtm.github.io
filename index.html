@@ -662,7 +662,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.29";
+const APP_VERSAO="v2026-10-02.30";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -1704,7 +1704,7 @@ function renderChamada(){
   const cEl=$("#pp_contagem");if(cEl)cEl.innerHTML=`${avisoDia}<span class="tag t-green">${rows.filter(r=>r.s.tipo==='Presença').length} presença</span> ${naoExigeRegistro?'':`<span class="tag ${semRegistro.length?'t-red':'t-green'}">${semRegistro.length} sem registro</span> `}<span class="tag t-amber">${rows.filter(r=>!['Presença','Sem registro'].includes(r.s.tipo)).length} outras ocorrências</span>${semSaida.length?` <span class="tag t-red">⚠ ${semSaida.length} sem saída</span>`:''}${naoAdmitidos?` <span class="tag t-grey">${naoAdmitidos} ainda não chegou nessa obra nessa data</span>`:''}${naoBatem?` <span class="tag t-grey">${naoBatem} não bate ponto</span>`:''}${afastados?` <span class="tag t-amber">${afastados} afastado(s)</span>`:''} <button class="btn btn-g btn-sm" onclick="formFeriado('${data}')">${feriado?"Editar feriado":"Marcar feriado"}</button>`;
   rows.sort((a,b)=>(a.s.tipo!=="Sem registro")-(b.s.tipo!=="Sem registro")||a.f.nome.localeCompare(b.f.nome));
   el.innerHTML=rows.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Função</th><th>Status</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${
-    rows.map(({f,s})=>{const faltaSaida=s.tipo==="Presença"&&s.horaEntrada&&!s.horaSaida;return `<tr style="${faltaSaida?'background:#fbe7e4':''}"><td>${esc(f.nome)}${f.regimePonto==="Manual"?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}${chipTurno(f.id,data)}</td><td><small style="color:var(--muted)">${esc(f.funcao||"—")}</small></td><td><span class="tag ${s.cls}">${esc(s.tipo)}</span></td><td>${esc(s.horaEntrada||"—")}</td><td>${s.horaSaida?esc(s.horaSaida):faltaSaida?'<span class="tag t-red">⚠ faltando</span>':'—'}</td><td><small style="color:var(--muted)">${esc(s.motivo||"—")}</small></td><td><div class="rowact">${
+    rows.map(({f,s})=>{const emTurno=s.tipo==="Presença"&&s.horaEntrada&&!s.horaSaida&&turnoEmAndamento(f.id,data);const faltaSaida=s.tipo==="Presença"&&s.horaEntrada&&!s.horaSaida&&!emTurno;return `<tr style="${faltaSaida?'background:#fbe7e4':''}"><td>${esc(f.nome)}${f.regimePonto==="Manual"?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}${chipTurno(f.id,data)}</td><td><small style="color:var(--muted)">${esc(f.funcao||"—")}</small></td><td><span class="tag ${s.cls}">${esc(s.tipo)}</span></td><td>${esc(s.horaEntrada||"—")}</td><td>${s.horaSaida?esc(s.horaSaida)+(((DB.faltas.find(x=>x.id===s.id)||{}).horaSaidaData>data)?' <small style="color:var(--muted)">(+1)</small>':''):emTurno?'<span class="tag t-steel">⏳ em turno</span>':faltaSaida?'<span class="tag t-red">⚠ faltando</span>':'—'}</td><td><small style="color:var(--muted)">${esc(s.motivo||"—")}</small></td><td><div class="rowact">${
       s.id?`<button class="btn btn-g btn-sm" onclick="delFalta('${s.id}')">Remover</button>${faltaSaida?`<button class="btn btn-a btn-sm" onclick="formCorrigirSaida('${s.id}')">＋ Saída</button>`:''}`
       :s.tipo==="Sem registro"?`<button class="btn btn-a btn-sm" onclick="marcarPresenca('${f.id}','${data}')">✓ Presença</button><button class="btn btn-g btn-sm" onclick="formFalta('${f.id}','${data}')">Outra ocorrência</button>`
       :`<small class="hint">gerenciar em Férias/Baixada</small>`
@@ -4643,33 +4643,62 @@ function _fmtDiaCurto(d){const x=pd(d);return x?DIAS_ABREV3[x.getDay()]+" "+_ddm
 /* ---- marcações do relógio encaixadas no turno ---- */
 function agruparMarcacoes(marcas){
   const funcNorm=DB.func.filter(efetivoObra).map(f=>({f,norm:normalizaNome(f.nome)}));
-  const e=escalaCfg(),tolA=(e.tolAntes!=null&&e.tolAntes!=="")?+e.tolAntes:120,tolD=(e.tolDepois!=null&&e.tolDepois!=="")?+e.tolDepois:180;
-  const itens=[],foraTurno=[];
+  const e=escalaCfg(),tolA=(e.tolAntes!=null&&e.tolAntes!=="")?+e.tolAntes:120;
+  const tolD=(e.tolDepois!=null&&e.tolDepois!==""&&+e.tolDepois!==180)?+e.tolDepois:300;
+  const itens=[],foraTurno=[],sugestoes=[];
   Object.values(marcas).forEach(p=>{
     const match=funcNorm.find(x=>x.norm===normalizaNome(p.nome));
-    const todas=p.marcas.map(m=>({...m,abs:diaNum(m.data)*1440+hmMin(m.hora),usada:false})).sort((a,b)=>a.abs-b.abs);
+    const todas=p.marcas.map(m=>({...m,abs:diaNum(m.data)*1440+hmMin(m.hora),usada:false}));
+    if(match){
+      /* junta com as batidas que já foram importadas antes: planilha por dia traz a entrada num arquivo e a saída no outro */
+      const tem=new Set(todas.map(m=>m.data+"|"+m.hora));
+      DB.faltas.forEach(fa=>{
+        if(fa.func!==match.f.id||!autoImportado(fa)||!fa.horaEntrada)return;
+        const add=(data,hora)=>{const k=data+"|"+hora;if(tem.has(k))return;tem.add(k);todas.push({data,hora,abs:diaNum(data)*1440+hmMin(hora),usada:false,doRegistro:true});};
+        add(fa.data,fa.horaEntrada);
+        if(fa.horaSaida){let sd=fa.horaSaidaData||fa.data;if(!fa.horaSaidaData&&hmMin(fa.horaSaida)<hmMin(fa.horaEntrada))sd=iso(_somaDias(pd(fa.data),1));add(sd,fa.horaSaida);}
+      });
+    }
+    todas.sort((a,b)=>a.abs-b.abs);
     const datasComItemTurno=new Set();
     if(match&&todas.length){
       const cand=new Set();new Set(todas.map(m=>m.data)).forEach(d=>{cand.add(d);cand.add(iso(_somaDias(pd(d),-1)));});
       [...cand].sort().forEach(D=>{
         const t=turnoEspecialDoDia(match.f.id,D);if(!t)return;
-        const ini=diaNum(D)*1440+hmMin(t.ini),fim=ini+duracaoTurnoMin(t);
-        const dentro=todas.filter(m=>!m.usada&&m.abs>=ini-tolA&&m.abs<=fim+tolD);
+        const dur=duracaoTurnoMin(t),ini=diaNum(D)*1440+hmMin(t.ini),fim=ini+dur;
+        let dentro=todas.filter(m=>!m.usada&&m.abs>=ini-tolA&&m.abs<=fim+tolD);
         if(!dentro.length)return;
+        if(dentro.length===1&&dentro[0].abs<=ini+dur/2){   /* achou só a entrada: procura a saída relativa a ela, mesmo que o horário real fuja do turno cadastrado */
+          const u=dentro[0],dep=todas.find(m=>!m.usada&&m!==u&&m.abs>u.abs+180&&m.abs<=u.abs+dur+300);
+          if(dep)dentro=[u,dep];
+        }
         dentro.forEach(m=>m.usada=true);
         const a=dentro[0],z=dentro[dentro.length-1];
         datasComItemTurno.add(D);
         itens.push({nome:p.nome,fid:match.f.id,data:D,entrada:a.hora,saida:dentro.length>1?z.hora:"",saidaData:dentro.length>1?z.data:"",qtdBatidas:dentro.length,turno:t.id,consumidas:dentro.map(m=>({data:m.data,hora:m.hora}))});
       });
     }
-    const porDia={};todas.filter(m=>!m.usada).forEach(m=>{(porDia[m.data]=porDia[m.data]||[]).push(m.hora);});
+    const sobra=todas.filter(m=>!m.usada&&!m.doRegistro);
+    const porDia={};sobra.forEach(m=>{(porDia[m.data]=porDia[m.data]||[]).push(m);});
     Object.keys(porDia).forEach(d=>{
-      const hs=porDia[d].sort((a,b)=>hmMin(a)-hmMin(b));
-      if(datasComItemTurno.has(d)){hs.forEach(h=>foraTurno.push({nome:p.nome,data:d,hora:h}));return;}
-      itens.push({nome:p.nome,data:d,entrada:hs[0]||"",saida:hs.length>1?hs[hs.length-1]:"",qtdBatidas:hs.length});
+      const ms=porDia[d].sort((a,b)=>a.abs-b.abs);
+      if(datasComItemTurno.has(d)){ms.forEach(m=>foraTurno.push({nome:p.nome,data:d,hora:m.hora}));return;}
+      itens.push({nome:p.nome,data:d,entrada:ms[0].hora||"",saida:ms.length>1?ms[ms.length-1].hora:"",qtdBatidas:ms.length});
     });
+    /* quem não está na escala mas bate como noturno: a sequência de batidas COMEÇA à noite e alterna a cada ~12h */
+    if(match){
+      const ms=sobra.filter(m=>!datasComItemTurno.has(m.data)&&!turnoEspecialDoDia(match.f.id,m.data)).sort((a,b)=>a.abs-b.abs);
+      const runs=[];let cur=[];ms.forEach(m=>{if(cur.length&&m.abs-cur[cur.length-1].abs>13*60){runs.push(cur);cur=[];}cur.push(m);});if(cur.length)runs.push(cur);
+      const datas=[];
+      runs.forEach(r=>{
+        if(r.length<2||hmMin(r[0].hora)<16*60)return;
+        const gap=r[1].abs-r[0].abs;if(!(gap>=5*60&&gap<=16*60&&hmMin(r[1].hora)<=11*60))return;
+        for(let i=0;i<r.length;i+=2)datas.push(r[i].data);
+      });
+      if(datas.length>=2)sugestoes.push({fid:match.f.id,nome:match.f.nome,datas});
+    }
   });
-  return{itens,foraTurno};
+  return{itens,foraTurno,sugestoes};
 }
 function processarArquivoMarcacoes(e){
   const file=e.target.files[0];if(!file)return;
@@ -4696,15 +4725,15 @@ function processarArquivoMarcacoes(e){
         if(hora)marcas[chave].marcas.push({data:dataIso,hora:hora.slice(0,5)});
       }
       const g=agruparMarcacoes(marcas);
-      mostrarResumoImportacaoMarcacoes(g.itens,g.foraTurno);
+      mostrarResumoImportacaoMarcacoes(g.itens,g.foraTurno,g.sugestoes);
     }catch(err){console.error(err);toast("Não consegui ler esse arquivo — confere se é um .xlsx válido.");}
   };
   reader.readAsArrayBuffer(file);
   e.target.value="";
 }
 function autoImportado(fa){return fa&&fa.tipo==="Presença"&&fa.motivo==="Importado de marcações";}
-function mostrarResumoImportacaoMarcacoes(lista,foraTurno){
-  foraTurno=foraTurno||[];
+function mostrarResumoImportacaoMarcacoes(lista,foraTurno,sugestoes){
+  foraTurno=foraTurno||[];sugestoes=sugestoes||[];
   const funcNorm=DB.func.filter(efetivoObra).map(f=>({f,norm:normalizaNome(f.nome)}));
   const consumidas=new Set();lista.forEach(it=>{if(it.turno&&it.fid)(it.consumidas||[]).forEach(m=>consumidas.add(it.fid+"|"+m.data+"|"+m.hora));});
   const tocada=fa=>consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaEntrada)||(fa.horaSaida&&consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaSaida));
@@ -4716,8 +4745,15 @@ function mostrarResumoImportacaoMarcacoes(lista,foraTurno){
     chaves[match.f.id+"|"+item.data]=item;
     const existente=DB.faltas.find(fa=>fa.func===match.f.id&&fa.data===item.data);
     if(existente){
+      const auto=autoImportado(existente);
       const difere=(existente.horaEntrada||"")!==(item.entrada||"")||(existente.horaSaida||"")!==(item.saida||"")||(existente.turno||"")!==(item.turno||"")||(existente.horaSaidaData||"")!==saidaDataDe(item);
-      if(autoImportado(existente)&&difere&&(item.turno||tocada(existente))){vaoCorrigir.push({existenteId:existente.id,nome:match.f.nome,data:item.data,item});return;}
+      if(item.turno&&existente.tipo==="Presença"&&item.saida&&!existente.horaSaida&&existente.horaEntrada&&existente.horaEntrada===item.entrada&&(auto||!existente.horaSaida)){
+        vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida,saidaData:saidaDataDe(item),turno:item.turno});return;
+      }
+      if(auto&&difere&&(item.turno||tocada(existente))){vaoCorrigir.push({existenteId:existente.id,nome:match.f.nome,data:item.data,item});return;}
+      if(item.turno&&existente.tipo==="Presença"&&!auto&&!existente.horaEntrada&&item.entrada){
+        vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,tudo:true,entrada:item.entrada,saida:item.saida,saidaData:saidaDataDe(item),turno:item.turno});return;
+      }
       if(existente.tipo==="Presença"&&!existente.horaSaida&&item.saida&&!item.turno){vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida});}
       else{jaTinhamRegistro.push({nome:item.nome,data:item.data});}
       return;
@@ -4732,28 +4768,51 @@ function mostrarResumoImportacaoMarcacoes(lista,foraTurno){
     if(consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaEntrada)&&(!fa.horaSaida||consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaSaida)))vaoRemover.push({id:fa.id,nome:funcNome(fa.func),data:fa.data});
   });
   const encaixadas=lista.filter(i=>i.turno).length,semSaida=encontrados.filter(x=>x.entrada&&!x.saida);
-  window._importMarcacoesPendente=encontrados;window._importMarcacoesCompletar=vaoCompletar;window._importMarcacoesCorrigir=vaoCorrigir;window._importMarcacoesRemover=vaoRemover;
+  window._importMarcacoesPendente=encontrados;window._importMarcacoesCompletar=vaoCompletar;window._importMarcacoesCorrigir=vaoCorrigir;window._importMarcacoesRemover=vaoRemover;window._sugestaoNoturno=sugestoes;
   const nomes=(l,n)=>l.slice(0,n||14).map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")+(l.length>(n||14)?" … +"+(l.length-(n||14)):"");
   openModal(`<div class="modal-h"><h3>Importar marcações</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat steel"><div class="n">${encaixadas}</div><div class="l">Batidas encaixadas num turno da escala</div></div><div class="stat amber"><div class="n">${vaoCorrigir.length}</div><div class="l">Vão corrigir (importação anterior distorcida)</div></div><div class="stat red"><div class="n">${vaoRemover.length}</div><div class="l">Vão remover (batida do turno no dia errado)</div></div><div class="stat"><div class="n">${vaoCompletar.length}</div><div class="l">Vão completar saída</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
+   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat steel"><div class="n">${encaixadas}</div><div class="l">Batidas encaixadas num turno da escala</div></div><div class="stat amber"><div class="n">${vaoCorrigir.length}</div><div class="l">Vão corrigir (importação anterior distorcida)</div></div><div class="stat red"><div class="n">${vaoRemover.length}</div><div class="l">Vão remover (batida do turno no dia errado)</div></div><div class="stat"><div class="n">${vaoCompletar.length}</div><div class="l">Vão completar (saída ou horário que faltava)</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
+   ${sugestoes.length?`<div style="background:#eef6ff;border:1px solid #cfe0f5;border-radius:8px;padding:10px 12px;margin-bottom:10px"><b>Parecem estar no noturno, mas não estão na escala</b><div class="hint" style="margin:4px 0">Só batem à noite e saem de manhã, em 2 dias ou mais: ${sugestoes.map(s=>esc(s.nome)+" ("+s.datas.length+" noites)").join(", ")}. Sem estar na escala, o ponto deles não é encaixado no turno.</div>${podeEditarEscala()?'<button class="btn btn-a btn-sm" onclick="aplicarSugestaoNoturno()">Colocar no noturno e depois importar de novo</button>':'<span class="hint">Peça a quem edita a escala pra incluí-los.</span>'}</div>`:""}
    ${vaoCorrigir.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px"><b>Vão ser corrigidos</b> (foram importados antes com o horário cortado no dia): ${nomes(vaoCorrigir)}</p>`:""}
    ${vaoRemover.length?`<p class="hint" style="color:var(--red);margin-bottom:10px"><b>Vão ser removidos</b> (eram só a batida de saída de um turno que virou o dia): ${nomes(vaoRemover)}</p>`:""}
-   ${vaoCompletar.length?`<p class="hint" style="color:var(--steel);margin-bottom:10px">Já tinham Presença sem saída e a planilha trouxe a saída — vou completar: ${nomes(vaoCompletar)}</p>`:""}
-   ${semSaida.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px">Só bateram entrada (esqueceram de bater ou saíram sem avisar): ${nomes(semSaida)}</p>`:""}
-   ${foraTurno.length?`<p class="hint" style="margin-bottom:10px">${foraTurno.length} batida(s) caíram fora da janela do turno e foram ignoradas: ${foraTurno.slice(0,8).map(x=>esc(x.nome)+" "+fmt(x.data)+" "+x.hora).join(", ")}${foraTurno.length>8?" …":""}</p>`:""}
+   ${vaoCompletar.length?`<p class="hint" style="color:var(--steel);margin-bottom:10px">Vou completar a saída (ou o horário) de: ${nomes(vaoCompletar)}</p>`:""}
+   ${semSaida.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px">Só bateram entrada (esqueceram de bater, saíram sem avisar ou a saída vem no arquivo de amanhã): ${nomes(semSaida)}</p>`:""}
+   ${foraTurno.length?`<p class="hint" style="margin-bottom:10px">${foraTurno.length} batida(s) caíram fora da janela do turno e foram ignoradas — se o horário real é bem diferente do cadastrado, ajuste em ⚙ Turnos: ${foraTurno.slice(0,8).map(x=>esc(x.nome)+" "+fmt(x.data)+" "+x.hora).join(", ")}${foraTurno.length>8?" …":""}</p>`:""}
    ${naoEncontrados.size?`<p class="hint" style="color:var(--red);margin-bottom:10px">Nomes que não bateram com ninguém ativo cadastrado (confere grafia/cadastro): ${[...naoEncontrados].map(n=>esc(n)).join(", ")}</p>`:""}
-   <p class="hint">Quem tem <b>turno na escala</b> (ex.: noturno 18h–6h) tem as batidas encaixadas no turno: o registro fica no dia em que o turno <b>começou</b>, com a saída no dia seguinte. Quem não tem turno segue a regra de sempre (primeira e última batida do dia). Só mexo em registros criados por importação; Falta, Atestado, Abono, Baixada e Férias lançados à mão nunca são alterados.</p>
+   <p class="hint">Quem tem <b>turno na escala</b> (ex.: noturno) tem as batidas encaixadas no turno: o registro fica no dia em que o turno <b>começou</b>, com a saída no dia seguinte — mesmo que a entrada e a saída venham em planilhas diferentes (eu junto com o que já foi importado). Quem não tem turno segue a regra de sempre. Só mexo em registros criados por importação (ou presenças sem horário); Falta, Atestado, Abono, Baixada e Férias lançados à mão nunca são alterados.</p>
    </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" ${(encontrados.length||vaoCompletar.length||vaoCorrigir.length||vaoRemover.length)?"":"disabled"} onclick="confirmarImportacaoMarcacoes()">Importar</button></div>`);
 }
 function confirmarImportacaoMarcacoes(){
   if(!confirmarSenhaSalvar())return;
   const lista=window._importMarcacoesPendente||[],completar=window._importMarcacoesCompletar||[],corrigir=window._importMarcacoesCorrigir||[],remover=window._importMarcacoesRemover||[];
   lista.forEach(item=>{const r={id:uid(),func:item.fid,data:item.data,tipo:"Presença",horaEntrada:item.entrada||"",horaSaida:item.saida||"",motivo:"Importado de marcações"};if(item.turno)r.turno=item.turno;if(item.saidaData)r.horaSaidaData=item.saidaData;DB.faltas.push(r);});
-  completar.forEach(item=>{const fa=DB.faltas.find(x=>x.id===item.existenteId);if(fa)fa.horaSaida=item.saida;});
+  completar.forEach(c=>{const fa=DB.faltas.find(x=>x.id===c.existenteId);if(!fa)return;if(c.tudo&&c.entrada)fa.horaEntrada=c.entrada;if(c.saida)fa.horaSaida=c.saida;if(c.saidaData)fa.horaSaidaData=c.saidaData;if(c.turno)fa.turno=c.turno;});
   corrigir.forEach(c=>{const fa=DB.faltas.find(x=>x.id===c.existenteId);if(!fa)return;fa.horaEntrada=c.item.entrada||"";fa.horaSaida=c.item.saida||"";if(c.item.turno)fa.turno=c.item.turno;else delete fa.turno;const sd=(c.item.saidaData&&c.item.saidaData!==c.item.data)?c.item.saidaData:"";if(sd)fa.horaSaidaData=sd;else delete fa.horaSaidaData;});
   if(remover.length){const ids=new Set(remover.map(x=>x.id));DB.faltas=DB.faltas.filter(x=>!ids.has(x.id));}
   save("faltas");window._importMarcacoesPendente=null;window._importMarcacoesCompletar=null;window._importMarcacoesCorrigir=null;window._importMarcacoesRemover=null;closeModal();render();
-  toast(lista.length+" presença(s) importada(s), "+corrigir.length+" corrigida(s), "+remover.length+" removida(s), "+completar.length+" completada(s) com a saída.");
+  toast(lista.length+" presença(s) importada(s), "+corrigir.length+" corrigida(s), "+remover.length+" removida(s), "+completar.length+" completada(s).");
+}
+function aplicarSugestaoNoturno(){
+  if(!exigeEdicaoEscala())return;
+  const sug=window._sugestaoNoturno||[];if(!sug.length)return;
+  const turno=turnosCfg().find(t=>turnoViraDia(t)&&/not/i.test(t.nome))||turnosCfg().find(t=>turnoViraDia(t));
+  if(!turno){toast("Crie um turno que atravesse a meia-noite em ⚙ Turnos.");return;}
+  const datas=sug.flatMap(s=>s.datas).sort(),de=datas[0],ate=datas[datas.length-1];
+  let per=periodosEscala().find(p=>p.de<=de&&p.ate>=ate);
+  if(!per)per={id:uid(),nome:"Noturno (sugerido pelo relógio)",de,ate,dias:null,criado:Date.now(),grupos:{}};
+  const g={...periodoGrupos(per)};
+  Object.keys(g).forEach(t=>{g[t]=periodoIdsDoGrupo(per,t).filter(i=>!sug.some(s=>s.fid===i));});
+  g[turno.id]=[...new Set([...(g[turno.id]||[]),...sug.map(s=>s.fid)])];
+  periodoSalvar({...per,grupos:g});
+  window._sugestaoNoturno=null;window._importMarcacoesPendente=null;closeModal();render();
+  toast(sug.length+" pessoa(s) no "+turno.nome+" ("+fmt(per.de)+" a "+fmt(per.ate)+"). Importe a planilha de novo e o ponto delas será corrigido.");
+}
+function turnoEmAndamento(fid,data){
+  const t=turnoEspecialDoDia(fid,data);if(!t)return false;
+  const e=escalaCfg(),tolD=(e.tolDepois!=null&&e.tolDepois!==""&&+e.tolDepois!==180)?+e.tolDepois:300;
+  const n=new Date(),agora=diaNum(iso(n))*1440+n.getHours()*60+n.getMinutes();
+  const fim=diaNum(data)*1440+hmMin(t.ini)+duracaoTurnoMin(t);
+  return agora<=fim+tolD;
 }
 /* ---- tela da escala ---- */
 let _escDe="",_escAte="",_escBusca="",_escGrupo="",_escTodos=false,_escSoProblemas=true;
@@ -4941,7 +5000,7 @@ let _trEdit=[];
 function formTurnos(){
   _trEdit=turnosCfg().map(t=>({...t}));const e=escalaCfg();
   openModal(`<div class="modal-h"><h3>⚙ Turnos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Crie quantos turnos precisar (ex.: Turno A 14h–22h, Parada 24h...). Turno que termina antes de começar atravessa a meia-noite. A sigla é a que aparece na grade.</p><div id="tr_lista"></div><button class="btn btn-g btn-sm" onclick="trAdicionar()">＋ Novo turno</button>
-   <div class="row2" style="margin-top:14px"><div class="fg"><label>Tolerância antes do início (min) <span class="opt">p/ encaixar as batidas do relógio</span></label><input type="number" id="tr_tolA" value="${e.tolAntes!=null&&e.tolAntes!==""?e.tolAntes:120}"></div><div class="fg"><label>Tolerância depois do fim (min)</label><input type="number" id="tr_tolD" value="${e.tolDepois!=null&&e.tolDepois!==""?e.tolDepois:180}"></div></div></div>
+   <div class="row2" style="margin-top:14px"><div class="fg"><label>Tolerância antes do início (min) <span class="opt">p/ encaixar as batidas do relógio</span></label><input type="number" id="tr_tolA" value="${e.tolAntes!=null&&e.tolAntes!==""?e.tolAntes:120}"></div><div class="fg"><label>Tolerância depois do fim (min)</label><input type="number" id="tr_tolD" value="${e.tolDepois!=null&&e.tolDepois!==""&&+e.tolDepois!==180?e.tolDepois:300}"></div></div></div>
    <div class="modal-f"><button class="btn btn-g" style="margin-right:auto" onclick="trPadrao()">Restaurar padrão</button><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarTurnos()">Salvar</button></div>`);
   trRender();
 }
