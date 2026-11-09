@@ -149,6 +149,16 @@
 .frcard.area .frh{background:#2c4a63}
 .frsec.vazio{min-height:26px;padding:4px 12px;border-bottom:1px dashed #e6e9e3}.frsec.vazio h4{margin:0;font-weight:400}
 .frtit{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);margin:18px 0 8px}
+.escwrap{overflow:auto;max-height:68vh;border:1px solid #e3e8ef;border-radius:10px;background:#fff}
+.esctbl{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.esctbl th,.esctbl td{border-bottom:1px solid #eef0ec;border-right:1px solid #f3f4f2;padding:4px 7px;text-align:center;white-space:nowrap;vertical-align:middle}
+.esctbl th:first-child,.esctbl td:first-child{position:sticky;left:0;background:#fff;text-align:left;z-index:1;min-width:190px}
+.esctbl thead th{background:#f5f6f4;position:sticky;top:0;z-index:2}
+.esctbl thead th:first-child{z-index:3}
+.esctbl .hoje{background:#fffbe6}.esctbl .fds{background:#f7f8f6}
+.escchip{display:inline-block;min-width:36px;padding:2px 7px;border-radius:6px;color:#fff;font-weight:700;font-size:11px;cursor:pointer}
+.escchip.canc{opacity:.45;text-decoration:line-through}
+.escfolga{color:var(--muted);font-weight:700;cursor:pointer}.escvazio{color:#c4c9c0;cursor:pointer;font-size:16px}
 </style>
 </head>
 <body>
@@ -615,7 +625,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"frentes",ic:"🏗",l:"Frentes e áreas"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"reemb",ic:"＄",l:"Fluig"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"frentes",ic:"🏗",l:"Frentes e áreas"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"escala",ic:"🕒",l:"Escala de turnos"},{v:"reemb",ic:"＄",l:"Fluig"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento"&&m.v!=="aprovacoes").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -650,7 +660,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.27";
+const APP_VERSAO="v2026-10-02.28";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -785,7 +795,7 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
+function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,escala:vEscala,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
 function vPainel(){const ativos=DB.func.filter(efetivoObra);const sedeAtivosP=DB.func.filter(sedeAtiva);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];[...ativos,...sedeAtivosP].forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
@@ -1681,7 +1691,7 @@ function renderChamada(){
   const fimDeSemana=diaSemanaNum===0||diaSemanaNum===6;
   const feriado=ehFeriado(data);
   const naoExigeRegistro=fimDeSemana||feriado;
-  let rows=DB.func.filter(f=>{if(!efetivoObra(f)||f.regimePonto==="NaoBate"||f.regimePonto==="Manual"||afastadoNaData(f,data))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc<=data;}).map(f=>({f,s:statusDoDia(f.id,data)}));
+  let rows=DB.func.filter(f=>{if(!efetivoObra(f)||f.regimePonto==="NaoBate"||f.regimePonto==="Manual"||afastadoNaData(f,data)||turnoIdDoDia(f.id,data)==="FOLGA")return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc<=data;}).map(f=>({f,s:statusDoDia(f.id,data)}));
   if(naoExigeRegistro)rows=rows.filter(r=>r.s.tipo!=="Sem registro");
   const naoAdmitidos=DB.func.filter(f=>{if(!efetivoObra(f))return false;const dc=dataChegadaNestaObra(f.id).data;return dc&&dc>data;}).length;
   const naoBatem=DB.func.filter(f=>efetivoObra(f)&&(f.regimePonto==="NaoBate"||f.regimePonto==="Manual")).length;
@@ -1692,7 +1702,7 @@ function renderChamada(){
   const cEl=$("#pp_contagem");if(cEl)cEl.innerHTML=`${avisoDia}<span class="tag t-green">${rows.filter(r=>r.s.tipo==='Presença').length} presença</span> ${naoExigeRegistro?'':`<span class="tag ${semRegistro.length?'t-red':'t-green'}">${semRegistro.length} sem registro</span> `}<span class="tag t-amber">${rows.filter(r=>!['Presença','Sem registro'].includes(r.s.tipo)).length} outras ocorrências</span>${semSaida.length?` <span class="tag t-red">⚠ ${semSaida.length} sem saída</span>`:''}${naoAdmitidos?` <span class="tag t-grey">${naoAdmitidos} ainda não chegou nessa obra nessa data</span>`:''}${naoBatem?` <span class="tag t-grey">${naoBatem} não bate ponto</span>`:''}${afastados?` <span class="tag t-amber">${afastados} afastado(s)</span>`:''} <button class="btn btn-g btn-sm" onclick="formFeriado('${data}')">${feriado?"Editar feriado":"Marcar feriado"}</button>`;
   rows.sort((a,b)=>(a.s.tipo!=="Sem registro")-(b.s.tipo!=="Sem registro")||a.f.nome.localeCompare(b.f.nome));
   el.innerHTML=rows.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Função</th><th>Status</th><th>Entrada</th><th>Saída</th><th>Motivo</th><th></th></tr></thead><tbody>${
-    rows.map(({f,s})=>{const faltaSaida=s.tipo==="Presença"&&s.horaEntrada&&!s.horaSaida;return `<tr style="${faltaSaida?'background:#fbe7e4':''}"><td>${esc(f.nome)}${f.regimePonto==="Manual"?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}</td><td><small style="color:var(--muted)">${esc(f.funcao||"—")}</small></td><td><span class="tag ${s.cls}">${esc(s.tipo)}</span></td><td>${esc(s.horaEntrada||"—")}</td><td>${s.horaSaida?esc(s.horaSaida):faltaSaida?'<span class="tag t-red">⚠ faltando</span>':'—'}</td><td><small style="color:var(--muted)">${esc(s.motivo||"—")}</small></td><td><div class="rowact">${
+    rows.map(({f,s})=>{const faltaSaida=s.tipo==="Presença"&&s.horaEntrada&&!s.horaSaida;return `<tr style="${faltaSaida?'background:#fbe7e4':''}"><td>${esc(f.nome)}${f.regimePonto==="Manual"?' <span class="tag t-steel" style="font-size:10px">manual</span>':''}${chipTurno(f.id,data)}</td><td><small style="color:var(--muted)">${esc(f.funcao||"—")}</small></td><td><span class="tag ${s.cls}">${esc(s.tipo)}</span></td><td>${esc(s.horaEntrada||"—")}</td><td>${s.horaSaida?esc(s.horaSaida):faltaSaida?'<span class="tag t-red">⚠ faltando</span>':'—'}</td><td><small style="color:var(--muted)">${esc(s.motivo||"—")}</small></td><td><div class="rowact">${
       s.id?`<button class="btn btn-g btn-sm" onclick="delFalta('${s.id}')">Remover</button>${faltaSaida?`<button class="btn btn-a btn-sm" onclick="formCorrigirSaida('${s.id}')">＋ Saída</button>`:''}`
       :s.tipo==="Sem registro"?`<button class="btn btn-a btn-sm" onclick="marcarPresenca('${f.id}','${data}')">✓ Presença</button><button class="btn btn-g btn-sm" onclick="formFalta('${f.id}','${data}')">Outra ocorrência</button>`
       :`<small class="hint">gerenciar em Férias/Baixada</small>`
@@ -1704,7 +1714,7 @@ function vPonto(){main.innerHTML=`<div class="head"><div><h1>Ponto & Ocorrência
    <div class="panel"><h2><span class="t">✓ Chamada do dia <span id="pp_contagem"></span></span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">Data</span><input type="date" id="pp_data" value="${_chamadaData}" onchange="atualizarChamada()"><button class="btn btn-g btn-sm" onclick="$('#pp_data').value=iso(today());atualizarChamada()">Hoje</button><button class="btn btn-a btn-sm" onclick="marcarTodosPresentes()">✓ Marcar todos sem registro como presença</button><button class="btn btn-g btn-sm" onclick="exportChamadaExcel()">⭳ Exportar dia</button></div><div class="tblwrap" id="pp_chamada"></div><p class="hint" style="padding:0 18px 14px">Quem não tiver nada registrado nesse dia aparece como "Sem registro" — é o sinal pra ir atrás do motivo.</p></div>
    <div class="panel"><h2><span class="t">📆 Dia a dia do período</span></h2><div style="padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="hint">De</span><input type="date" id="pp_de" value="${_pontoPeriodo.de}" onchange="atualizarPeriodoPonto()"><span class="hint">até</span><input type="date" id="pp_ate" value="${_pontoPeriodo.ate}" onchange="atualizarPeriodoPonto()"><button class="btn btn-g btn-sm" onclick="resetPeriodoPonto()">Período atual (16 a 15)</button></div><p class="hint" style="padding:0 18px 10px">Um bloco por dia, só quem não é presença simples (falta, sem registro, baixada, férias, atestado...). Clica em "sem registro" pra marcar falta na hora.</p><div id="pp_grade"></div></div>
    <div class="panel"><h2><span class="t">📊 Resumo do período (total por pessoa)</span></h2><div class="tblwrap" id="pp_tbl"></div><p class="hint" style="padding:0 18px 14px">Referência p/ desconto de vale-alimentação — confirme a regra final com o RH.</p></div>
-   <div class="panel"><h2><span class="t">Faltas & ocorrências (lista)</span></h2><div class="tblwrap">${DB.faltas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Motivo</th><th>Reflexo</th><th></th></tr></thead><tbody>${DB.faltas.slice().sort((a,b)=>a.data<b.data?1:-1).map(f=>{const alojado=estadiaAtual(f.func);const tipo=f.tipo||"Falta";const descontaBaixada=tipo==="Falta";const cls=tipo==="Presença"?"t-green":tipo==="Falta"?"t-red":tipo==="Treinamento"?"t-steel":"t-amber";return `<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.data)}</td><td><span class="tag ${cls}">${esc(tipo)}</span></td><td><small style="color:var(--muted)">${esc(f.motivo||"—")}</small></td><td><small>${descontaBaixada?(alojado?"Alojado: −1 dia de baixada":"Local: tira café + passagem"):"Não desconta baixada"}</small></td><td><button class="btn btn-g btn-sm" onclick="delFalta('${f.id}')">Excluir</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma ocorrência registrada.</p></div>`}</div></div>
+   <div class="panel"><h2><span class="t">Faltas & ocorrências (lista)</span></h2><div class="tblwrap">${DB.faltas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Data</th><th>Tipo</th><th>Motivo</th><th>Reflexo</th><th></th></tr></thead><tbody>${DB.faltas.slice().sort((a,b)=>a.data<b.data?1:-1).map(f=>{const alojado=estadiaAtual(f.func);const tipo=f.tipo||"Falta";const descontaBaixada=tipo==="Falta";const cls=tipo==="Presença"?"t-green":tipo==="Falta"?"t-red":tipo==="Treinamento"?"t-steel":"t-amber";return `<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.data)}</td><td><span class="tag ${cls}">${esc(tipo)}</span></td><td><small style="color:var(--muted)">${esc(f.motivo||"—")}${f.turno&&turnoPorId(f.turno)?` <span class="tag t-grey" style="font-size:10px">${esc(siglaTurno(turnoPorId(f.turno)))}</span>`:""}</small></td><td><small>${descontaBaixada?(alojado?"Alojado: −1 dia de baixada":"Local: tira café + passagem"):"Não desconta baixada"}</small></td><td><button class="btn btn-g btn-sm" onclick="delFalta('${f.id}')">Excluir</button></td></tr>`;}).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma ocorrência registrada.</p></div>`}</div></div>
    <div class="panel"><h2><span class="t">Férias</span></h2><div class="tblwrap">${DB.ferias.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th>Dias</th><th></th></tr></thead><tbody>${DB.ferias.slice().sort((a,b)=>a.inicio<b.inicio?1:-1).map(f=>`<tr><td>${esc(funcNome(f.func))}</td><td>${fmt(f.inicio)}</td><td>${fmt(f.fim)}</td><td class="num">${diasEntre(pd(f.inicio),pd(f.fim))+1}</td><td><button class="btn btn-g btn-sm" onclick="delFerias('${f.id}')">Excluir</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhuma férias registrada.</p></div>`}</div></div>
    <div class="panel"><h2><span class="t">Baixada (períodos)</span></h2><div class="tblwrap">${DB.baixadas.length?`<table class="tbl"><thead><tr><th>Funcionário</th><th>Início</th><th>Fim</th><th>Dias</th><th>Obs</th><th></th></tr></thead><tbody>${DB.baixadas.slice().sort((a,b)=>a.dataInicio<b.dataInicio?1:-1).map(b=>`<tr><td>${esc(funcNome(b.func))}</td><td>${fmt(b.dataInicio)}</td><td>${b.dataFim?fmt(b.dataFim):"—"}</td><td class="num">${b.dias}</td><td>${esc(b.obs||"—")}</td><td><button class="btn btn-g btn-sm" onclick="delBaixada('${b.id}')">Excluir</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><p>Nenhum período registrado.</p></div>`}</div></div>`;renderResumoPeriodoPonto();renderGradeDiariaPonto();renderChamada();}
 function selectFunc(idsel){return `<input type="text" id="${idsel}_busca" placeholder="Buscar por nome..." oninput="filtrarSelectFunc('${idsel}_busca','${idsel}')" style="margin-bottom:6px"><select id="${idsel}">${porNome(DB.func.filter(ativo)).map(f=>`<option value="${f.id}">${esc(f.nome)}</option>`).join("")}</select>`;}
@@ -1758,82 +1768,6 @@ function salvarCorrecaoSaida(faltaId){
 function normalizaNome(s){return String(s==null?"":s).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();}
 const LOCAL_MARCACOES_OBRA="UNEM - NOVA LIMA / MG";
 function abrirImportarMarcacoes(){$("#marc_file").click();}
-function processarArquivoMarcacoes(e){
-  const file=e.target.files[0];if(!file)return;
-  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const wb=XLSX.read(ev.target.result,{type:"array"});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
-      const header=rows[0].map(h=>String(h).trim());
-      const idxNome=header.indexOf("Nome");
-      const idxLocal=header.indexOf("Descrição do local");
-      const idxData=header.indexOf("Data");
-      if(idxNome<0||idxData<0){toast("Não reconheci as colunas — confere se é o export certo de Marcações.");return;}
-      const porPessoaDia={};
-      for(let i=1;i<rows.length;i++){
-        const r=rows[i];if(!r[idxNome])continue;
-        if(idxLocal>=0&&r[idxLocal]!==LOCAL_MARCACOES_OBRA)continue;
-        const dataRaw=String(r[idxData]||"").trim();
-        const partesDataHora=dataRaw.split(" ");
-        const dataSoDia=partesDataHora[0];
-        const hora=partesDataHora[1]||"";
-        const partes=dataSoDia.split("/");
-        if(partes.length!==3)continue;
-        const dataIso=partes[2]+"-"+partes[1].padStart(2,"0")+"-"+partes[0].padStart(2,"0");
-        const chave=normalizaNome(r[idxNome])+"|"+dataIso;
-        if(!porPessoaDia[chave])porPessoaDia[chave]={nome:r[idxNome],data:dataIso,horas:[]};
-        if(hora)porPessoaDia[chave].horas.push(hora);
-      }
-      const lista=Object.values(porPessoaDia).map(item=>{
-        const paraMinutos=h=>{const p=h.split(":").map(Number);return(p[0]||0)*60+(p[1]||0);};
-        item.horas.sort((a,b)=>paraMinutos(a)-paraMinutos(b));
-        return{nome:item.nome,data:item.data,entrada:item.horas[0]||"",saida:item.horas.length>1?item.horas[item.horas.length-1]:"",qtdBatidas:item.horas.length};
-      });
-      mostrarResumoImportacaoMarcacoes(lista);
-    }catch(err){console.error(err);toast("Não consegui ler esse arquivo — confere se é um .xlsx válido.");}
-  };
-  reader.readAsArrayBuffer(file);
-  e.target.value="";
-}
-function mostrarResumoImportacaoMarcacoes(lista){
-  const funcNorm=DB.func.filter(efetivoObra).map(f=>({f,norm:normalizaNome(f.nome)}));
-  const encontrados=[],naoEncontrados=new Set(),jaTinhamRegistro=[],vaoCompletar=[];
-  lista.forEach(item=>{
-    const match=funcNorm.find(x=>x.norm===normalizaNome(item.nome));
-    if(!match){naoEncontrados.add(item.nome);return;}
-    const existente=DB.faltas.find(fa=>fa.func===match.f.id&&fa.data===item.data);
-    if(existente){
-      if(existente.tipo==="Presença"&&!existente.horaSaida&&item.saida){
-        vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida});
-      }else{
-        jaTinhamRegistro.push({nome:item.nome,data:item.data});
-      }
-      return;
-    }
-    encontrados.push({fid:match.f.id,nome:match.f.nome,data:item.data,entrada:item.entrada,saida:item.saida});
-  });
-  const semSaida=encontrados.filter(x=>x.entrada&&!x.saida);
-  window._importMarcacoesPendente=encontrados;
-  window._importMarcacoesCompletar=vaoCompletar;
-  openModal(`<div class="modal-h"><h3>Importar marcações</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
-   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat steel"><div class="n">${vaoCompletar.length}</div><div class="l">Vão completar saída que faltava</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro completo (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
-   ${vaoCompletar.length?`<p class="hint" style="color:var(--steel);margin-bottom:10px">🔄 Esses já tinham Presença lançada sem saída, e agora a planilha trouxe a saída — vou completar: ${vaoCompletar.map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")}</p>`:""}
-   ${semSaida.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px">⚠ Só bateram entrada, sem saída registrada (esqueceram de bater ou saíram sem avisar): ${semSaida.map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")}</p>`:""}
-   ${naoEncontrados.size?`<p class="hint" style="color:var(--red);margin-bottom:10px">Nomes que não bateram com ninguém ativo cadastrado (confere grafia/cadastro): ${[...naoEncontrados].map(n=>esc(n)).join(", ")}</p>`:""}
-   <p class="hint">Isso marca <b>Presença</b> (com hora de entrada/saída, quando tiver) nos dias em que a pessoa bateu ponto e ainda não tinha nenhum registro naquele dia (não mexe em Falta/Atestado/Baixada/Férias já lançados). Se já tinha Presença sem saída, completa. Quem ficou sem saída fica marcado pra você revisar depois.</p>
-   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" ${(encontrados.length||vaoCompletar.length)?"":"disabled"} onclick="confirmarImportacaoMarcacoes()">Confirmar (${encontrados.length} novas + ${vaoCompletar.length} completadas)</button></div>`);
-}
-function confirmarImportacaoMarcacoes(){
-  if(!confirmarSenhaSalvar())return;
-  const lista=window._importMarcacoesPendente||[];
-  const completar=window._importMarcacoesCompletar||[];
-  lista.forEach(item=>{DB.faltas.push({id:uid(),func:item.fid,data:item.data,tipo:"Presença",horaEntrada:item.entrada||"",horaSaida:item.saida||"",motivo:"Importado de marcações"});});
-  completar.forEach(item=>{const fa=DB.faltas.find(x=>x.id===item.existenteId);if(fa)fa.horaSaida=item.saida;});
-  save("faltas");window._importMarcacoesPendente=null;window._importMarcacoesCompletar=null;closeModal();render();toast(lista.length+" presenças importadas, "+completar.length+" completadas com a saída.");
-}
 const REGIMES_PONTO={"Normal":"Normal — bate ponto no tablet","NaoBate":"Não bate ponto (cargo de confiança)","Manual":"Bate ponto manualmente"};
 function abrirGerenciarRegimePonto(){
   const list=porNome(DB.func.filter(efetivoObra));
@@ -4641,6 +4575,406 @@ function copiarFrentesTexto(){
   const ok=()=>toast("Copiado — é só colar no WhatsApp.");
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok).catch(()=>prompt("Copie o texto:",t));else prompt("Copie o texto:",t);
 }
+/* ===== ESCALA DE TURNOS (Normal, Diurno 12h, Noturno 12h e turnos extras) ===== */
+const TURNOS_PADRAO=[{id:"normal",nome:"Normal",sigla:"NOR",ini:"07:00",fim:"17:00",cor:"#5b7a8c"},{id:"diurno12",nome:"Diurno 12h",sigla:"D12",ini:"06:00",fim:"18:00",cor:"#d99a1e"},{id:"noturno12",nome:"Noturno 12h",sigla:"N12",ini:"18:00",fim:"06:00",cor:"#3b4a8f"}];
+function escalaCfg(){const e=DB.cfg.escala;return(e&&typeof e==="object")?e:{};}
+function turnosCfg(){const t=escalaCfg().turnos;const l=Array.isArray(t)?t.filter(x=>x&&x.id):[];return l.length?l:TURNOS_PADRAO;}
+function turnoPorId(id){return turnosCfg().find(t=>t.id===id)||null;}
+function hmMin(h){const p=String(h||"").split(":").map(Number);return(p[0]||0)*60+(p[1]||0);}
+function minHm(m){m=((Math.round(m)%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+function duracaoTurnoMin(t){const i=hmMin(t.ini),f=hmMin(t.fim);return f>i?f-i:f+1440-i;}
+function turnoViraDia(t){return hmMin(t.fim)<=hmMin(t.ini);}
+function siglaTurno(t){return(t&&(t.sigla||String(t.nome||"").slice(0,3).toUpperCase()))||"?";}
+function blocosEscala(){const b=escalaCfg().blocos;return Array.isArray(b)?b.filter(x=>x&&x.func&&x.de&&x.ate):[];}
+function turnoIdDoDia(fid,data){let r="",t=-1;for(const b of blocosEscala()){if(b.func===fid&&b.de<=data&&b.ate>=data&&(b.criado||0)>=t){r=b.turno||"";t=b.criado||0;}}return r;}
+function turnoEspecialDoDia(fid,data){const id=turnoIdDoDia(fid,data);return(id&&id!=="FOLGA"&&turnoPorId(id))?turnoPorId(id):null;}
+function cancelamentosEscala(){const c=escalaCfg().cancelados;return Array.isArray(c)?c.filter(Boolean):[];}
+function turnoCancelado(data,turnoId){return cancelamentosEscala().find(c=>c.data===data&&c.turno===turnoId)||null;}
+function _escalaSalvar(parte){
+  const e={...escalaCfg(),...parte};const lim=iso(_somaDias(today(),-200));
+  e.blocos=(Array.isArray(e.blocos)?e.blocos:[]).filter(b=>b&&b.ate>=lim);
+  e.cancelados=(Array.isArray(e.cancelados)?e.cancelados:[]).filter(c=>c&&c.data>=lim);
+  DB.cfg.escala=e;save("cfg");
+}
+function escalaAtribuir(fids,de,ate,turnoId,dias){
+  const d0=pd(de),d1=pd(ate);if(!d0||!d1||d1<d0)return 0;
+  const criado=Date.now(),novos=[];
+  fids.forEach(fid=>{
+    let ini=null,ult=null;
+    for(let d=new Date(d0);d<=d1;d=_somaDias(d,1)){
+      const ok=!dias||dias.includes(d.getDay());
+      if(ok){if(!ini)ini=iso(d);ult=iso(d);}
+      else if(ini){novos.push({id:uid(),func:fid,de:ini,ate:ult,turno:turnoId,criado});ini=null;}
+    }
+    if(ini)novos.push({id:uid(),func:fid,de:ini,ate:ult,turno:turnoId,criado});
+  });
+  _escalaSalvar({blocos:[...blocosEscala(),...novos]});return novos.length;
+}
+function diaNum(isoStr){const p=String(isoStr).split("-").map(Number);return Math.round(Date.UTC(p[0],(p[1]||1)-1,p[2]||1)/864e5);}
+function horasDoRegistro(r){
+  if(!r||!r.horaEntrada||!r.horaSaida)return null;
+  const e=hmMin(r.horaEntrada),s=hmMin(r.horaSaida);let m;
+  if(r.horaSaidaData&&r.horaSaidaData>r.data)m=(diaNum(r.horaSaidaData)-diaNum(r.data))*1440+s-e;else{m=s-e;if(m<0)m+=1440;}
+  return m/60;
+}
+function statusEscalaDia(fid,data){
+  const t=turnoEspecialDoDia(fid,data);if(!t)return null;
+  const canc=turnoCancelado(data,t.id),st=statusDoDia(fid,data);
+  const rec=st.id?DB.faltas.find(x=>x.id===st.id):null,prev=duracaoTurnoMin(t)/60,h=horasDoRegistro(rec);
+  let flag="ok",txt="ok";
+  if(st.tipo==="Sem registro"){flag=canc?"cancelado":"sem";txt=canc?"turno cancelado — falta abonar":"sem registro";}
+  else if(st.tipo==="Presença"){
+    if(!rec||!rec.horaEntrada){flag="manual";txt="presença sem horário";}
+    else if(!rec.horaSaida){flag="so_entrada";txt="só entrada (sem saída)";}
+    else if(h!=null&&Math.abs(h-prev)>0.75){flag="horas";txt="horas fora do esperado ("+h.toFixed(1).replace(".",",")+"h de "+prev.toFixed(0)+"h)";}
+  }else{flag="ocorrencia";txt=st.tipo;}
+  return{turno:t,st,rec,horas:h,prev,flag,txt,cancelado:!!canc};
+}
+function chipTurno(fid,data){
+  const id=turnoIdDoDia(fid,data);if(!id)return"";
+  if(id==="FOLGA")return' <span class="tag t-grey" style="font-size:10px">folga</span>';
+  const t=turnoPorId(id);if(!t)return"";
+  return ` <span class="tag" style="font-size:10px;background:${esc(t.cor||"#5b7a8c")};color:#fff">${esc(siglaTurno(t))}</span>`;
+}
+function _fmtDiaCurto(d){const x=pd(d);return x?DIAS_ABREV3[x.getDay()]+" "+_ddmm(x):"—";}
+/* ---- marcações do relógio encaixadas no turno ---- */
+function agruparMarcacoes(marcas){
+  const funcNorm=DB.func.filter(efetivoObra).map(f=>({f,norm:normalizaNome(f.nome)}));
+  const e=escalaCfg(),tolA=(e.tolAntes!=null&&e.tolAntes!=="")?+e.tolAntes:120,tolD=(e.tolDepois!=null&&e.tolDepois!=="")?+e.tolDepois:180;
+  const itens=[],foraTurno=[];
+  Object.values(marcas).forEach(p=>{
+    const match=funcNorm.find(x=>x.norm===normalizaNome(p.nome));
+    const todas=p.marcas.map(m=>({...m,abs:diaNum(m.data)*1440+hmMin(m.hora),usada:false})).sort((a,b)=>a.abs-b.abs);
+    const datasComItemTurno=new Set();
+    if(match&&todas.length){
+      const cand=new Set();new Set(todas.map(m=>m.data)).forEach(d=>{cand.add(d);cand.add(iso(_somaDias(pd(d),-1)));});
+      [...cand].sort().forEach(D=>{
+        const t=turnoEspecialDoDia(match.f.id,D);if(!t)return;
+        const ini=diaNum(D)*1440+hmMin(t.ini),fim=ini+duracaoTurnoMin(t);
+        const dentro=todas.filter(m=>!m.usada&&m.abs>=ini-tolA&&m.abs<=fim+tolD);
+        if(!dentro.length)return;
+        dentro.forEach(m=>m.usada=true);
+        const a=dentro[0],z=dentro[dentro.length-1];
+        datasComItemTurno.add(D);
+        itens.push({nome:p.nome,fid:match.f.id,data:D,entrada:a.hora,saida:dentro.length>1?z.hora:"",saidaData:dentro.length>1?z.data:"",qtdBatidas:dentro.length,turno:t.id,consumidas:dentro.map(m=>({data:m.data,hora:m.hora}))});
+      });
+    }
+    const porDia={};todas.filter(m=>!m.usada).forEach(m=>{(porDia[m.data]=porDia[m.data]||[]).push(m.hora);});
+    Object.keys(porDia).forEach(d=>{
+      const hs=porDia[d].sort((a,b)=>hmMin(a)-hmMin(b));
+      if(datasComItemTurno.has(d)){hs.forEach(h=>foraTurno.push({nome:p.nome,data:d,hora:h}));return;}
+      itens.push({nome:p.nome,data:d,entrada:hs[0]||"",saida:hs.length>1?hs[hs.length-1]:"",qtdBatidas:hs.length});
+    });
+  });
+  return{itens,foraTurno};
+}
+function processarArquivoMarcacoes(e){
+  const file=e.target.files[0];if(!file)return;
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      const header=rows[0].map(h=>String(h).trim());
+      const idxNome=header.indexOf("Nome"),idxLocal=header.indexOf("Descrição do local"),idxData=header.indexOf("Data");
+      if(idxNome<0||idxData<0){toast("Não reconheci as colunas — confere se é o export certo de Marcações.");return;}
+      const marcas={};
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];if(!r[idxNome])continue;
+        if(idxLocal>=0&&r[idxLocal]!==LOCAL_MARCACOES_OBRA)continue;
+        const partesDataHora=String(r[idxData]||"").trim().split(" ");
+        const partes=partesDataHora[0].split("/"),hora=partesDataHora[1]||"";
+        if(partes.length!==3)continue;
+        const dataIso=partes[2]+"-"+partes[1].padStart(2,"0")+"-"+partes[0].padStart(2,"0");
+        const chave=normalizaNome(r[idxNome]);
+        if(!marcas[chave])marcas[chave]={nome:r[idxNome],marcas:[]};
+        if(hora)marcas[chave].marcas.push({data:dataIso,hora:hora.slice(0,5)});
+      }
+      const g=agruparMarcacoes(marcas);
+      mostrarResumoImportacaoMarcacoes(g.itens,g.foraTurno);
+    }catch(err){console.error(err);toast("Não consegui ler esse arquivo — confere se é um .xlsx válido.");}
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value="";
+}
+function autoImportado(fa){return fa&&fa.tipo==="Presença"&&fa.motivo==="Importado de marcações";}
+function mostrarResumoImportacaoMarcacoes(lista,foraTurno){
+  foraTurno=foraTurno||[];
+  const funcNorm=DB.func.filter(efetivoObra).map(f=>({f,norm:normalizaNome(f.nome)}));
+  const consumidas=new Set();lista.forEach(it=>{if(it.turno&&it.fid)(it.consumidas||[]).forEach(m=>consumidas.add(it.fid+"|"+m.data+"|"+m.hora));});
+  const tocada=fa=>consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaEntrada)||(fa.horaSaida&&consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaSaida));
+  const encontrados=[],naoEncontrados=new Set(),jaTinhamRegistro=[],vaoCompletar=[],vaoCorrigir=[],chaves={};
+  const saidaDataDe=it=>(it.saidaData&&it.saidaData!==it.data)?it.saidaData:"";
+  lista.forEach(item=>{
+    const match=item.fid?{f:DB.func.find(x=>x.id===item.fid)}:funcNorm.find(x=>x.norm===normalizaNome(item.nome));
+    if(!match||!match.f){naoEncontrados.add(item.nome);return;}
+    chaves[match.f.id+"|"+item.data]=item;
+    const existente=DB.faltas.find(fa=>fa.func===match.f.id&&fa.data===item.data);
+    if(existente){
+      const difere=(existente.horaEntrada||"")!==(item.entrada||"")||(existente.horaSaida||"")!==(item.saida||"")||(existente.turno||"")!==(item.turno||"")||(existente.horaSaidaData||"")!==saidaDataDe(item);
+      if(autoImportado(existente)&&difere&&(item.turno||tocada(existente))){vaoCorrigir.push({existenteId:existente.id,nome:match.f.nome,data:item.data,item});return;}
+      if(existente.tipo==="Presença"&&!existente.horaSaida&&item.saida&&!item.turno){vaoCompletar.push({existenteId:existente.id,nome:match.f.nome,data:item.data,saida:item.saida});}
+      else{jaTinhamRegistro.push({nome:item.nome,data:item.data});}
+      return;
+    }
+    encontrados.push({fid:match.f.id,nome:match.f.nome,data:item.data,entrada:item.entrada,saida:item.saida,saidaData:saidaDataDe(item),turno:item.turno||""});
+  });
+  const fidsComTurno=new Set(lista.filter(i=>i.turno).map(i=>i.fid));
+  const vaoRemover=[];
+  DB.faltas.forEach(fa=>{
+    if(!fidsComTurno.has(fa.func)||!autoImportado(fa)||fa.turno||!fa.horaEntrada)return;
+    if(chaves[fa.func+"|"+fa.data])return;
+    if(consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaEntrada)&&(!fa.horaSaida||consumidas.has(fa.func+"|"+fa.data+"|"+fa.horaSaida)))vaoRemover.push({id:fa.id,nome:funcNome(fa.func),data:fa.data});
+  });
+  const encaixadas=lista.filter(i=>i.turno).length,semSaida=encontrados.filter(x=>x.entrada&&!x.saida);
+  window._importMarcacoesPendente=encontrados;window._importMarcacoesCompletar=vaoCompletar;window._importMarcacoesCorrigir=vaoCorrigir;window._importMarcacoesRemover=vaoRemover;
+  const nomes=(l,n)=>l.slice(0,n||14).map(x=>esc(x.nome)+" ("+fmt(x.data)+")").join(", ")+(l.length>(n||14)?" … +"+(l.length-(n||14)):"");
+  openModal(`<div class="modal-h"><h3>Importar marcações</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="grid stats" style="margin-bottom:14px"><div class="stat green"><div class="n">${encontrados.length}</div><div class="l">Vão virar Presença</div></div><div class="stat steel"><div class="n">${encaixadas}</div><div class="l">Batidas encaixadas num turno da escala</div></div><div class="stat amber"><div class="n">${vaoCorrigir.length}</div><div class="l">Vão corrigir (importação anterior distorcida)</div></div><div class="stat red"><div class="n">${vaoRemover.length}</div><div class="l">Vão remover (batida do turno no dia errado)</div></div><div class="stat"><div class="n">${vaoCompletar.length}</div><div class="l">Vão completar saída</div></div><div class="stat amber"><div class="n">${semSaida.length}</div><div class="l">Sem batida de saída</div></div><div class="stat"><div class="n">${jaTinhamRegistro.length}</div><div class="l">Já tinham registro (ignorados)</div></div><div class="stat red"><div class="n">${naoEncontrados.size}</div><div class="l">Nome não encontrado</div></div></div>
+   ${vaoCorrigir.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px"><b>Vão ser corrigidos</b> (foram importados antes com o horário cortado no dia): ${nomes(vaoCorrigir)}</p>`:""}
+   ${vaoRemover.length?`<p class="hint" style="color:var(--red);margin-bottom:10px"><b>Vão ser removidos</b> (eram só a batida de saída de um turno que virou o dia): ${nomes(vaoRemover)}</p>`:""}
+   ${vaoCompletar.length?`<p class="hint" style="color:var(--steel);margin-bottom:10px">Já tinham Presença sem saída e a planilha trouxe a saída — vou completar: ${nomes(vaoCompletar)}</p>`:""}
+   ${semSaida.length?`<p class="hint" style="color:var(--amber-d);margin-bottom:10px">Só bateram entrada (esqueceram de bater ou saíram sem avisar): ${nomes(semSaida)}</p>`:""}
+   ${foraTurno.length?`<p class="hint" style="margin-bottom:10px">${foraTurno.length} batida(s) caíram fora da janela do turno e foram ignoradas: ${foraTurno.slice(0,8).map(x=>esc(x.nome)+" "+fmt(x.data)+" "+x.hora).join(", ")}${foraTurno.length>8?" …":""}</p>`:""}
+   ${naoEncontrados.size?`<p class="hint" style="color:var(--red);margin-bottom:10px">Nomes que não bateram com ninguém ativo cadastrado (confere grafia/cadastro): ${[...naoEncontrados].map(n=>esc(n)).join(", ")}</p>`:""}
+   <p class="hint">Quem tem <b>turno na escala</b> (ex.: noturno 18h–6h) tem as batidas encaixadas no turno: o registro fica no dia em que o turno <b>começou</b>, com a saída no dia seguinte. Quem não tem turno segue a regra de sempre (primeira e última batida do dia). Só mexo em registros criados por importação; Falta, Atestado, Abono, Baixada e Férias lançados à mão nunca são alterados.</p>
+   </div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" ${(encontrados.length||vaoCompletar.length||vaoCorrigir.length||vaoRemover.length)?"":"disabled"} onclick="confirmarImportacaoMarcacoes()">Importar</button></div>`);
+}
+function confirmarImportacaoMarcacoes(){
+  if(!confirmarSenhaSalvar())return;
+  const lista=window._importMarcacoesPendente||[],completar=window._importMarcacoesCompletar||[],corrigir=window._importMarcacoesCorrigir||[],remover=window._importMarcacoesRemover||[];
+  lista.forEach(item=>{const r={id:uid(),func:item.fid,data:item.data,tipo:"Presença",horaEntrada:item.entrada||"",horaSaida:item.saida||"",motivo:"Importado de marcações"};if(item.turno)r.turno=item.turno;if(item.saidaData)r.horaSaidaData=item.saidaData;DB.faltas.push(r);});
+  completar.forEach(item=>{const fa=DB.faltas.find(x=>x.id===item.existenteId);if(fa)fa.horaSaida=item.saida;});
+  corrigir.forEach(c=>{const fa=DB.faltas.find(x=>x.id===c.existenteId);if(!fa)return;fa.horaEntrada=c.item.entrada||"";fa.horaSaida=c.item.saida||"";if(c.item.turno)fa.turno=c.item.turno;else delete fa.turno;const sd=(c.item.saidaData&&c.item.saidaData!==c.item.data)?c.item.saidaData:"";if(sd)fa.horaSaidaData=sd;else delete fa.horaSaidaData;});
+  if(remover.length){const ids=new Set(remover.map(x=>x.id));DB.faltas=DB.faltas.filter(x=>!ids.has(x.id));}
+  save("faltas");window._importMarcacoesPendente=null;window._importMarcacoesCompletar=null;window._importMarcacoesCorrigir=null;window._importMarcacoesRemover=null;closeModal();render();
+  toast(lista.length+" presença(s) importada(s), "+corrigir.length+" corrigida(s), "+remover.length+" removida(s), "+completar.length+" completada(s) com a saída.");
+}
+/* ---- tela da escala ---- */
+let _escDe="",_escAte="",_escBusca="",_escGrupo="",_escTodos=false,_escSoProblemas=true;
+function escPeriodoPadrao(){const seg=_segundaDe(today());return{de:iso(seg),ate:iso(_somaDias(seg,6))};}
+function escDias(){const out=[],a=pd(_escDe),b=pd(_escAte);if(!a||!b||b<a)return out;let n=0;for(let d=new Date(a);d<=b&&n<62;d=_somaDias(d,1),n++)out.push(iso(d));return out;}
+function escMuda(n){const a=pd(_escDe),b=pd(_escAte),len=Math.round((b-a)/864e5)+1;_escDe=iso(_somaDias(a,n*len));_escAte=iso(_somaDias(b,n*len));render();}
+function escHoje(){const p=escPeriodoPadrao();_escDe=p.de;_escAte=p.ate;render();}
+function _escCor(t){return esc((t&&t.cor)||"#5b7a8c");}
+function vEscala(){
+  if(!_escDe||!_escAte){const p=escPeriodoPadrao();_escDe=p.de;_escAte=p.ate;}
+  const dias=escDias(),hoje=iso(today()),turnos=turnosCfg();
+  const efet=DB.func.filter(efetivoObra).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+  const q=normalizaNome(_escBusca);
+  const pessoas=efet.filter(f=>(_escTodos||dias.some(d=>turnoIdDoDia(f.id,d)!==""))&&(!q||normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))&&(!_escGrupo||gruposDoFunc(f.id).some(x=>x.frente.id===_escGrupo)));
+  const idxF=new Map();DB.faltas.forEach(r=>{if(r.data>=_escDe&&r.data<=_escAte)idxF.set(r.func+"|"+r.data,r);});
+  const cel=(f,d)=>{
+    const id=turnoIdDoDia(f.id,d);const fds=[0,6].includes(pd(d).getDay());
+    let inner;
+    if(!id)inner=`<span class="escvazio" onclick="celulaEscala('${f.id}','${d}')">·</span>`;
+    else if(id==="FOLGA")inner=`<span class="escfolga" onclick="celulaEscala('${f.id}','${d}')">F</span>`;
+    else{const t=turnoPorId(id);const canc=t&&turnoCancelado(d,id);const r=idxF.get(f.id+"|"+d);
+      inner=t?`<span class="escchip ${canc?"canc":""}" style="background:${_escCor(t)}" title="${esc(t.nome)} ${t.ini}–${t.fim}${canc?" · cancelado":""}" onclick="celulaEscala('${f.id}','${d}')">${esc(siglaTurno(t))}</span>${r&&r.tipo==="Abono"?'<div style="font-size:9px;color:var(--green)">✓ abono</div>':(r&&r.tipo==="Presença"?'<div style="font-size:9px;color:var(--muted)">'+esc(r.horaEntrada||"")+'</div>':"")}`:`<span class="escvazio" title="turno removido">?</span>`;}
+    return `<td class="${d===hoje?"hoje":""} ${fds?"fds":""}">${inner}</td>`;
+  };
+  const linhas=pessoas.map(f=>`<tr><td><b>${esc(f.nome)}</b><br><small style="color:var(--muted)">${esc(f.funcao||"—")}${gruposDoFunc(f.id).map(x=>" · "+esc(x.frente.nome)).join("")}</small></td>${dias.map(d=>cel(f,d)).join("")}</tr>`).join("");
+  const totais=turnos.map(t=>`<tr><td style="font-size:11.5px"><span class="escchip" style="background:${_escCor(t)};cursor:default">${esc(siglaTurno(t))}</span> ${esc(t.nome)} <small style="color:var(--muted)">escalados</small></td>${dias.map(d=>{const n=efet.filter(f=>turnoIdDoDia(f.id,d)===t.id).length;const c=turnoCancelado(d,t.id);return `<td style="font-weight:700;${c?"text-decoration:line-through;color:var(--red)":""}">${n||""}${c?'<div style="font-size:9px;font-weight:400">cancelado</div>':""}</td>`;}).join("")}</tr>`).join("");
+  const cab=dias.map(d=>{const dt=pd(d),fds=[0,6].includes(dt.getDay());return `<th class="${d===hoje?"hoje":""} ${fds?"fds":""}">${DIAS_ABREV3[dt.getDay()]}<br>${_ddmm(dt)}<br><span style="cursor:pointer;opacity:.7" title="Cancelar turno deste dia e abonar" onclick="formCancelarTurno('${d}')">🚫</span></th>`;}).join("");
+  const conf=[];
+  pessoas.forEach(f=>dias.forEach(d=>{if(d>hoje)return;const s=statusEscalaDia(f.id,d);if(s)conf.push({f,d,s});}));
+  const prob=conf.filter(x=>!["ok","ocorrencia"].includes(x.s.flag));
+  const cont=k=>conf.filter(x=>x.s.flag===k).length;
+  const lista=(_escSoProblemas?prob:conf).sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR")).slice(0,160);
+  const tagFlag={ok:"t-green",sem:"t-red",so_entrada:"t-amber",horas:"t-amber",cancelado:"t-red",manual:"t-grey",ocorrencia:"t-steel"};
+  main.innerHTML=`<div class="head"><div><h1>🕒 Escala de turnos</h1><p>Quem trabalha em qual turno, dia a dia. Quem não aparece aqui segue o turno normal. Turno cancelado vira abono em lote, e o relógio é conferido contra a escala.</p></div><div class="acts"><button class="btn btn-g" onclick="formTurnos()">⚙ Turnos</button><button class="btn btn-g" onclick="exportEscalaExcel()">⭳ Excel</button><button class="btn btn-g" onclick="formCancelarTurno('')">🚫 Cancelar turno / abonar</button><button class="btn btn-a" onclick="formAtribuirTurno()">＋ Atribuir turno</button></div></div>
+   <div class="toolbar"><button class="btn btn-g btn-sm" onclick="escMuda(-1)">◀</button><input type="date" value="${_escDe}" onchange="_escDe=this.value;render()"><span class="hint">até</span><input type="date" value="${_escAte}" onchange="_escAte=this.value;render()"><button class="btn btn-g btn-sm" onclick="escMuda(1)">▶</button><button class="btn btn-g btn-sm" onclick="escHoje()">Semana atual</button>
+    <input type="search" placeholder="Buscar nome ou função..." value="${esc(_escBusca)}" oninput="_escBusca=this.value;vEscalaTabela()" style="min-width:180px"><select onchange="_escGrupo=this.value;render()"><option value="">Todas as frentes e áreas</option>${optsGrupos(_escGrupo)}</select><label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escTodos?"checked":""} onchange="_escTodos=this.checked;render()">mostrar todo o efetivo</label></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">${pessoas.filter(f=>dias.some(d=>turnoEspecialDoDia(f.id,d))).length}</div><div class="l">Pessoas em turno especial</div></div><div class="stat red"><div class="n">${cont("sem")+cont("cancelado")}</div><div class="l">Sem registro / cancelado sem abono</div></div><div class="stat amber"><div class="n">${cont("so_entrada")}</div><div class="l">Só entrada (sem saída)</div></div><div class="stat amber"><div class="n">${cont("horas")}</div><div class="l">Horas fora do esperado</div></div></div>
+   <div class="escwrap" id="esc_wrap"><table class="esctbl"><thead><tr><th>Pessoa</th>${cab}</tr></thead><tbody>${linhas||`<tr><td colspan="${dias.length+1}" style="text-align:center;padding:18px;color:var(--muted)">Ninguém em turno especial neste período. Use ＋ Atribuir turno.</td></tr>`}${totais}</tbody></table></div>
+   <div class="panel" style="margin-top:16px"><h2><span class="t">Conferência: escala × relógio <span class="tag t-grey">${prob.length} ponto(s) a ver</span></span><label style="font-size:12.5px;font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escSoProblemas?"checked":""} onchange="_escSoProblemas=this.checked;render()">só o que precisa de atenção</label></h2><div class="tblwrap">${lista.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Pessoa</th><th>Dia</th><th>Turno</th><th>Previsto</th><th>Marcado</th><th>Horas</th><th>Situação</th><th></th></tr></thead><tbody>${lista.map(({f,d,s})=>`<tr><td>${esc(f.nome)}</td><td>${_fmtDiaCurto(d)}</td><td><span class="escchip" style="background:${_escCor(s.turno)};cursor:default">${esc(siglaTurno(s.turno))}</span></td><td>${s.turno.ini}–${s.turno.fim}</td><td>${s.rec&&s.rec.horaEntrada?esc(s.rec.horaEntrada)+" → "+(s.rec.horaSaida?esc(s.rec.horaSaida)+(s.rec.horaSaidaData&&s.rec.horaSaidaData>d?" (+1)":""):"?"):"—"}</td><td class="num">${s.horas!=null?s.horas.toFixed(1).replace(".",","):"—"}</td><td><span class="tag ${tagFlag[s.flag]||"t-grey"}">${esc(s.txt)}</span></td><td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="formAjustePonto('${f.id}','${d}')">Ajustar</button> <button class="btn btn-g btn-sm" onclick="formCancelarTurno('${d}','${s.turno.id}')">Abonar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><div class="big">✅</div><p>${conf.length?"Nada a conferir: tudo bate com a escala.":"Sem dias de turno especial até hoje neste período."}</p></div>`}</div></div>`;
+}
+function vEscalaTabela(){render();setTimeout(()=>{const i=document.querySelector('.toolbar input[type=search]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},0);}
+/* ---- atribuir turno em lote ---- */
+let _atSel=new Set();
+function formAtribuirTurno(){
+  _atSel=new Set();
+  const funcoes=[...new Set(DB.func.filter(efetivoObra).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  openModal(`<div class="modal-h"><h3>＋ Atribuir turno</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="row3"><div class="fg"><label>Turno *</label><select id="at_turno">${turnosCfg().map(t=>`<option value="${esc(t.id)}">${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}<option value="FOLGA">Folga</option><option value="">Voltar ao normal (tirar da escala)</option></select></div><div class="fg"><label>De *</label><input type="date" id="at_de" value="${_escDe}"></div><div class="fg"><label>Até *</label><input type="date" id="at_ate" value="${_escAte}"></div></div>
+   <div class="fg"><label>Dias da semana</label><div style="display:flex;gap:10px;flex-wrap:wrap">${[1,2,3,4,5,6,0].map(n=>`<label style="font-size:12.5px;display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" class="at_dia" value="${n}" checked style="width:auto">${DIAS_ABREV3[n]}</label>`).join("")}</div></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><input id="at_busca" type="search" placeholder="Buscar nome ou função..." oninput="atRender()" style="flex:1;min-width:160px"><select id="at_func" onchange="atRender()"><option value="">Todas as funções</option>${funcoes.map(x=>`<option>${esc(x)}</option>`).join("")}</select><select id="at_grupo" onchange="atRender()"><option value="">Todas as frentes e áreas</option>${optsGrupos("")}</select><button class="btn btn-g btn-sm" onclick="atTodos(true)">Marcar todos os visíveis</button><button class="btn btn-g btn-sm" onclick="atTodos(false)">Limpar</button></div>
+   <div id="at_lista" style="max-height:34vh;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:4px 10px"></div><div id="at_resumo" class="hint" style="margin-top:6px"></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarAtribuirTurno()">Aplicar</button></div>`);
+  atRender();
+}
+function _atVisiveis(){
+  const q=normalizaNome($("#at_busca").value),fn=$("#at_func").value,g=$("#at_grupo").value;
+  return DB.func.filter(efetivoObra).filter(f=>(!fn||f.funcao===fn)&&(!q||normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))&&(!g||gruposDoFunc(f.id).some(x=>x.frente.id===g))).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+}
+function atRender(){
+  const el=$("#at_lista");if(!el)return;const l=_atVisiveis();
+  el.innerHTML=l.length?l.slice(0,250).map(f=>`<label style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" class="at_chk" value="${f.id}" ${_atSel.has(f.id)?"checked":""} onchange="atMarca('${f.id}',this.checked)" style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(f.nome)}</b> <small style="color:var(--muted)">${esc(f.funcao||"")}${gruposDoFunc(f.id).map(x=>" · "+esc(x.frente.nome)).join("")}</small></span></label>`).join(""):'<p class="hint" style="padding:8px">Ninguém com esse filtro.</p>';
+  atResumo();
+}
+function atMarca(fid,on){if(on)_atSel.add(fid);else _atSel.delete(fid);atResumo();}
+function atTodos(on){_atVisiveis().forEach(f=>{if(on)_atSel.add(f.id);else _atSel.delete(f.id);});atRender();}
+function atResumo(){const r=$("#at_resumo");if(r)r.innerHTML=_atSel.size?`<b>${_atSel.size}</b> pessoa(s) marcada(s).`:"Marque as pessoas (ou filtre por frente e use “Marcar todos os visíveis”).";}
+function salvarAtribuirTurno(){
+  const de=$("#at_de").value,ate=$("#at_ate").value,turno=$("#at_turno").value;
+  if(!de||!ate||ate<de){toast("Confira as datas.");return;}
+  if(!_atSel.size){toast("Marque pelo menos uma pessoa.");return;}
+  const dias=[...document.querySelectorAll(".at_dia:checked")].map(c=>+c.value);
+  if(!dias.length){toast("Marque pelo menos um dia da semana.");return;}
+  const n=escalaAtribuir([..._atSel],de,ate,turno,dias.length===7?null:dias);
+  closeModal();render();toast(n?("Turno aplicado a "+_atSel.size+" pessoa(s)."):"Nenhum dia no período bate com os dias da semana marcados.");
+}
+function celulaEscala(fid,data){
+  const f=DB.func.find(x=>x.id===fid);if(!f)return;
+  const id=turnoIdDoDia(fid,data),st=statusDoDia(fid,data);
+  openModal(`<div class="modal-h"><h3>${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">${_fmtDiaCurto(data)} · situação no ponto: <b>${esc(st.tipo)}</b>${st.horaEntrada?" · "+esc(st.horaEntrada)+(st.horaSaida?" → "+esc(st.horaSaida):""):""}</p>
+   <div class="row2"><div class="fg"><label>Turno neste dia</label><select id="ce_turno"><option value="">Normal (sem escala)</option>${turnosCfg().map(t=>`<option value="${esc(t.id)}" ${id===t.id?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}<option value="FOLGA" ${id==="FOLGA"?"selected":""}>Folga</option></select></div><div class="fg"><label>Aplicar até</label><input type="date" id="ce_ate" value="${data}"></div></div></div>
+   <div class="modal-f"><button class="btn btn-g" style="margin-right:auto" onclick="closeModal();formAjustePonto('${fid}','${data}')">Ajustar o ponto deste dia</button><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarCelulaEscala('${fid}','${data}')">Salvar</button></div>`);
+}
+function salvarCelulaEscala(fid,data){
+  const ate=$("#ce_ate").value||data;if(ate<data){toast("A data final vem antes da inicial.");return;}
+  escalaAtribuir([fid],data,ate,$("#ce_turno").value,null);closeModal();render();toast("Escala atualizada.");
+}
+/* ---- turno cancelado -> abono em lote ---- */
+let _cnExtra=new Set(),_cnSel={};
+function formCancelarTurno(dataPre,turnoPre){
+  _cnExtra=new Set();_cnSel={};
+  const especiais=turnosCfg();
+  const data=dataPre||iso(_somaDias(today(),-1));
+  const turnoPadrao=turnoPre||((especiais.find(t=>turnoViraDia(t))||especiais[0]).id);
+  openModal(`<div class="modal-h"><h3>🚫 Turno cancelado — abono em lote</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Escolha o dia e o turno que não foi necessário. A lista traz quem estava escalado nele; marque quem vai ser abonado.</p>
+   <div class="row3"><div class="fg"><label>Dia do turno *</label><input type="date" id="cn_data" value="${data}" onchange="cnRender()"></div><div class="fg"><label>Turno *</label><select id="cn_turno" onchange="cnRender()">${especiais.map(t=>`<option value="${esc(t.id)}" ${t.id===turnoPadrao?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div><div class="fg"><label>Lançar como</label><select id="cn_tipo"><option>Abono</option><option>Falta justificada</option></select></div></div>
+   <div class="fg"><label>Motivo *</label><input id="cn_motivo" placeholder="ex.: Turno noturno cancelado — sem necessidade operacional"></div>
+   <div id="cn_info" class="hint" style="margin-bottom:6px"></div>
+   <div id="cn_lista" style="max-height:32vh;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:4px 10px"></div>
+   <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><input id="cn_add" list="cn_addlist" placeholder="＋ Incluir outra pessoa (não estava na escala)..." style="flex:1;min-width:200px" onchange="cnAdicionar()"><datalist id="cn_addlist">${DB.func.filter(efetivoObra).map(f=>`<option value="${esc(f.nome)}">`).join("")}</datalist></div>
+   <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin-top:10px;cursor:pointer"><input type="checkbox" id="cn_marcar" checked style="width:auto">Marcar este turno como <b>cancelado</b> nesse dia na escala</label></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarCancelarTurno()">Lançar abonos</button></div>`);
+  cnRender(true);
+}
+function cnAdicionar(){
+  const n=normalizaNome($("#cn_add").value),f=DB.func.filter(efetivoObra).find(x=>normalizaNome(x.nome)===n);
+  $("#cn_add").value="";if(!f){toast("Não achei essa pessoa no efetivo.");return;}
+  _cnExtra.add(f.id);_cnSel[f.id]=true;cnRender();
+}
+function cnLinhas(){
+  const data=$("#cn_data").value,tid=$("#cn_turno").value;
+  const ids=new Set(DB.func.filter(f=>efetivoObra(f)&&turnoIdDoDia(f.id,data)===tid).map(f=>f.id));
+  _cnExtra.forEach(i=>ids.add(i));
+  return [...ids].map(id=>DB.func.find(x=>x.id===id)).filter(Boolean).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>{
+    const st=statusDoDia(f.id,data);let acao="criar",desab=false,nota="";
+    if(st.tipo==="Sem registro"){acao="criar";nota="sem registro → vira abono";}
+    else if(st.tipo==="Falta"){acao="substituir";nota="tem Falta → será substituída";}
+    else if(st.tipo==="Presença"){acao="forcar";nota="TRABALHOU"+(st.horaEntrada?" ("+st.horaEntrada+(st.horaSaida?"–"+st.horaSaida:"")+")":"")+" — marque só se for substituir";}
+    else{acao="bloq";desab=true;nota="já consta: "+st.tipo;}
+    return{f,st,acao,desab,nota};
+  });
+}
+function cnRender(inicial){
+  const el=$("#cn_lista");if(!el)return;
+  const linhas=cnLinhas();
+  linhas.forEach(l=>{if(!(l.f.id in _cnSel))_cnSel[l.f.id]=!l.desab&&l.acao!=="forcar";if(l.desab)_cnSel[l.f.id]=false;});
+  const data=$("#cn_data").value,tid=$("#cn_turno").value,t=turnoPorId(tid),canc=turnoCancelado(data,tid);
+  const mot=$("#cn_motivo");if(mot&&(!mot.value||mot.dataset.auto==="1")){mot.value="Turno "+(t?t.nome.toLowerCase():"")+" de "+fmt(data)+" cancelado — sem necessidade operacional";mot.dataset.auto="1";}
+  $("#cn_info").innerHTML=`${linhas.length} pessoa(s) escalada(s) em <b>${esc(t?t.nome:"")}</b> em ${_fmtDiaCurto(data)}.${canc?` <span style="color:var(--amber-d)">Este turno já foi marcado como cancelado em ${fmt(canc.em)} por ${esc(canc.por||"—")} (${canc.qtd||0} abono(s)). Quem já tem Abono aparece bloqueado.</span>`:""}`;
+  el.innerHTML=linhas.length?linhas.map(l=>`<label style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f2;${l.desab?"opacity:.55":"cursor:pointer"}"><input type="checkbox" class="cn_chk" value="${l.f.id}" ${_cnSel[l.f.id]?"checked":""} ${l.desab?"disabled":""} onchange="_cnSel['${l.f.id}']=this.checked" style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(l.f.nome)}</b> <small style="color:var(--muted)">${esc(l.f.funcao||"")}</small></span><span class="tag ${l.acao==="forcar"?"t-amber":l.desab?"t-grey":"t-green"}" style="font-size:10.5px">${esc(l.nota)}</span></label>`).join(""):'<p class="hint" style="padding:8px">Ninguém escalado nesse turno nesse dia. Se a escala não foi lançada, inclua as pessoas abaixo.</p>';
+}
+function salvarCancelarTurno(){
+  const data=$("#cn_data").value,tid=$("#cn_turno").value,tipo=$("#cn_tipo").value,motivo=$("#cn_motivo").value.trim();
+  if(!data){toast("Informe o dia.");return;}
+  if(!motivo){toast("Escreva o motivo do abono.");return;}
+  const sel=cnLinhas().filter(l=>_cnSel[l.f.id]&&!l.desab);
+  if(!sel.length&&!$("#cn_marcar").checked){toast("Marque pelo menos uma pessoa.");return;}
+  let criados=0,substituidos=0;
+  sel.forEach(l=>{
+    if(l.acao==="criar"){DB.faltas.push({id:uid(),func:l.f.id,data,tipo,motivo,turno:tid,origem:"escala"});criados++;}
+    else{const r=DB.faltas.find(x=>x.id===l.st.id);if(r){Object.assign(r,{tipo,motivo,turno:tid,origem:"escala"});r.horaEntrada="";r.horaSaida="";delete r.horaSaidaData;substituidos++;}}
+  });
+  if(sel.length)save("faltas");
+  if($("#cn_marcar").checked){
+    const anter=cancelamentosEscala().filter(c=>!(c.data===data&&c.turno===tid));
+    const antigo=turnoCancelado(data,tid);
+    _escalaSalvar({cancelados:[...anter,{id:(antigo&&antigo.id)||uid(),data,turno:tid,motivo,por:nomeUsuarioLogado()||"",em:iso(today()),qtd:(antigo?antigo.qtd||0:0)+criados+substituidos}]});
+  }
+  closeModal();render();toast(criados+" abono(s) lançado(s)"+(substituidos?", "+substituidos+" falta(s)/presença(s) substituída(s)":"")+".");
+}
+/* ---- ajuste manual do ponto de um dia ---- */
+function formAjustePonto(fid,data){
+  const f=DB.func.find(x=>x.id===fid);if(!f)return;
+  const st=statusDoDia(fid,data);
+  if(["Férias","Baixada"].includes(st.tipo)){toast("Essa pessoa está de "+st.tipo.toLowerCase()+" nesse dia — gerencie em Férias/Baixada.");return;}
+  const rec=st.id?DB.faltas.find(x=>x.id===st.id):null,t=turnoEspecialDoDia(fid,data);
+  const viraDia=!!(rec&&rec.horaSaidaData&&rec.horaSaidaData>data)||(!(rec&&rec.horaSaida)&&!!(t&&turnoViraDia(t)));
+  openModal(`<div class="modal-h"><h3>Ajustar ponto — ${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">${_fmtDiaCurto(data)}${t?" · turno "+esc(t.nome)+" ("+t.ini+"–"+t.fim+")":""} · hoje consta: <b>${esc(st.tipo)}</b></p>
+   <div class="fg"><label>Lançar como</label><select id="aj_tipo">${["Presença","Abono","Falta justificada","Falta"].map(x=>`<option ${(rec?rec.tipo:"Presença")===x?"selected":""}>${x}</option>`).join("")}</select></div>
+   <div class="row3"><div class="fg"><label>Entrada</label><input type="time" id="aj_ent" value="${esc(rec?rec.horaEntrada||"":(t?t.ini:""))}"></div><div class="fg"><label>Saída</label><input type="time" id="aj_sai" value="${esc(rec?rec.horaSaida||"":(t?t.fim:""))}"></div><div class="fg"><label>&nbsp;</label><label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" id="aj_dia" ${viraDia?"checked":""} style="width:auto">saída no dia seguinte</label></div></div>
+   <div class="fg"><label>Motivo / observação</label><input id="aj_mot" value="${esc(rec&&rec.motivo&&rec.motivo!=="Importado de marcações"?rec.motivo:"")}" placeholder="ex.: relógio não registrou a saída"></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarAjustePonto('${fid}','${data}')">Salvar</button></div>`);
+}
+function salvarAjustePonto(fid,data){
+  const tipo=$("#aj_tipo").value,ent=$("#aj_ent").value,sai=$("#aj_sai").value,mot=$("#aj_mot").value.trim()||"Ajuste manual";
+  if(tipo==="Falta"&&funcionarioEmBaixadaNaData(fid,data)){toast("Essa pessoa está de baixada nessa data.");return;}
+  if(tipo==="Falta"&&funcionarioComAtestadoNaData(fid,data)){toast("Essa pessoa tem Atestado nessa data.");return;}
+  const t=turnoEspecialDoDia(fid,data),st=statusDoDia(fid,data),rec=st.id?DB.faltas.find(x=>x.id===st.id):null;
+  const comHora=tipo==="Presença";
+  const campos={tipo,motivo:mot,horaEntrada:comHora?ent:"",horaSaida:comHora?sai:"",origem:"ajuste"};
+  if(t)campos.turno=t.id;
+  const dest=(comHora&&sai&&($("#aj_dia").checked||(ent&&hmMin(sai)<hmMin(ent))))?iso(_somaDias(pd(data),1)):"";
+  if(rec){Object.assign(rec,campos);if(dest)rec.horaSaidaData=dest;else delete rec.horaSaidaData;}
+  else{const n={id:uid(),func:fid,data,...campos};if(dest)n.horaSaidaData=dest;DB.faltas.push(n);}
+  save("faltas");closeModal();render();toast("Ponto ajustado.");
+}
+/* ---- turnos (inclui criar turnos extras) ---- */
+let _trEdit=[];
+function formTurnos(){
+  _trEdit=turnosCfg().map(t=>({...t}));const e=escalaCfg();
+  openModal(`<div class="modal-h"><h3>⚙ Turnos</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Crie quantos turnos precisar (ex.: Turno A 14h–22h, Parada 24h...). Turno que termina antes de começar atravessa a meia-noite. A sigla é a que aparece na grade.</p><div id="tr_lista"></div><button class="btn btn-g btn-sm" onclick="trAdicionar()">＋ Novo turno</button>
+   <div class="row2" style="margin-top:14px"><div class="fg"><label>Tolerância antes do início (min) <span class="opt">p/ encaixar as batidas do relógio</span></label><input type="number" id="tr_tolA" value="${e.tolAntes!=null&&e.tolAntes!==""?e.tolAntes:120}"></div><div class="fg"><label>Tolerância depois do fim (min)</label><input type="number" id="tr_tolD" value="${e.tolDepois!=null&&e.tolDepois!==""?e.tolDepois:180}"></div></div></div>
+   <div class="modal-f"><button class="btn btn-g" style="margin-right:auto" onclick="trPadrao()">Restaurar padrão</button><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarTurnos()">Salvar</button></div>`);
+  trRender();
+}
+function trRender(){
+  const el=$("#tr_lista");if(!el)return;
+  el.innerHTML=_trEdit.map((t,i)=>`<div style="display:grid;grid-template-columns:1.5fr .7fr .8fr .8fr auto auto;gap:6px;align-items:end;margin-bottom:8px"><div class="fg" style="margin:0"><label class="opt">Nome</label><input value="${esc(t.nome)}" oninput="_trEdit[${i}].nome=this.value"></div><div class="fg" style="margin:0"><label class="opt">Sigla</label><input value="${esc(t.sigla||"")}" maxlength="4" oninput="_trEdit[${i}].sigla=this.value"></div><div class="fg" style="margin:0"><label class="opt">Início</label><input type="time" value="${esc(t.ini)}" oninput="_trEdit[${i}].ini=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Fim</label><input type="time" value="${esc(t.fim)}" oninput="_trEdit[${i}].fim=this.value;trDur(${i})"></div><div class="fg" style="margin:0"><label class="opt">Cor</label><input type="color" value="${esc(t.cor||"#5b7a8c")}" oninput="_trEdit[${i}].cor=this.value" style="padding:2px;height:36px;width:48px"></div><button class="btn btn-g btn-sm" style="color:var(--red)" title="Remover" onclick="trRemover(${i})">×</button></div><div class="hint" id="tr_dur${i}" style="margin:-4px 0 8px 2px">${trDurTxt(t)}</div>`).join("");
+}
+function trDurTxt(t){const m=duracaoTurnoMin(t);return "Duração: "+Math.floor(m/60)+"h"+(m%60?String(m%60).padStart(2,"0"):"")+(turnoViraDia(t)?" · atravessa a meia-noite":"");}
+function trDur(i){const el=$("#tr_dur"+i);if(el)el.textContent=trDurTxt(_trEdit[i]);}
+function trAdicionar(){_trEdit.push({id:uid(),nome:"Novo turno",sigla:"NOV",ini:"06:00",fim:"14:00",cor:"#2f8f5b"});trRender();}
+function trRemover(i){
+  const t=_trEdit[i];const n=blocosEscala().filter(b=>b.turno===t.id).length;
+  if(_trEdit.length<=1){toast("Mantenha pelo menos um turno.");return;}
+  if(n&&!confirm(n+" lançamento(s) da escala usam \""+t.nome+"\" e vão deixar de valer. Remover mesmo assim?"))return;
+  _trEdit.splice(i,1);trRender();
+}
+function trPadrao(){if(!confirm("Voltar aos três turnos padrão? Turnos extras criados serão removidos da lista."))return;_trEdit=TURNOS_PADRAO.map(t=>({...t}));trRender();}
+function salvarTurnos(){
+  const nomes=_trEdit.map(t=>String(t.nome||"").trim());
+  if(nomes.some(n=>!n)){toast("Há um turno sem nome.");return;}
+  const k=nomes.map(n=>normalizaNome(n));if(new Set(k).size!==k.length){toast("Há turnos com o mesmo nome.");return;}
+  if(_trEdit.some(t=>!t.ini||!t.fim||t.ini===t.fim)){toast("Confira início e fim (não podem ser iguais).");return;}
+  const lista=_trEdit.map(t=>({id:t.id||uid(),nome:String(t.nome).trim(),sigla:String(t.sigla||"").trim().toUpperCase()||String(t.nome).trim().slice(0,3).toUpperCase(),ini:t.ini,fim:t.fim,cor:t.cor||"#5b7a8c"}));
+  _escalaSalvar({turnos:lista,tolAntes:+$("#tr_tolA").value||0,tolDepois:+$("#tr_tolD").value||0});
+  closeModal();render();toast("Turnos salvos.");
+}
+/* ---- Excel pro DP ---- */
+function exportEscalaExcel(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const dias=escDias(),hoje=iso(today());
+  const efet=DB.func.filter(efetivoObra).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+  const pessoas=efet.filter(f=>dias.some(d=>turnoIdDoDia(f.id,d)!==""));
+  const grade=pessoas.map(f=>{const r={Pessoa:f.nome,Função:f.funcao||""};dias.forEach(d=>{const id=turnoIdDoDia(f.id,d);const t=id&&id!=="FOLGA"?turnoPorId(id):null;r[_fmtDiaCurto(d)]=id==="FOLGA"?"Folga":(t?siglaTurno(t)+(turnoCancelado(d,id)?" (cancelado)":""):"");});return r;});
+  const det=[];pessoas.forEach(f=>dias.forEach(d=>{const s=statusEscalaDia(f.id,d);if(!s)return;det.push({Pessoa:f.nome,Matrícula:f.matricula||"",Função:f.funcao||"",Data:fmt(d),Dia:DIAS_ABREV3[pd(d).getDay()],Turno:s.turno.nome,Previsto:s.turno.ini+" – "+s.turno.fim,"Horas previstas":+s.prev.toFixed(1),Entrada:s.rec&&s.rec.horaEntrada||"","Saída":s.rec&&s.rec.horaSaida||"","Saída no dia seguinte":s.rec&&s.rec.horaSaidaData&&s.rec.horaSaidaData>d?"Sim":"","Horas trabalhadas":s.horas!=null?+s.horas.toFixed(2):"",Situação:s.st.tipo==="Presença"?s.txt:s.st.tipo,"Turno cancelado":s.cancelado?"Sim":"",Motivo:s.rec&&s.rec.motivo||""});}));
+  const ab=DB.faltas.filter(r=>r.data>=_escDe&&r.data<=_escAte&&["Abono","Falta justificada"].includes(r.tipo)).sort((a,b)=>a.data<b.data?-1:1).map(r=>({Pessoa:funcNome(r.func),Data:fmt(r.data),Tipo:r.tipo,Turno:(turnoPorId(r.turno)||{}).nome||"",Motivo:r.motivo||"",Origem:r.origem==="escala"?"Turno cancelado":(r.origem||"")}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(grade.length?grade:[{"—":"sem escala no período"}]),"Escala");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(det.length?det:[{"—":"sem dados"}]),"Ponto x escala");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ab.length?ab:[{"—":"sem abonos no período"}]),"Abonos");
+  XLSX.writeFile(wb,"escala-"+_escDe+"-a-"+_escAte+".xlsx");toast("Exportado.");
+}
+
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
 function vinculosDaNota(n){
   const out=[];
