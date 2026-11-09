@@ -159,6 +159,8 @@
 .escchip{display:inline-block;min-width:36px;padding:2px 7px;border-radius:6px;color:#fff;font-weight:700;font-size:11px;cursor:pointer}
 .escchip.canc{opacity:.45;text-decoration:line-through}
 .escfolga{color:var(--muted);font-weight:700;cursor:pointer}.escvazio{color:#c4c9c0;cursor:pointer;font-size:16px}
+.perCard{border:1px solid #e3e8ef;border-radius:10px;padding:10px 14px;margin-bottom:10px;background:#fff}
+.perAtivo{border-color:var(--steel);box-shadow:0 0 0 2px rgba(60,100,150,.14)}
 </style>
 </head>
 <body>
@@ -660,7 +662,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.28";
+const APP_VERSAO="v2026-10-02.29";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -4586,7 +4588,7 @@ function duracaoTurnoMin(t){const i=hmMin(t.ini),f=hmMin(t.fim);return f>i?f-i:f
 function turnoViraDia(t){return hmMin(t.fim)<=hmMin(t.ini);}
 function siglaTurno(t){return(t&&(t.sigla||String(t.nome||"").slice(0,3).toUpperCase()))||"?";}
 function blocosEscala(){const b=escalaCfg().blocos;return Array.isArray(b)?b.filter(x=>x&&x.func&&x.de&&x.ate):[];}
-function turnoIdDoDia(fid,data){let r="",t=-1;for(const b of blocosEscala()){if(b.func===fid&&b.de<=data&&b.ate>=data&&(b.criado||0)>=t){r=b.turno||"";t=b.criado||0;}}return r;}
+function turnoIdDoDia(fid,data){let r="",t=-1;for(const b of blocosEscala()){if(b.func===fid&&b.de<=data&&b.ate>=data){const sc=(b.criado||0)*2+(b.periodo?0:1);if(sc>=t){r=b.turno||"";t=sc;}}}return r;}
 function turnoEspecialDoDia(fid,data){const id=turnoIdDoDia(fid,data);return(id&&id!=="FOLGA"&&turnoPorId(id))?turnoPorId(id):null;}
 function cancelamentosEscala(){const c=escalaCfg().cancelados;return Array.isArray(c)?c.filter(Boolean):[];}
 function turnoCancelado(data,turnoId){return cancelamentosEscala().find(c=>c.data===data&&c.turno===turnoId)||null;}
@@ -4594,6 +4596,7 @@ function _escalaSalvar(parte){
   const e={...escalaCfg(),...parte};const lim=iso(_somaDias(today(),-200));
   e.blocos=(Array.isArray(e.blocos)?e.blocos:[]).filter(b=>b&&b.ate>=lim);
   e.cancelados=(Array.isArray(e.cancelados)?e.cancelados:[]).filter(c=>c&&c.data>=lim);
+  e.periodos=(Array.isArray(e.periodos)?e.periodos:[]).filter(x=>x&&x.ate>=lim);
   DB.cfg.escala=e;save("cfg");
 }
 function escalaAtribuir(fids,de,ate,turnoId,dias){
@@ -4754,7 +4757,12 @@ function confirmarImportacaoMarcacoes(){
 }
 /* ---- tela da escala ---- */
 let _escDe="",_escAte="",_escBusca="",_escGrupo="",_escTodos=false,_escSoProblemas=true;
-function escPeriodoPadrao(){const seg=_segundaDe(today());return{de:iso(seg),ate:iso(_somaDias(seg,6))};}
+function escPeriodoPadrao(){
+  const hoje=iso(today()),pers=periodosEscala().sort((a,b)=>a.de<b.de?-1:1);
+  const p=pers.find(x=>x.de<=hoje&&x.ate>=hoje)||pers.find(x=>x.de>hoje&&x.de<=iso(_somaDias(today(),14)));
+  if(p){const lim=iso(_somaDias(pd(p.de),30));return{de:p.de,ate:p.ate<=lim?p.ate:lim};}
+  const seg=_segundaDe(today());return{de:iso(seg),ate:iso(_somaDias(seg,6))};
+}
 function escDias(){const out=[],a=pd(_escDe),b=pd(_escAte);if(!a||!b||b<a)return out;let n=0;for(let d=new Date(a);d<=b&&n<62;d=_somaDias(d,1),n++)out.push(iso(d));return out;}
 function escMuda(n){const a=pd(_escDe),b=pd(_escAte),len=Math.round((b-a)/864e5)+1;_escDe=iso(_somaDias(a,n*len));_escAte=iso(_somaDias(b,n*len));render();}
 function escHoje(){const p=escPeriodoPadrao();_escDe=p.de;_escAte=p.ate;render();}
@@ -4784,11 +4792,12 @@ function vEscala(){
   const cont=k=>conf.filter(x=>x.s.flag===k).length;
   const lista=(_escSoProblemas?prob:conf).sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR")).slice(0,160);
   const tagFlag={ok:"t-green",sem:"t-red",so_entrada:"t-amber",horas:"t-amber",cancelado:"t-red",manual:"t-grey",ocorrencia:"t-steel"};
-  main.innerHTML=`<div class="head"><div><h1>🕒 Escala de turnos</h1><p>Quem trabalha em qual turno, dia a dia. Quem não aparece aqui segue o turno normal. Turno cancelado vira abono em lote, e o relógio é conferido contra a escala.</p></div><div class="acts"><button class="btn btn-g" onclick="formTurnos()">⚙ Turnos</button><button class="btn btn-g" onclick="exportEscalaExcel()">⭳ Excel</button><button class="btn btn-g" onclick="formCancelarTurno('')">🚫 Cancelar turno / abonar</button><button class="btn btn-a" onclick="formAtribuirTurno()">＋ Atribuir turno</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>🕒 Escala de turnos</h1><p>Quem trabalha em qual turno, dia a dia. Quem não aparece aqui segue o turno normal. Turno cancelado vira abono em lote, e o relógio é conferido contra a escala.</p></div><div class="acts">${podeEditarEscala()?'<button class="btn btn-g" onclick="formTurnos()">⚙ Turnos</button>':""}<button class="btn btn-g" onclick="exportEscalaExcel()">⭳ Excel</button>${podeEditarEscala()?'<button class="btn btn-g" onclick="formCancelarTurno(\'\')">🚫 Cancelar turno / abonar</button><button class="btn btn-g" onclick="formAtribuirTurno()">＋ Atribuição avulsa</button><button class="btn btn-a" onclick="formPeriodo()">＋ Novo período especial</button>':""}</div></div>
+   ${htmlPeriodos()}
    <div class="toolbar"><button class="btn btn-g btn-sm" onclick="escMuda(-1)">◀</button><input type="date" value="${_escDe}" onchange="_escDe=this.value;render()"><span class="hint">até</span><input type="date" value="${_escAte}" onchange="_escAte=this.value;render()"><button class="btn btn-g btn-sm" onclick="escMuda(1)">▶</button><button class="btn btn-g btn-sm" onclick="escHoje()">Semana atual</button>
     <input type="search" placeholder="Buscar nome ou função..." value="${esc(_escBusca)}" oninput="_escBusca=this.value;vEscalaTabela()" style="min-width:180px"><select onchange="_escGrupo=this.value;render()"><option value="">Todas as frentes e áreas</option>${optsGrupos(_escGrupo)}</select><label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escTodos?"checked":""} onchange="_escTodos=this.checked;render()">mostrar todo o efetivo</label></div>
    <div class="grid stats"><div class="stat steel"><div class="n">${pessoas.filter(f=>dias.some(d=>turnoEspecialDoDia(f.id,d))).length}</div><div class="l">Pessoas em turno especial</div></div><div class="stat red"><div class="n">${cont("sem")+cont("cancelado")}</div><div class="l">Sem registro / cancelado sem abono</div></div><div class="stat amber"><div class="n">${cont("so_entrada")}</div><div class="l">Só entrada (sem saída)</div></div><div class="stat amber"><div class="n">${cont("horas")}</div><div class="l">Horas fora do esperado</div></div></div>
-   <div class="escwrap" id="esc_wrap"><table class="esctbl"><thead><tr><th>Pessoa</th>${cab}</tr></thead><tbody>${linhas||`<tr><td colspan="${dias.length+1}" style="text-align:center;padding:18px;color:var(--muted)">Ninguém em turno especial neste período. Use ＋ Atribuir turno.</td></tr>`}${totais}</tbody></table></div>
+   <div class="escwrap" id="esc_wrap"><table class="esctbl"><thead><tr><th>Pessoa</th>${cab}</tr></thead><tbody>${linhas||`<tr><td colspan="${dias.length+1}" style="text-align:center;padding:18px;color:var(--muted)">Ninguém em turno especial neste período. Crie um período especial acima.</td></tr>`}${totais}</tbody></table></div><div class="hint" style="margin:6px 2px">${(()=>{const n=efet.filter(f=>!dias.some(d=>turnoIdDoDia(f.id,d)!=="")).length;return "Demais pessoas do efetivo ("+n+"): turno normal — não precisam ser lançadas.";})()}</div>
    <div class="panel" style="margin-top:16px"><h2><span class="t">Conferência: escala × relógio <span class="tag t-grey">${prob.length} ponto(s) a ver</span></span><label style="font-size:12.5px;font-weight:400;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_escSoProblemas?"checked":""} onchange="_escSoProblemas=this.checked;render()">só o que precisa de atenção</label></h2><div class="tblwrap">${lista.length?`<table class="tbl" style="font-size:12.5px"><thead><tr><th>Pessoa</th><th>Dia</th><th>Turno</th><th>Previsto</th><th>Marcado</th><th>Horas</th><th>Situação</th><th></th></tr></thead><tbody>${lista.map(({f,d,s})=>`<tr><td>${esc(f.nome)}</td><td>${_fmtDiaCurto(d)}</td><td><span class="escchip" style="background:${_escCor(s.turno)};cursor:default">${esc(siglaTurno(s.turno))}</span></td><td>${s.turno.ini}–${s.turno.fim}</td><td>${s.rec&&s.rec.horaEntrada?esc(s.rec.horaEntrada)+" → "+(s.rec.horaSaida?esc(s.rec.horaSaida)+(s.rec.horaSaidaData&&s.rec.horaSaidaData>d?" (+1)":""):"?"):"—"}</td><td class="num">${s.horas!=null?s.horas.toFixed(1).replace(".",","):"—"}</td><td><span class="tag ${tagFlag[s.flag]||"t-grey"}">${esc(s.txt)}</span></td><td style="white-space:nowrap"><button class="btn btn-g btn-sm" onclick="formAjustePonto('${f.id}','${d}')">Ajustar</button> <button class="btn btn-g btn-sm" onclick="formCancelarTurno('${d}','${s.turno.id}')">Abonar</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty"><div class="big">✅</div><p>${conf.length?"Nada a conferir: tudo bate com a escala.":"Sem dias de turno especial até hoje neste período."}</p></div>`}</div></div>`;
 }
 function vEscalaTabela(){render();setTimeout(()=>{const i=document.querySelector('.toolbar input[type=search]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},0);}
@@ -4973,6 +4982,223 @@ function exportEscalaExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(det.length?det:[{"—":"sem dados"}]),"Ponto x escala");
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ab.length?ab:[{"—":"sem abonos no período"}]),"Abonos");
   XLSX.writeFile(wb,"escala-"+_escDe+"-a-"+_escAte+".xlsx");toast("Exportado.");
+}
+
+/* ===== PERÍODOS ESPECIAIS DA ESCALA (só quem foge do normal; o resto segue normal) ===== */
+function podeEditarEscala(){return!!_usuarioLogadoId&&nivelPermissaoUsuario("escala")==="salvar";}
+function exigeEdicaoEscala(){
+  if(!_usuarioLogadoId){toast("Identifique-se (CPF) antes de editar a escala.");abrirLoginUsuario();return false;}
+  if(!podeEditarEscala()){toast("Você não tem permissão de salvar em Escala de turnos.");return false;}
+  return true;
+}
+function periodosEscala(){const p=escalaCfg().periodos;return Array.isArray(p)?p.filter(x=>x&&x.id&&x.de&&x.ate&&x.ate>=x.de).map(x=>({...x,dias:Array.isArray(x.dias)?x.dias.filter(n=>Number.isInteger(n)):null})):[];}
+function periodoGrupos(per){const g=per&&per.grupos;return(g&&typeof g==="object"&&!Array.isArray(g))?g:{};}
+function periodoIdsDoGrupo(per,tid){const l=periodoGrupos(per)[tid];return Array.isArray(l)?l:[];}
+function blocosDe(fid,de,ate,turno,dias,criado,periodoId){
+  const d0=pd(de),d1=pd(ate),out=[];if(!d0||!d1||d1<d0)return out;
+  let ini=null,ult=null;
+  for(let d=new Date(d0);d<=d1;d=_somaDias(d,1)){
+    const ok=!dias||!dias.length||dias.includes(d.getDay());
+    if(ok){if(!ini)ini=iso(d);ult=iso(d);}
+    else if(ini){out.push({id:uid(),func:fid,de:ini,ate:ult,turno,criado,periodo:periodoId});ini=null;}
+  }
+  if(ini)out.push({id:uid(),func:fid,de:ini,ate:ult,turno,criado,periodo:periodoId});
+  return out;
+}
+function _periodoBlocos(per){const out=[];Object.keys(periodoGrupos(per)).forEach(tid=>periodoIdsDoGrupo(per,tid).forEach(fid=>blocosDe(fid,per.de,per.ate,tid,per.dias,per.criado,per.id).forEach(b=>out.push(b))));return out;}
+function periodoSalvar(per){
+  const outros=periodosEscala().filter(x=>x.id!==per.id);
+  const blocos=blocosEscala().filter(b=>b.periodo!==per.id).concat(_periodoBlocos(per));
+  _escalaSalvar({periodos:[...outros,per],blocos});
+}
+function periodoExcluir(id){_escalaSalvar({periodos:periodosEscala().filter(x=>x.id!==id),blocos:blocosEscala().filter(b=>b.periodo!==id)});}
+function periodoEstado(per){
+  const hoje=iso(today());
+  if(per.ate<hoje)return{txt:"encerrado",cls:"t-grey"};
+  if(per.de>hoje)return{txt:"começa em "+fmt(per.de),cls:"t-steel"};
+  const dia=diaNum(hoje)-diaNum(per.de)+1,total=diaNum(per.ate)-diaNum(per.de)+1;
+  return{txt:"em andamento · dia "+dia+" de "+total,cls:"t-green"};
+}
+function htmlPeriodos(){
+  const ed=podeEditarEscala(),hoje=iso(today());
+  const pers=periodosEscala().sort((a,b)=>a.de<b.de?1:-1);
+  const vivos=pers.filter(p=>p.ate>=hoje),passados=pers.filter(p=>p.ate<hoje).slice(0,3);
+  const avulsos=blocosEscala().filter(b=>!b.periodo&&b.turno&&b.turno!=="FOLGA"&&turnoPorId(b.turno)).length;
+  const card=p=>{
+    const est=periodoEstado(p),ativo=est.cls==="t-green",tids=Object.keys(periodoGrupos(p)).filter(t=>periodoIdsDoGrupo(p,t).length||true);
+    const grupos=tids.map(tid=>{
+      const t=turnoPorId(tid);if(!t)return"";
+      const mem=periodoIdsDoGrupo(p,tid).map(id=>DB.func.find(x=>x.id===id)).filter(f=>f&&efetivoObra(f));
+      return `<div style="margin-top:8px"><b style="font-size:12.5px">${turnoViraDia(t)?"🌙":"☀"} ${esc(t.nome)}</b> <small style="color:var(--muted)">${t.ini}–${t.fim} · ${mem.length} pessoa(s)</small>${ed?` <button class="btn btn-g btn-sm" style="padding:1px 8px" onclick="abrirPessoasPeriodo('${p.id}','${esc(tid)}')">＋ Pessoas</button>`:""}<div style="margin-top:4px">${mem.length?mem.map(f=>`<span class="chip ${afastado(f)?"afast":""}">${esc(frNomeCurto(f.nome))}${ed?`<small style="cursor:pointer" title="Tirar do turno (volta ao normal)" onclick="removerPessoaPeriodo('${p.id}','${esc(tid)}','${f.id}')">✕</small>`:""}</span>`).join(""):'<span style="color:var(--muted);font-size:12px">ninguém ainda</span>'}</div></div>`;
+    }).join("");
+    return `<div class="perCard ${ativo?"perAtivo":""}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:14px">${esc(p.nome||"Período especial")}</b><span class="tag ${est.cls}">${esc(est.txt)}</span><span style="font-size:12.5px">${fmt(p.de)} → <b>${fmt(p.ate)}</b></span>${p.dias&&p.dias.length?`<small style="color:var(--muted)">${p.dias.map(n=>DIAS_ABREV3[n]).join(", ")}</small>`:""}<span style="flex:1"></span><button class="btn btn-g btn-sm" onclick="escVerPeriodo('${p.id}')">Ver na grade</button>${ed?`<button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',-1)" title="Termina um dia antes">−1 dia</button><button class="btn btn-g btn-sm" onclick="periodoAjustaFim('${p.id}',1)" title="Termina um dia depois">+1 dia</button><button class="btn btn-g btn-sm" onclick="formDatasPeriodo('${p.id}')">✎ Datas</button>${p.ate>=hoje?`<button class="btn btn-a btn-sm" onclick="formDatasPeriodo('${p.id}','${iso(_somaDias(today(),-1))}')">↩ Voltar ao normal a partir de hoje</button>`:""}<button class="btn btn-g btn-sm" style="color:var(--red)" onclick="excluirPeriodo('${p.id}')">🗑</button>`:""}</div>${grupos}<div style="margin-top:8px;font-size:12px;color:var(--muted)">Demais pessoas do efetivo: <b>turno normal</b> — não precisam ser lançadas.${ed?` <button class="btn btn-g btn-sm" style="padding:1px 8px" onclick="abrirPessoasPeriodo('${p.id}','')">＋ Incluir outro turno</button>`:""}</div></div>`;
+  };
+  return `<div class="panel"><h2><span class="t">Períodos especiais <span class="tag t-grey">${vivos.length} ativo(s)/futuro(s)</span></span>${ed?`<button class="btn btn-a btn-sm" onclick="formPeriodo()">＋ Novo período especial</button>`:""}</h2><div style="padding:12px 16px">${vivos.length||passados.length?[...vivos,...passados].map(card).join(""):`<div class="empty" style="padding:12px"><p>Nenhum período especial. Crie um pra parada, obra 24 horas etc.: você escolhe só quem foge do normal${ed?"":" (peça a permissão de salvar)"}.</p></div>`}${avulsos&&ed?`<div class="hint" style="margin-top:6px">Há <b>${avulsos}</b> lançamento(s) avulso(s) de turno (feitos por Atribuição avulsa). <button class="btn btn-g btn-sm" onclick="organizarAvulsos()">⚡ Organizar em períodos</button></div>`:""}</div></div>`;
+}
+function escVerPeriodo(id){const p=periodosEscala().find(x=>x.id===id);if(!p)return;_escDe=p.de;const lim=iso(_somaDias(pd(p.de),30));_escAte=p.ate<=lim?p.ate:lim;render();setTimeout(()=>{const el=document.getElementById("esc_wrap");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},60);}
+/* picker genérico de pessoas */
+const _pk={};
+function pkHtml(pf){
+  const funcoes=[...new Set(DB.func.filter(efetivoObra).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><input id="${pf}_busca" type="search" placeholder="Buscar nome ou função..." oninput="pkRender('${pf}')" style="flex:1;min-width:160px"><select id="${pf}_func" onchange="pkRender('${pf}')"><option value="">Todas as funções</option>${funcoes.map(x=>`<option>${esc(x)}</option>`).join("")}</select><select id="${pf}_grupo" onchange="pkRender('${pf}')"><option value="">Todas as frentes e áreas</option>${optsGrupos("")}</select><button class="btn btn-g btn-sm" onclick="pkTodos('${pf}',true)">Marcar todos os visíveis</button><button class="btn btn-g btn-sm" onclick="pkTodos('${pf}',false)">Limpar</button></div><div id="${pf}_lista" style="max-height:34vh;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;padding:4px 10px"></div><div id="${pf}_resumo" class="hint" style="margin-top:6px"></div>`;
+}
+function pkInit(pf,ids,excluir,rotulo){_pk[pf]={sel:new Set(ids||[]),excluir:new Set(excluir||[]),rotulo:rotulo||(()=>"")};pkRender(pf);}
+function pkVisiveis(pf){
+  const q=normalizaNome($("#"+pf+"_busca").value),fn=$("#"+pf+"_func").value,g=$("#"+pf+"_grupo").value,ex=_pk[pf].excluir;
+  return DB.func.filter(efetivoObra).filter(f=>!ex.has(f.id)&&(!fn||f.funcao===fn)&&(!q||normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))&&(!g||gruposDoFunc(f.id).some(x=>x.frente.id===g))).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+}
+function pkRender(pf){
+  const el=$("#"+pf+"_lista");if(!el||!_pk[pf])return;const l=pkVisiveis(pf),sel=_pk[pf].sel;
+  el.innerHTML=l.length?l.slice(0,250).map(f=>{const r=_pk[pf].rotulo(f);return `<label style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f2;cursor:pointer"><input type="checkbox" value="${f.id}" ${sel.has(f.id)?"checked":""} onchange="pkMarca('${pf}','${f.id}',this.checked)" style="width:auto"><span style="flex:1;font-size:12.5px"><b>${esc(f.nome)}</b> <small style="color:var(--muted)">${esc(f.funcao||"")}${gruposDoFunc(f.id).map(x=>" · "+esc(x.frente.nome)).join("")}</small>${r?` <span class="tag t-amber" style="font-size:10px">${esc(r)}</span>`:""}</span></label>`;}).join(""):'<p class="hint" style="padding:8px">Ninguém com esse filtro.</p>';
+  pkResumo(pf);
+}
+function pkMarca(pf,fid,on){if(on)_pk[pf].sel.add(fid);else _pk[pf].sel.delete(fid);pkResumo(pf);}
+function pkTodos(pf,on){pkVisiveis(pf).forEach(f=>{if(on)_pk[pf].sel.add(f.id);else _pk[pf].sel.delete(f.id);});pkRender(pf);}
+function pkResumo(pf){const r=$("#"+pf+"_resumo");if(r)r.innerHTML=_pk[pf].sel.size?`<b>${_pk[pf].sel.size}</b> pessoa(s) marcada(s).`:"Marque as pessoas (ou filtre por frente e use “Marcar todos os visíveis”).";}
+/* novo período */
+function formPeriodo(){
+  if(!exigeEdicaoEscala())return;
+  const hoje=iso(today()),turnos=turnosCfg();
+  const padrao=(turnos.find(t=>turnoViraDia(t))||turnos[0]).id;
+  openModal(`<div class="modal-h"><h3>＋ Novo período especial</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Escolha só quem <b>foge do normal</b> (ex.: o noturno). Todo o resto do efetivo continua no turno normal, sem lançar nada. Depois do último dia, tudo volta ao normal sozinho.</p>
+   <div class="fg"><label>Nome <span class="opt">(opcional)</span></label><input id="np_nome" placeholder="ex.: Parada da Vale"></div>
+   <div class="row3"><div class="fg"><label>De *</label><input type="date" id="np_de" value="${hoje}"></div><div class="fg"><label>Até *</label><input type="date" id="np_ate" value="${iso(_somaDias(today(),6))}"></div><div class="fg"><label>Turno dessas pessoas *</label><select id="np_turno">${turnos.map(t=>`<option value="${esc(t.id)}" ${t.id===padrao?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div></div>
+   <details style="margin-bottom:10px"><summary style="cursor:pointer;color:var(--steel);font-weight:600;font-size:13px">Só em alguns dias da semana</summary><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">${[1,2,3,4,5,6,0].map(n=>`<label style="font-size:12.5px;display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" class="np_dia" value="${n}" checked style="width:auto">${DIAS_ABREV3[n]}</label>`).join("")}</div></details>
+   ${pkHtml("np")}</div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarPeriodoNovo()">Criar período</button></div>`);
+  pkInit("np",[],[],f=>{const t=turnoEspecialDoDia(f.id,iso(today()));return t?"hoje: "+siglaTurno(t):"";});
+}
+function salvarPeriodoNovo(){
+  if(!exigeEdicaoEscala())return;
+  const de=$("#np_de").value,ate=$("#np_ate").value,turno=$("#np_turno").value;
+  if(!de||!ate||ate<de){toast("Confira as datas.");return;}
+  const ids=[..._pk.np.sel];if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
+  const dias=[...document.querySelectorAll(".np_dia:checked")].map(c=>+c.value);
+  if(!dias.length){toast("Marque pelo menos um dia da semana.");return;}
+  const per={id:uid(),nome:$("#np_nome").value.trim()||"Período especial",de,ate,dias:dias.length===7?null:dias,criado:Date.now(),grupos:{[turno]:ids}};
+  periodoSalvar(per);_escDe=de;const lim=iso(_somaDias(pd(de),30));_escAte=ate<=lim?ate:lim;
+  closeModal();render();toast("Período criado: "+ids.length+" pessoa(s) em "+(turnoPorId(turno)||{nome:""}).nome+". As demais seguem no normal.");
+}
+/* adicionar / mover / tirar pessoas */
+function abrirPessoasPeriodo(id,turnoFixo){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===id);if(!per)return;
+  const turnos=turnosCfg();
+  window._ppId=id;
+  openModal(`<div class="modal-h"><h3>＋ Pessoas — ${esc(per.nome||"Período especial")}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <div class="fg" style="max-width:360px"><label>Turno dessas pessoas *</label><select id="pp_turno" onchange="pkRender('pp')">${turnos.map(t=>`<option value="${esc(t.id)}" ${t.id===turnoFixo?"selected":""}>${esc(t.nome)} (${t.ini}–${t.fim})</option>`).join("")}</select></div>
+   ${pkHtml("pp")}</div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarPessoasPeriodo()">Adicionar</button></div>`);
+  const grupos=periodoGrupos(per);
+  pkInit("pp",[],[],f=>{const g=Object.keys(grupos).find(t=>periodoIdsDoGrupo(per,t).includes(f.id));return g?"hoje: "+(turnoPorId(g)?siglaTurno(turnoPorId(g)):g):"";});
+}
+function salvarPessoasPeriodo(){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===window._ppId);if(!per)return;
+  const turno=$("#pp_turno").value,ids=[..._pk.pp.sel];if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
+  const g={};Object.keys(periodoGrupos(per)).forEach(t=>{g[t]=periodoIdsDoGrupo(per,t).filter(i=>!ids.includes(i));});
+  g[turno]=[...new Set([...(g[turno]||[]),...ids])];
+  periodoSalvar({...per,grupos:g});closeModal();render();toast(ids.length+" pessoa(s) em "+(turnoPorId(turno)||{nome:""}).nome+".");
+}
+function removerPessoaPeriodo(id,tid,fid){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===id);if(!per)return;
+  const g={...periodoGrupos(per)};g[tid]=periodoIdsDoGrupo(per,tid).filter(i=>i!==fid);
+  periodoSalvar({...per,grupos:g});render();
+}
+function excluirPeriodo(id){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===id);if(!per)return;
+  if(!confirm('Excluir o período "'+(per.nome||"")+'"? Todo mundo dele volta ao turno normal. Presenças e abonos já lançados no ponto não são apagados.'))return;
+  periodoExcluir(id);render();toast("Período excluído.");
+}
+/* mudar datas / voltar ao normal (com abono do que não foi trabalhado) */
+function periodoAjustaFim(id,d){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===id);if(!per)return;
+  const nova=iso(_somaDias(pd(per.ate),d));
+  if(nova<per.de){toast("O período não pode terminar antes de começar.");return;}
+  if(d>0){periodoSalvar({...per,ate:nova});render();toast("Período vai até "+fmt(nova)+".");}
+  else formDatasPeriodo(id,nova);
+}
+function pdImpacto(per,novaAte,novaDe){
+  const hoje=iso(today()),removidos=[];
+  for(let d=_somaDias(pd(novaAte),1);iso(d)<=per.ate;d=_somaDias(d,1))removidos.push(iso(d));
+  const passados=removidos.filter(d=>d<hoje),itens=[];
+  passados.forEach(d=>Object.keys(periodoGrupos(per)).forEach(tid=>periodoIdsDoGrupo(per,tid).forEach(fid=>{
+    const f=DB.func.find(x=>x.id===fid);if(!f||!efetivoObra(f)||turnoIdDoDia(fid,d)!==tid)return;
+    const st=statusDoDia(fid,d);itens.push({d,tid,f,st});
+  })));
+  return{removidos,passados,itens};
+}
+function formDatasPeriodo(id,ateSug){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===id);if(!per)return;
+  window._pdId=id;
+  openModal(`<div class="modal-h"><h3>✎ Datas — ${esc(per.nome||"Período especial")}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+   <p class="hint" style="margin-bottom:10px">Mudar as datas ajusta a escala de <b>todo mundo</b> do período de uma vez. Os dias que saírem voltam ao turno normal.</p>
+   <div class="row2"><div class="fg"><label>Começa em</label><input type="date" id="pd_de" value="${per.de}" onchange="pdPreview()"></div><div class="fg"><label>Termina em</label><input type="date" id="pd_ate" value="${ateSug||per.ate}" onchange="pdPreview()"></div></div>
+   <div id="pd_info"></div></div>
+   <div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarDatasPeriodo()">Salvar datas</button></div>`);
+  pdPreview();
+}
+function pdPreview(){
+  const per=periodosEscala().find(x=>x.id===window._pdId),el=$("#pd_info");if(!per||!el)return;
+  const de=$("#pd_de").value,ate=$("#pd_ate").value;
+  if(!de||!ate||ate<de){el.innerHTML='<p class="hint" style="color:var(--red)">Confira as datas.</p>';return;}
+  const imp=ate<per.ate?pdImpacto(per,ate):{removidos:[],passados:[],itens:[]};
+  const sem=imp.itens.filter(x=>x.st.tipo==="Sem registro"),falta=imp.itens.filter(x=>x.st.tipo==="Falta"),trab=imp.itens.filter(x=>x.st.tipo==="Presença"),outros=imp.itens.filter(x=>!["Sem registro","Falta","Presença"].includes(x.st.tipo));
+  const futuros=imp.removidos.length-imp.passados.length;
+  let h="";
+  if(imp.removidos.length)h+=`<p class="hint" style="margin-bottom:8px">Saem da escala <b>${imp.removidos.length}</b> dia(s) (${fmt(imp.removidos[0])} a ${fmt(imp.removidos[imp.removidos.length-1])}): <b>${imp.passados.length}</b> já passaram e <b>${futuros}</b> ainda não chegaram (esses simplesmente voltam ao normal).</p>`;
+  if(imp.itens.length){
+    const mot=`Turno cancelado — período encerrado em ${fmt(ate)}`;
+    h+=`<div style="background:#fff8e8;border:1px solid #f0d9a8;border-radius:8px;padding:10px 12px"><b>Dias que já passaram e foram cortados do período</b><div class="hint" style="margin:4px 0">${sem.length} sem registro → viram abono · ${falta.length} com falta → viram abono · ${trab.length} <b>trabalharam</b> (mantidos) · ${outros.length} com atestado/férias etc. (mantidos)</div>
+     <label style="display:flex;gap:6px;align-items:center;font-size:13px;cursor:pointer;margin:6px 0"><input type="checkbox" id="pd_abonar" ${(sem.length+falta.length)?"checked":""} ${(sem.length+falta.length)?"":"disabled"} style="width:auto"> Abonar quem estava escalado e não trabalhou (${sem.length+falta.length} dia(s)-pessoa)</label>
+     <div class="row2"><div class="fg" style="margin:0"><label class="opt">Lançar como</label><select id="pd_tipo"><option>Abono</option><option>Falta justificada</option></select></div><div class="fg" style="margin:0"><label class="opt">Motivo</label><input id="pd_motivo" value="${esc(mot)}"></div></div>
+     <p class="hint" style="margin-top:6px">Quer escolher pessoa por pessoa? Cancele e use <b>🚫 Cancelar turno / abonar</b> dia a dia antes de encurtar.</p></div>`;
+  }
+  el.innerHTML=h;
+}
+function salvarDatasPeriodo(){
+  if(!exigeEdicaoEscala())return;
+  const per=periodosEscala().find(x=>x.id===window._pdId);if(!per)return;
+  const de=$("#pd_de").value,ate=$("#pd_ate").value;
+  if(!de||!ate||ate<de){toast("Confira as datas.");return;}
+  let criados=0,subst=0;
+  const abonar=$("#pd_abonar")&&$("#pd_abonar").checked;
+  if(abonar){
+    const tipo=$("#pd_tipo").value,motivo=($("#pd_motivo").value||"").trim();
+    if(!motivo){toast("Escreva o motivo do abono.");return;}
+    const imp=pdImpacto(per,ate),canc=cancelamentosEscala().slice(),cont={};
+    imp.itens.forEach(x=>{
+      if(x.st.tipo==="Sem registro"){DB.faltas.push({id:uid(),func:x.f.id,data:x.d,tipo,motivo,turno:x.tid,origem:"escala"});criados++;cont[x.d+"|"+x.tid]=(cont[x.d+"|"+x.tid]||0)+1;}
+      else if(x.st.tipo==="Falta"){const r=DB.faltas.find(y=>y.id===x.st.id);if(r){Object.assign(r,{tipo,motivo,turno:x.tid,origem:"escala"});subst++;cont[x.d+"|"+x.tid]=(cont[x.d+"|"+x.tid]||0)+1;}}
+    });
+    Object.keys(cont).forEach(k=>{const [d,t]=k.split("|");const i=canc.findIndex(c=>c.data===d&&c.turno===t);const reg={id:i>=0?canc[i].id:uid(),data:d,turno:t,motivo,por:nomeUsuarioLogado()||"",em:iso(today()),qtd:(i>=0?canc[i].qtd||0:0)+cont[k]};if(i>=0)canc[i]=reg;else canc.push(reg);});
+    if(criados||subst){save("faltas");_escalaSalvar({cancelados:canc});}
+  }
+  periodoSalvar({...per,de,ate});
+  closeModal();render();
+  toast("Datas salvas: "+fmt(de)+" a "+fmt(ate)+(abonar?" · "+criados+" abono(s)"+(subst?" e "+subst+" falta(s) trocada(s)":""):"")+".");
+}
+/* escalas avulsas -> períodos */
+function organizarAvulsos(){
+  if(!exigeEdicaoEscala())return;
+  const avul=blocosEscala().filter(b=>!b.periodo&&b.turno&&b.turno!=="FOLGA"&&turnoPorId(b.turno));
+  if(!avul.length){toast("Nada avulso pra organizar.");return;}
+  const porPeriodo={};avul.forEach(b=>{const k=b.de+"|"+b.ate;(porPeriodo[k]=porPeriodo[k]||[]).push(b);});
+  const chaves=Object.keys(porPeriodo);
+  if(!confirm("Vou juntar os lançamentos avulsos em "+chaves.length+" período(s) (um por intervalo de datas). Ninguém muda de turno. Continuar?"))return;
+  const novos=[],blocos=blocosEscala().slice();
+  chaves.forEach(k=>{
+    const [de,ate]=k.split("|"),bs=porPeriodo[k],id=uid(),grupos={};
+    bs.forEach(b=>{(grupos[b.turno]=grupos[b.turno]||[]);if(!grupos[b.turno].includes(b.func))grupos[b.turno].push(b.func);b.periodo=id;});
+    novos.push({id,nome:"Período "+fmt(de)+" a "+fmt(ate),de,ate,dias:null,criado:Math.min(...bs.map(b=>b.criado||Date.now())),grupos});
+  });
+  _escalaSalvar({periodos:[...periodosEscala(),...novos],blocos});
+  render();toast(novos.length+" período(s) criado(s).");
 }
 
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
