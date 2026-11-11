@@ -627,7 +627,7 @@ function esc(s){return(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function openModal(html){modal.innerHTML=html;ov.classList.add("on");}
 function closeModal(){ov.classList.remove("on");modal.innerHTML="";}
 /* Clique fora do modal NÃO fecha mais — só fecha por ação explícita (X, Cancelar, ou Salvar), pra nunca perder dados já digitados sem querer */
-const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"frentes",ic:"🏗",l:"Frentes e áreas"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"escala",ic:"🕒",l:"Escala de turnos"},{v:"reemb",ic:"＄",l:"Fluig"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
+const MENU=[{v:"painel",ic:"◉",l:"Painel"},{sec:"Efetivo"},{v:"func",ic:"☰",l:"Funcionários"},{v:"frentes",ic:"🏗",l:"Frentes e áreas"},{v:"aniversariantes",ic:"🎂",l:"Aniversariantes"},{v:"experiencia",ic:"⏳",l:"Experiência"},{v:"contratacao",ic:"📈",l:"Admissões & Deslig."},{v:"ajustes",ic:"📋",l:"Ajustes adm./deslig."},{v:"mov",ic:"⇄",l:"Movimentações"},{v:"mobilizacao",ic:"🚚",l:"Mobilização"},{v:"recrutamento",ic:"🗂",l:"Recrutamento"},{v:"baixada",ic:"↩",l:"Baixada"},{v:"transportefds",ic:"🚌",l:"Transporte Fim de Semana"},{v:"valealimentacao",ic:"🍽",l:"Vale Alimentação"},{v:"ponto",ic:"◷",l:"Ponto & Ocorr."},{v:"escala",ic:"🕒",l:"Escala de turnos"},{v:"reemb",ic:"＄",l:"Fluig"},{sec:"Estrutura"},{v:"locais",ic:"⚑",l:"Locais / Rota"},{v:"mapa",ic:"🗺",l:"Mapa"},{v:"veiculos",ic:"🚌",l:"Veículos & Rotas"},{v:"abastecimento",ic:"⛽",l:"Abastecimento"},{sec:"Compras"},{v:"painelCompras",ic:"💰",l:"Painel Compras"},{v:"lancamentos",ic:"🧮",l:"Painel de Lançamentos"},{v:"aprovacoes",ic:"✅",l:"Aprovações"},{v:"pedidos",ic:"📋",l:"Pedidos"},{v:"listasemana",ic:"🗓",l:"Lista da semana"},{v:"fornecedores",ic:"🏢",l:"Fornecedores"},{v:"contratos",ic:"📄",l:"Contratos"},{v:"contasmensais",ic:"💡",l:"Contas Mensais"},{v:"custoscontratos",ic:"📊",l:"Custos de Contratos"},{v:"notasfiscais",ic:"🧾",l:"Notas Fiscais"},{v:"setores",ic:"🏷",l:"Setores"},{v:"despesas",ic:"💵",l:"Despesas"},{v:"almoxarifado",ic:"📦",l:"Almoxarifado"},{v:"almoxPedidos",ic:"🙋",l:"Pedidos de Material/EPI"},{sec:"Áreas"},{v:"areas",ic:"👁",l:"Painel Áreas"}];
 const SECOES_PERMISSAO=MENU.filter(m=>!m.sec&&m.v!=="reemb"&&m.v!=="recrutamento"&&m.v!=="aprovacoes").map(m=>({chave:m.v,nome:m.l,desc:"",telas:[m.v]}));
 const NIVEIS_PERMISSAO=["nenhum","ver","salvar"];
 function migrarPermissoesAntigas(f){
@@ -662,7 +662,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.34";
+const APP_VERSAO="v2026-10-02.35";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -797,11 +797,15 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,escala:vEscala,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
+function render(){migrarFluxoPedidos();({painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,ajustes:vAjustes,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,escala:vEscala,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
 function vPainel(){const ativos=DB.func.filter(efetivoObra);const sedeAtivosP=DB.func.filter(sedeAtiva);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];[...ativos,...sedeAtivosP].forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
   {const fl=DB.reemb.filter(prontoParaFinalizar).length;if(fl)alerts.push({c:"var(--steel)",b:"Fluig — "+fl+" lançamento(s) pago(s) há mais de "+diasFinalizarFluig()+" dias",s:"Aguardando finalização com a observação da confirmação."});}
+ {const ven=[];DB.func.forEach(f=>["adm","desl"].forEach(t=>{const l=listaAjuste(f,t);if(!l)return;const n=l.itens.filter(i=>ajVencido(f,t,l,i)).length;if(n)ven.push({f,t,n});}));
+  if(ven.length)alerts.push({c:"var(--amber)",b:"Ajustes de admissão/desligamento vencidos: "+ven.reduce((x,v)=>x+v.n,0)+" passo(s) em "+ven.length+" pessoa(s)",s:ven.slice(0,5).map(v=>v.f.nome+" ("+(v.t==="adm"?"admissão":"desligamento")+")").join(", ")+(ven.length>5?" …":"")+" — veja em Ajustes adm./deslig."});
+  const hj=iso(today()),h7=iso(_somaDias(today(),7)),hom=[];DB.func.forEach(f=>{const l=listaAjuste(f,"desl");if(!l)return;const h=dataHomologacao(f.demissao);const it=l.itens.find(i=>i.homolog);if(h&&h.data>=hj&&h.data<=h7&&(!it||!ajResolvido(it)))hom.push(f.nome+" ("+fmt(h.data)+")");});
+  if(hom.length)alerts.push({c:"var(--steel)",b:"Homologações nos próximos 7 dias: "+hom.length,s:hom.slice(0,6).join(", ")+(hom.length>6?" …":"")});}
  main.innerHTML=`<div class="head"><div><h1>Painel da Obra</h1><p>GM.MG.00083 — Vale — Nova Lima · Situação de hoje — ${fmt(iso(today()))}</p></div><div class="acts"><button class="btn btn-g" onclick="doBackup()">⭳ Backup</button><button class="btn btn-g" onclick="exportExcel()">⭳ Excel</button><button class="btn btn-a" onclick="formFunc()">＋ Novo funcionário</button></div></div>
    <div class="grid stats"><div class="stat steel"><div class="n">${ativos.length}</div><div class="l">Ativos na obra${rotSede()}</div></div><div class="stat"><div class="n">${emAloj}</div><div class="l">Em alojamento</div></div><div class="stat"><div class="n">${emHotel}</div><div class="l">Em hotel</div></div><div class="stat amber"><div class="n">${alerts.filter(a=>a.c.includes("amber")).length}</div><div class="l">Baixadas p/ programar</div></div></div>
    <div class="grid stats"><div class="stat"><div class="n">${locaisCount}</div><div class="l">Locais (${pctLocal}%)</div></div><div class="stat green"><div class="n">${alojadosCount}</div><div class="l">Alojados/Hotel (${pctAlojado}%)</div></div><div class="stat steel"><div class="n">${modCount}</div><div class="l">MOD — mão de obra direta</div></div><div class="stat amber"><div class="n">${moiCount}</div><div class="l">MOI — mão de obra indireta</div></div></div>
@@ -860,7 +864,8 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div style="display:flex;align-items:center;gap:14px;margin-bottom:15px"><div id="f_fotoPreview">${fotoThumb(f,64)}</div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><label for="f_fotoInput" class="btn btn-g btn-sm" style="cursor:pointer" id="f_fotoLabel">📷 ${f.foto?"Trocar foto":"Adicionar foto"}</label><input type="file" accept="image/*" id="f_fotoInput" style="display:none" onchange="onFotoSelect(event)"><button type="button" class="btn btn-g btn-sm" id="f_fotoRemoveBtn" style="display:${f.foto?"inline-flex":"none"};color:var(--red)" onclick="removerFoto()">Remover foto</button><div class="hint">JPG/PNG — redimensionada automaticamente.</div></div></div>
    <div class="sub">Identificação</div><div class="row2"><div class="fg"><label>Matrícula</label><input id="f_mat" value="${esc(f.matricula)}"></div><div class="fg"><label>Nome completo *</label><input id="f_nome" value="${esc(f.nome)}"></div></div><div class="row2"><div class="fg"><label>Função *</label><select id="f_func">${(()=>{const reg=funcoesConhecidas();const extra=f.funcao&&!reg.includes(f.funcao)?[f.funcao]:[];const todas=[...reg,...extra];return todas.length?`<option value="">—</option>`+todas.map(fn=>`<option value="${esc(fn)}" ${f.funcao===fn?"selected":""}>${esc(fn)}${extra.includes(fn)?" (ainda não cadastrada como vaga)":""}</option>`).join(""):`<option value="">— nenhuma vaga cadastrada —</option>`;})()}</select><div class="hint">Não achou? <a href="#" onclick="closeModal();CUR='mobilizacao';buildNav();render();return false" style="color:var(--steel)">cadastre em Mobilização → Quadro de vagas</a></div></div><div class="fg"><label>Empresa / Empreiteira</label><input id="f_emp" value="${esc(f.empresa)}"></div><div class="fg"><label>Setor de compras <span class="opt">(opcional — só quem faz pedido)</span></label><select id="f_setorcompras"><option value="">—</option>${DB.compras_setores.map(s=>`<option value="${s.id}" ${f.setorCompras===s.id?"selected":""}>${esc(s.nome)}</option>`).join("")}</select></div></div><div class="row2"><div class="fg"><label>Classificação <span class="opt">(conforme a função)</span></label><select id="f_class"><option value="">—</option><option value="MOD" ${f.classificacao==="MOD"?"selected":""}>MOD — Mão de Obra Direta</option><option value="MOI" ${f.classificacao==="MOI"?"selected":""}>MOI — Mão de Obra Indireta</option></select></div><div class="fg"><label>Regime de folga <span class="opt">(troca ida por baixada)</span></label><select id="f_folga">${["Não","Sim","Semanal","Quinzenal"].map(x=>`<option value="${x}" ${(f.regimeFolga||"Não")===x?"selected":""}>${x}</option>`).join("")}</select></div></div><div class="row2"><div class="fg"><label>Vínculo <span class="opt">(Sede = é da sede e fica na obra: não entra no efetivo, não tem baixada, ponto nem benefícios; pode ter alojamento ou hotel)</span></label><select id="f_vinculo"><option value="Obra" ${vinculoDe(f)==="Obra"?"selected":""}>Obra</option><option value="Sede" ${vinculoDe(f)==="Sede"?"selected":""}>Sede</option></select></div><div class="fg"><label>Frente / área <span class="opt">(altere em Frentes e áreas)</span></label><input readonly value="${esc(id?txtGruposDoFunc(id):"—")}" style="background:#f6f7f5"></div></div><div class="row3"><div class="fg"><label>RG</label><input id="f_rg" value="${esc(f.rg)}"></div><div class="fg"><label>CPF</label><input id="f_cpf" value="${esc(f.cpf)}"></div><div class="fg"><label>Nascimento</label><input type="date" id="f_nasc" value="${esc(f.nascimento)}"></div></div><div class="row3"><div class="fg"><label>Cidade de origem</label><input id="f_cid" value="${esc(f.cidade)}"></div><div class="fg"><label>Telefone</label><input id="f_tel" value="${esc(f.telefone)}"></div><div class="fg"><label>E-mail</label><input id="f_email" value="${esc(f.email)}"></div></div><div class="fg"><label>Treinamento <span class="opt">(situação/observação)</span></label><input id="f_trein" value="${esc(f.treinamento)}" placeholder="ex.: integração até dia 3"></div><div class="sub">Contrato</div><div class="row2"><div class="fg"><label>Admissão *</label><input type="date" id="f_adm" value="${esc(f.admissao)}"></div><div class="fg"><label>Demissão <span class="opt">(se saiu)</span></label><input type="date" id="f_dem" value="${esc(f.demissao)}"></div></div>
    <div class="fg"><label>Motivo do desligamento <span class="opt">(se saiu)</span></label><select id="f_motivodem"><option value="">—</option>${["Pedido de demissão","Demissão sem justa causa","Demissão com justa causa","Encerramento de contrato","Término de obra","Abandono de emprego","Outro"].map(x=>`<option ${f.motivoDesligamento===x?"selected":""}>${x}</option>`).join("")}</select></div>
-   <div class="row2"><div class="fg"><label>Fim experiência 1ª fase <span class="opt">(deixe vazio p/ automático: +${DB.cfg.expF1}d)</span></label><input type="date" id="f_exp1" value="${esc(f.expData1)}"></div><div class="fg"><label>Fim experiência 2ª fase <span class="opt">(automático: +${DB.cfg.expF2}d)</span></label><input type="date" id="f_exp2" value="${esc(f.expData2)}"></div></div>
+   <div class="fg"><label>Responsável pelos ajustes <span class="opt">(admissão ou desligamento — a lista de passos é criada ao salvar; fica no menu Ajustes)</span></label><select id="f_ajresp">${optsResponsavel((f.ajusteAdm&&f.ajusteAdm.responsavel)||(f.ajusteDesl&&f.ajusteDesl.responsavel)||_usuarioLogadoId||"")}</select></div>
+ <div class="row2"><div class="fg"><label>Fim experiência 1ª fase <span class="opt">(deixe vazio p/ automático: +${DB.cfg.expF1}d)</span></label><input type="date" id="f_exp1" value="${esc(f.expData1)}"></div><div class="fg"><label>Fim experiência 2ª fase <span class="opt">(automático: +${DB.cfg.expF2}d)</span></label><input type="date" id="f_exp2" value="${esc(f.expData2)}"></div></div>
    <div class="sub">Contagem de baixada <span style="text-transform:none;font-weight:400;color:var(--muted)">(2,5 dias/mês após ${DB.cfg.baixadaCarencia}d de carência)</span></div>
    <div class="fg"><label>Tem direito à baixada? <span class="opt">(quem vai pra casa toda semana/quinzena, ou é "Local", normalmente não tem)</span></label><select id="f_direitobaixada"><option value="Sim" ${f.direitoBaixada!=="Não"?"selected":""}>Sim</option><option value="Não" ${f.direitoBaixada==="Não"?"selected":""}>Não</option></select></div>
    <div class="fg"><label>Regime de ponto <span class="opt">(pra não aparecer "sem registro"/falta indevido na Chamada do dia)</span></label><select id="f_regimeponto"><option value="Normal" ${(!f.regimePonto||f.regimePonto==="Normal")?"selected":""}>Normal — bate ponto todo dia</option><option value="NaoBate" ${f.regimePonto==="NaoBate"?"selected":""}>Não bate ponto (ex.: diretoria/engenharia)</option><option value="Manual" ${f.regimePonto==="Manual"?"selected":""}>Ponto manual (ex.: trabalha fora, horário diferenciado)</option></select></div>
@@ -877,7 +882,8 @@ function formFunc(id){const f=id?DB.func.find(x=>x.id===id):{};_fotoTemp=f.foto|
    <div class="row2"><div class="fg"><label>Direção</label><select id="f_transf_dir"><option value="">— não registrar agora —</option><option value="Chegando">Chegando de outra obra</option><option value="Saindo">Indo para outra obra</option></select></div><div class="fg"><label>Data da transferência</label><input type="date" id="f_transf_data" value="${iso(today())}"></div></div>
    <div class="row2"><div class="fg"><label>Obra de origem</label><input id="f_transf_origem" placeholder="ex.: GM.MG.00071"></div><div class="fg"><label>Obra de destino</label><input id="f_transf_destino" placeholder="ex.: GM.MG.00083 (aqui)"></div></div>
    </div><div class="modal-f">${id?`<button class="btn btn-g" style="margin-right:auto;color:var(--red)" onclick="delFunc('${id}')">Excluir</button>`:""}<button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarFunc('${id||""}')">Salvar</button></div>`);}
-function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={...(prev||{}),id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,vinculo:($("#f_vinculo")?$("#f_vinculo").value:"Obra"),rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:prev?prev.podeAutorizarPin:false,acessoReembolso:prev?prev.acessoReembolso:false,acessoRecrutamento:prev?prev.acessoRecrutamento:false,acessoAlmoxarifado:prev?prev.acessoAlmoxarifado:false,acessoPedidos:prev?prev.acessoPedidos:false,permissoes:prev?prev.permissoes:undefined,perfilSoLeitura:prev?prev.perfilSoLeitura:false,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),valeCombustivelLinha:$("#f_vclinha").value.trim(),valeCombustivelIda:$("#f_vcida").value,valeCombustivelVolta:$("#f_vcvolta").value,fdsIntervalo:$("#f_fdsintervalo").value,fdsModo:$("#f_fdsmodo").value,fdsCidade:$("#f_fdscidade").value.trim(),fdsValor:$("#f_fdsvalor").value,fdsAcao:$("#f_fdsacao").value,fdsObs:$("#f_fdsobs").value.trim(),obs:$("#f_obs").value.trim()};if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
+function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("Informe o nome.");return;}if(!$("#f_adm").value){toast("Informe a admissão.");return;}const prev=id?DB.func.find(x=>x.id===id):null;const dem=$("#f_dem").value;const folga=$("#f_folga").value;const o={...(prev||{}),id:id||uid(),foto:_fotoTemp,matricula:$("#f_mat").value.trim(),nome,funcao:$("#f_func").value.trim(),empresa:$("#f_emp").value.trim(),setorCompras:$("#f_setorcompras").value,classificacao:$("#f_class").value,vinculo:($("#f_vinculo")?$("#f_vinculo").value:"Obra"),rg:$("#f_rg").value.trim(),cpf:$("#f_cpf").value.trim(),nascimento:$("#f_nasc").value,cidade:$("#f_cid").value.trim(),telefone:$("#f_tel").value.trim(),email:$("#f_email").value.trim(),treinamento:$("#f_trein").value.trim(),regimeFolga:folga,moraPerto:folga&&folga!=="Não"?"1":"",admissao:$("#f_adm").value,demissao:dem,motivoDesligamento:$("#f_motivodem").value,expData1:$("#f_exp1").value,expData2:$("#f_exp2").value,baixadaAjusteValor:$("#f_baix_val").value,baixadaAjusteData:$("#f_baix_data").value,dataInicioBaixada:$("#f_baixinicio")?.value||"",dataChegadaObra:$("#f_chegadaobra").value,saldoBaixadaInicial:$("#f_saldoinicial").value,direitoBaixada:$("#f_direitobaixada").value,regimePonto:$("#f_regimeponto").value,pin:prev?prev.pin:"",podeAutorizarPin:prev?prev.podeAutorizarPin:false,acessoReembolso:prev?prev.acessoReembolso:false,acessoRecrutamento:prev?prev.acessoRecrutamento:false,acessoAlmoxarifado:prev?prev.acessoAlmoxarifado:false,acessoPedidos:prev?prev.acessoPedidos:false,permissoes:prev?prev.permissoes:undefined,perfilSoLeitura:prev?prev.perfilSoLeitura:false,pixTipo:$("#f_pixt").value,pixChave:$("#f_pixk").value.trim(),pixBanco:$("#f_pixb").value.trim(),valeCombustivelLinha:$("#f_vclinha").value.trim(),valeCombustivelIda:$("#f_vcida").value,valeCombustivelVolta:$("#f_vcvolta").value,fdsIntervalo:$("#f_fdsintervalo").value,fdsModo:$("#f_fdsmodo").value,fdsCidade:$("#f_fdscidade").value.trim(),fdsValor:$("#f_fdsvalor").value,fdsAcao:$("#f_fdsacao").value,fdsObs:$("#f_fdsobs").value.trim(),obs:$("#f_obs").value.trim()};{const rAj=($("#f_ajresp")?$("#f_ajresp").value:"")||_usuarioLogadoId||"";if(!id&&!o.ajusteAdm)o.ajusteAdm=criarListaAjuste(o,"adm",rAj);if(dem&&(!prev||!prev.demissao)&&!o.ajusteDesl)o.ajusteDesl=criarListaAjuste(o,"desl",rAj);}
+ if(id){const i=DB.func.findIndex(x=>x.id===id);DB.func[i]=o;}else DB.func.push(o);save("func");if(dem&&(!prev||!prev.demissao)){const m=estadiaAtual(o.id);if(m){m.saida=dem;m.motivo=m.motivo||"Demissão";save("mov");}}
   const transfDir=$("#f_transf_dir")?.value;
   if(transfDir){
     const transfData=$("#f_transf_data").value||iso(today());
@@ -885,13 +891,13 @@ function salvarFunc(id){const nome=$("#f_nome").value.trim();if(!nome){toast("In
     if(transfDir==="Saindo"){const ant=estadiaAtual(o.id);if(ant){ant.saida=transfData;ant.motivo=ant.motivo||"Transferência";}}
     DB.mov.push(mo);save("mov");
   }
-  closeModal();render();toast("Funcionário salvo.");}
+  closeModal();render();toast("Funcionário salvo."+(!id&&o.ajusteAdm?" A lista de ajustes da admissão foi criada (menu Ajustes).":""));}
 let _fotoTemp="";
 function onFotoSelect(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{const size=200;const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');const ratio=Math.max(size/img.width,size/img.height);const w=img.width*ratio,h=img.height*ratio;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);_fotoTemp=canvas.toDataURL('image/jpeg',0.82);const pv=$("#f_fotoPreview");if(pv)pv.innerHTML=`<img src="${_fotoTemp}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;display:block">`;const lb=$("#f_fotoLabel");if(lb)lb.textContent="📷 Trocar foto";const rb=$("#f_fotoRemoveBtn");if(rb)rb.style.display="inline-flex";};img.src=ev.target.result;};reader.readAsDataURL(file);}
 function removerFoto(){_fotoTemp="";const pv=$("#f_fotoPreview");if(pv)pv.innerHTML=fotoThumb({},64);const lb=$("#f_fotoLabel");if(lb)lb.textContent="📷 Adicionar foto";const rb=$("#f_fotoRemoveBtn");if(rb)rb.style.display="none";const inp=$("#f_fotoInput");if(inp)inp.value="";}
 function delFunc(id){if(!confirm("Excluir só o cadastro deste funcionário?"))return;DB.func=DB.func.filter(x=>x.id!==id);save("func");closeModal();render();toast("Excluído.");}
-function formInativar(id){const f=DB.func.find(x=>x.id===id);openModal(`<div class="modal-h"><h3>Inativar ${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:14px">Isso marca o funcionário como desligado e encerra a estadia atual dele, se houver.</p><div class="row2"><div class="fg"><label>Data de desligamento *</label><input type="date" id="ia_data" value="${iso(today())}"></div><div class="fg"><label>Motivo</label><select id="ia_motivo"><option value="">—</option>${["Pedido de demissão","Demissão sem justa causa","Demissão com justa causa","Encerramento de contrato","Término de obra","Abandono de emprego","Outro"].map(x=>`<option ${f.motivoDesligamento===x?"selected":""}>${x}</option>`).join("")}</select></div></div><div class="fg"><label>Observações / comentário</label><textarea id="ia_obs" rows="3" placeholder="qualquer detalhe relevante sobre o desligamento fica anotado aqui"></textarea></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" style="background:var(--red);color:#fff" onclick="salvarInativacao('${id}')">Inativar</button></div>`);}
-function salvarInativacao(id){const data=$("#ia_data").value;if(!data){toast("Informe a data.");return;}const f=DB.func.find(x=>x.id===id);f.demissao=data;f.motivoDesligamento=$("#ia_motivo").value;f.obsDesligamento=$("#ia_obs").value.trim();save("func");const m=estadiaAtual(id);if(m){m.saida=data;m.motivo=m.motivo||"Demissão";save("mov");}closeModal();render();toast("Funcionário inativado.");}
+function formInativar(id){const f=DB.func.find(x=>x.id===id);openModal(`<div class="modal-h"><h3>Inativar ${esc(f.nome)}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:14px">Isso marca o funcionário como desligado e encerra a estadia atual dele, se houver.</p><div class="row2"><div class="fg"><label>Data de desligamento *</label><input type="date" id="ia_data" value="${iso(today())}"></div><div class="fg"><label>Motivo</label><select id="ia_motivo"><option value="">—</option>${["Pedido de demissão","Demissão sem justa causa","Demissão com justa causa","Encerramento de contrato","Término de obra","Abandono de emprego","Outro"].map(x=>`<option ${f.motivoDesligamento===x?"selected":""}>${x}</option>`).join("")}</select></div></div><div class="fg"><label>Responsável pelos ajustes do desligamento</label><select id="ia_resp">${optsResponsavel((f.ajusteDesl&&f.ajusteDesl.responsavel)||_usuarioLogadoId||"")}</select></div><div class="fg"><label>Observações / comentário</label><textarea id="ia_obs" rows="3" placeholder="qualquer detalhe relevante sobre o desligamento fica anotado aqui"></textarea></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" style="background:var(--red);color:#fff" onclick="salvarInativacao('${id}')">Inativar</button></div>`);}
+function salvarInativacao(id){const data=$("#ia_data").value;if(!data){toast("Informe a data.");return;}const f=DB.func.find(x=>x.id===id);f.demissao=data;f.motivoDesligamento=$("#ia_motivo").value;f.obsDesligamento=$("#ia_obs").value.trim();if(!f.ajusteDesl)f.ajusteDesl=criarListaAjuste(f,"desl",($("#ia_resp")?$("#ia_resp").value:"")||_usuarioLogadoId||"");save("func");const m=estadiaAtual(id);if(m){m.saida=data;m.motivo=m.motivo||"Demissão";save("mov");}closeModal();render();{const h=dataHomologacao(data);toast("Funcionário inativado. Lista de ajustes criada"+(h?" — homologação em "+fmt(h.data)+(h.antecipada?" (antecipada)":""):"")+".");}}
 function reativarFuncionario(id){
   if(!confirm("Reativar esse funcionário? Isso remove a marca de desligado (use quando foi um engano)."))return;
   const f=DB.func.find(x=>x.id===id);
@@ -5527,6 +5533,252 @@ function htmlAcompanhamentoCompras(){
    ${card("green",pagas.length,"4 · Pagas nos últimos 30 dias",brl(totPg),"_nfFiltroStatus='Pago';_nfFiltroMes='';render()")}
   </div>`;
 }
+/* ===== AJUSTES DE ADMISSÃO E DESLIGAMENTO (lista de passos por pessoa) ===== */
+const AJ_STATUS=["Pendente","Em andamento","Feito","Não se aplica"];
+const AJ_ADM_PADRAO=[
+ {id:"docs",nome:"Assinatura de documentos"},
+ {id:"ambientacao",nome:"Assinatura da ambientação"},
+ {id:"transporte",nome:"Transporte para a obra"},
+ {id:"alimentacao",nome:"Alimentação"},
+ {id:"plano",nome:"Inclusão de dependentes — plano de saúde e odontológico"},
+ {id:"alojamento",nome:"Alojamento: termo assinado e vaga definida",cond:"alojado"},
+ {id:"aso",nome:"ASO admissional liberado"},
+ {id:"epi",nome:"EPI e uniforme entregues (ficha assinada)"},
+ {id:"ponto",nome:"Cadastro no ponto (relógio e regime de ponto)"},
+ {id:"banco",nome:"Dados bancários / chave PIX"},
+ {id:"integracao",nome:"Integração de segurança e treinamentos obrigatórios"},
+ {id:"cracha",nome:"Crachá e acesso à obra"}];
+const AJ_DESL_PADRAO=[
+ {id:"docs",nome:"Documentação (TRCT, aviso, baixa na CTPS)"},
+ {id:"ponto",nome:"Ponto (fechamento, faltas e horas)"},
+ {id:"devolucao",nome:"Devolução de itens (EPI, uniforme, crachá, ferramentas)"},
+ {id:"homologacao",nome:"Homologação e pagamento das verbas",homolog:true},
+ {id:"dados",nome:"Dados gerais (conferir o cadastro e encerrar)"},
+ {id:"aso",nome:"Exame demissional (ASO)"},
+ {id:"beneficios",nome:"Cancelar benefícios (plano de saúde e odontológico, alimentação, transporte)"},
+ {id:"alojamento",nome:"Alojamento: desocupar e devolver a chave",cond:"alojado"},
+ {id:"acessos",nome:"Desativar acessos e crachá"},
+ {id:"fluig",nome:"Fluig: reembolsos e adiantamentos pendentes acertados"}];
+function modeloAjuste(tipo){
+  const m=DB.cfg.ajusteModelos,l=(m&&Array.isArray(m[tipo]))?m[tipo].filter(x=>x&&x.nome):[];
+  return l.length?l:(tipo==="adm"?AJ_ADM_PADRAO:AJ_DESL_PADRAO);
+}
+function alojadoAgora(fid){const e=estadiaAtual(fid);return!!(e&&(e.tipo==="Alojamento"||e.tipo==="Hotel"));}
+function dataHomologacao(demissaoISO){
+  const d=pd(demissaoISO);if(!d)return null;
+  const orig=_somaDias(d,10);let h=orig,guarda=0;
+  while((h.getDay()===0||h.getDay()===6||ehFeriado(iso(h)))&&guarda++<10)h=_somaDias(h,-1);
+  return{data:iso(h),original:iso(orig),antecipada:iso(h)!==iso(orig)};
+}
+function criarListaAjuste(f,tipo,resp){
+  const alojado=alojadoAgora(f.id);
+  const itens=modeloAjuste(tipo).filter(m=>!m.cond||(m.cond==="alojado"&&alojado)).map(m=>({id:m.id||uid(),nome:m.nome,homolog:!!m.homolog,status:"Pendente",obs:"",feitoEm:"",feitoPor:""}));
+  return{criadoEm:iso(today()),responsavel:resp||"",itens,obs:"",concluidoEm:""};
+}
+function listaAjuste(f,tipo){
+  const l=tipo==="adm"?f.ajusteAdm:f.ajusteDesl;
+  if(!(l&&typeof l==="object"&&Array.isArray(l.itens)))return null;
+  const limpa=l.itens.filter(i=>i&&typeof i==="object"&&(i.nome||i.nome===0)).map((i,k)=>{if(!i.id)i.id="i"+k+"_"+String(i.nome).replace(/\W/g,"").slice(0,8);i.nome=String(i.nome);if(!AJ_STATUS.includes(i.status))i.status="Pendente";return i;});
+  if(limpa.length!==l.itens.length||limpa.some((x,k)=>x!==l.itens[k]))l.itens=limpa;
+  return l;
+}
+function ajResolvido(it){return it&&(it.status==="Feito"||it.status==="Não se aplica");}
+function prazoAjuste(f,tipo,lista){
+  if(tipo==="desl"){const h=dataHomologacao(f.demissao);return h?h.data:"";}
+  const base=f.admissao||(lista&&lista.criadoEm)||"";if(!base||!pd(base))return"";
+  const dias=+DB.cfg.ajusteAdmPrazoDias||7;return iso(_somaDias(pd(base),dias));
+}
+function ajVencido(f,tipo,lista,it){const pr=prazoAjuste(f,tipo,lista);return!ajResolvido(it)&&!!pr&&pd(pr)<today();}
+function ajResumo(l){const t=l.itens.length,ok=l.itens.filter(ajResolvido).length;return{total:t,feitos:ok,pend:t-ok};}
+function podeEditarAjustes(){return!!_usuarioLogadoId&&nivelPermissaoUsuario("ajustes")==="salvar";}
+function exigeEdicaoAjustes(){
+  if(!_usuarioLogadoId){toast("Identifique-se (CPF) antes de editar os ajustes.");abrirLoginUsuario();return false;}
+  if(!podeEditarAjustes()){toast("Você não tem permissão de salvar em Ajustes de admissão/desligamento.");return false;}
+  return true;
+}
+function optsResponsavel(sel){
+  const l=DB.func.filter(ativo).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+  return `<option value="">(sem responsável)</option>`+l.map(f=>`<option value="${f.id}" ${f.id===sel?"selected":""}>${esc(f.nome)}</option>`).join("");
+}
+/* ---- página ---- */
+let _ajSemana="",_ajResp="",_ajTipo="",_ajSoPend=true,_ajAcum=true,_ajBusca="",_ajSujo=false;
+function ajSemanaVis(){return _ajSemana||iso(_segundaDe(today()));}
+function ajRegistros(){
+  const seg=ajSemanaVis(),fim=iso(_somaDias(pd(seg),6)),q=normalizaNome(_ajBusca),out=[];
+  DB.func.forEach(f=>{
+    ["adm","desl"].forEach(tipo=>{
+      const l=listaAjuste(f,tipo);if(!l)return;
+      if(_ajTipo&&_ajTipo!==tipo)return;
+      if(_ajResp&&(_ajResp==="__meus"?l.responsavel!==_usuarioLogadoId:l.responsavel!==_ajResp))return;
+      if(q&&!normalizaNome(f.nome+" "+(f.funcao||"")).includes(q))return;
+      const ev=tipo==="adm"?f.admissao:f.demissao,hom=tipo==="desl"?dataHomologacao(f.demissao):null;
+      const naSemana=(ev&&ev>=seg&&ev<=fim)||(hom&&hom.data>=seg&&hom.data<=fim);
+      const aberta=l.itens.some(i=>!ajResolvido(i));
+      const anterior=_ajAcum&&aberta&&ev&&ev<seg;
+      if(!(naSemana||anterior))return;
+      if(_ajSoPend&&!aberta)return;
+      out.push({f,tipo,lista:l,ev,hom,venc:l.itens.filter(i=>ajVencido(f,tipo,l,i)).length});
+    });
+  });
+  return out.sort((a,b)=>(b.venc>0)-(a.venc>0)||String(a.ev||"").localeCompare(String(b.ev||""))||String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR"));
+}
+function ajSemLista(){
+  const lim=iso(_somaDias(today(),-60)),out=[];
+  DB.func.forEach(f=>{
+    if(f.admissao&&f.admissao>=lim&&!listaAjuste(f,"adm"))out.push({f,tipo:"adm",ev:f.admissao});
+    if(f.demissao&&f.demissao>=lim&&!listaAjuste(f,"desl"))out.push({f,tipo:"desl",ev:f.demissao});
+  });
+  return out.sort((a,b)=>String(b.ev).localeCompare(String(a.ev)));
+}
+function ajGuarda(fn){if(_ajSujo&&!confirm("Há alterações não salvas nesta página. Descartar e continuar?"))return;_ajSujo=false;fn();}
+function ajMuda(n){ajGuarda(()=>{_ajSemana=iso(_somaDias(pd(ajSemanaVis()),7*n));render();});}
+function ajHoje(){ajGuarda(()=>{_ajSemana="";render();});}
+function ajFiltro(campo,v){ajGuarda(()=>{if(campo==="resp")_ajResp=v;else if(campo==="tipo")_ajTipo=v;else if(campo==="pend")_ajSoPend=v;else if(campo==="acum")_ajAcum=v;render();});}
+function ajCardHtml(r,ed){
+  const {f,tipo,lista,ev,hom}=r,res=ajResumo(lista),prazo=prazoAjuste(f,tipo,lista),hoje=today();
+  const concl=res.pend===0;
+  const cab=tipo==="adm"?`<span class="tag t-green">Admissão</span> ${fmt(ev)}`:`<span class="tag t-red">Desligamento</span> ${fmt(ev)}`;
+  const homTxt=hom?`<div style="font-size:12.5px;margin-top:4px">📅 <b>Homologação: ${fmt(hom.data)} (${DIAS_ABREV3[pd(hom.data).getDay()]})</b>${hom.antecipada?` <span class="tag t-amber" style="font-size:10px">antecipada · 10 dias seria ${fmt(hom.original)} (${DIAS_ABREV3[pd(hom.original).getDay()]})</span>`:""} ${pd(hom.data)<hoje&&!ajResolvido(lista.itens.find(i=>i.homolog)||{status:"Feito"})?'<span class="tag t-red" style="font-size:10px">vencida</span>':(diasEntre(hoje,pd(hom.data))<=3&&pd(hom.data)>=hoje?'<span class="tag t-amber" style="font-size:10px">chegando</span>':"")}</div>`:"";
+  const linhas=lista.itens.map(it=>{
+    const venc=ajVencido(f,tipo,lista,it);
+    return `<tr data-iid="${esc(it.id)}" style="${venc?"background:#fbe7e4":""}"><td>${esc(it.nome)}${venc?' <span class="tag t-red" style="font-size:10px">vencido</span>':""}</td>
+     <td><select class="aj_st" ${ed?"":"disabled"} onchange="_ajSujo=true;ajSujo(this)">${AJ_STATUS.map(x=>`<option ${it.status===x?"selected":""}>${x}</option>`).join("")}</select></td>
+     <td><input class="aj_obs" value="${esc(it.obs||"")}" ${ed?"":"disabled"} placeholder="como está / detalhes" oninput="_ajSujo=true;ajSujo(this)" style="min-width:180px"></td>
+     <td style="font-size:11px;color:var(--muted);white-space:nowrap">${it.feitoEm?"✔ "+fmt(it.feitoEm)+(it.feitoPor?"<br>"+esc(it.feitoPor):""):""}</td></tr>`;
+  }).join("");
+  return `<div class="panel ajcard" data-f="${f.id}" data-t="${tipo}" style="margin-bottom:14px;${res.pend&&r.venc?"border:2px solid var(--red)":""}"><div style="padding:12px 16px">
+   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><b style="font-size:15px">${esc(f.nome)}</b><span style="color:var(--muted);font-size:12.5px">${esc(f.funcao||"")}${vinculoDe(f)==="Sede"?" · Sede":""}</span>${cab}<span style="flex:1"></span>${concl?'<span class="tag t-green">✔ Concluída'+(lista.concluidoEm?" em "+fmt(lista.concluidoEm):"")+'</span>':`<span class="tag ${r.venc?"t-red":"t-amber"}">${res.feitos}/${res.total} feitos${r.venc?" · "+r.venc+" vencido(s)":""}</span>`}
+    <span class="hint ajsujo" style="display:none;color:var(--amber-d)">● alterações não salvas</span></div>
+   ${homTxt}${prazo&&tipo==="adm"?`<div style="font-size:12px;color:var(--muted);margin-top:3px">Prazo dos ajustes: ${fmt(prazo)}</div>`:""}
+   <div style="display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap"><label style="font-size:12.5px;color:var(--muted)">Responsável pelos ajustes</label><select class="aj_resp" ${ed?"":"disabled"} onchange="_ajSujo=true;ajSujo(this)">${optsResponsavel(lista.responsavel)}</select></div>
+   <div class="tblwrap"><table class="tbl" style="font-size:12.5px"><thead><tr><th>Passo</th><th>Status</th><th>Observação</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>
+   <div class="fg" style="margin:8px 0 6px"><label class="opt">Observação geral desta lista</label><input class="aj_obsgeral" value="${esc(lista.obs||"")}" ${ed?"":"disabled"} oninput="_ajSujo=true;ajSujo(this)"></div>
+   ${ed?`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-a btn-sm" onclick="ajSalvarCard('${f.id}','${tipo}')">💾 Salvar ajustes</button><button class="btn btn-g btn-sm" onclick="ajNovoItem('${f.id}','${tipo}')">＋ Item</button><button class="btn btn-g btn-sm" onclick="ajSincronizar('${f.id}','${tipo}')" title="Inclui passos do modelo que ainda não estão na lista (ex.: alojamento)">⟳ Sincronizar com o modelo</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="ajExcluirLista('${f.id}','${tipo}')">Excluir lista</button></div>`:""}</div></div>`;
+}
+function ajSujo(el){const c=el.closest(".ajcard");if(c){const s=c.querySelector(".ajsujo");if(s)s.style.display="inline";}}
+function vAjustes(){
+  const ed=podeEditarAjustes(),seg=ajSemanaVis(),fim=iso(_somaDias(pd(seg),6));
+  const regs=ajRegistros(),sem=ajSemLista();
+  const todas=[];DB.func.forEach(f=>["adm","desl"].forEach(t=>{const l=listaAjuste(f,t);if(l)todas.push({f,t,l});}));
+  const abertas=todas.filter(x=>x.l.itens.some(i=>!ajResolvido(i))),venc=todas.reduce((n,x)=>n+x.l.itens.filter(i=>ajVencido(x.f,x.t,x.l,i)).length,0);
+  const homSem=todas.filter(x=>x.t==="desl").filter(x=>{const h=dataHomologacao(x.f.demissao);return h&&h.data>=seg&&h.data<=fim;}).length;
+  const resps=[...new Set(todas.map(x=>x.l.responsavel).filter(Boolean))];
+  const adms=regs.filter(r=>r.tipo==="adm"),desls=regs.filter(r=>r.tipo==="desl");
+  main.innerHTML=`<div class="head"><div><h1>📋 Ajustes de admissão e desligamento</h1><p>Cada admissão e cada desligamento tem uma lista de passos, com responsável, status e observações. Marque como está, escreva os detalhes e salve. A homologação é 10 dias após a demissão (cai em fim de semana: antecipa pra sexta).</p></div><div class="acts">${ed?'<button class="btn btn-a" onclick="ajSalvarTodos()">💾 Salvar tudo</button><button class="btn btn-g" onclick="formModelosAjuste()">⚙ Modelos</button>':""}<button class="btn btn-g" onclick="exportAjustesExcel()">⭳ Excel</button></div></div>
+   <div class="toolbar"><button class="btn btn-g btn-sm" onclick="ajMuda(-1)">◀</button><b style="padding:0 8px">Semana de ${_ddmm(pd(seg))} a ${_ddmm(pd(fim))}</b><button class="btn btn-g btn-sm" onclick="ajMuda(1)">▶</button><button class="btn btn-g btn-sm" onclick="ajHoje()">Esta semana</button>
+    <select onchange="ajFiltro('tipo',this.value)"><option value="">Admissões e desligamentos</option><option value="adm" ${_ajTipo==="adm"?"selected":""}>Só admissões</option><option value="desl" ${_ajTipo==="desl"?"selected":""}>Só desligamentos</option></select>
+    <select onchange="ajFiltro('resp',this.value)"><option value="">Todos os responsáveis</option>${_usuarioLogadoId?`<option value="__meus" ${_ajResp==="__meus"?"selected":""}>Só os meus</option>`:""}${resps.map(id=>`<option value="${id}" ${_ajResp===id?"selected":""}>${esc(funcNome(id))}</option>`).join("")}</select>
+    <label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_ajSoPend?"checked":""} onchange="ajFiltro('pend',this.checked)">só com pendência</label>
+    <label style="font-size:12.5px;display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto" ${_ajAcum?"checked":""} onchange="ajFiltro('acum',this.checked)">incluir pendências de semanas anteriores</label>
+    <input type="search" placeholder="Buscar pessoa..." value="${esc(_ajBusca)}" onchange="ajGuarda(()=>{_ajBusca=this.value;render();})" style="min-width:160px"></div>
+   <div class="grid stats"><div class="stat steel"><div class="n">${abertas.length}</div><div class="l">Listas abertas</div></div><div class="stat ${venc?"red":"green"}"><div class="n">${venc}</div><div class="l">Passos vencidos</div></div><div class="stat amber"><div class="n">${homSem}</div><div class="l">Homologações nesta semana</div></div><div class="stat"><div class="n">${sem.length}</div><div class="l">Sem lista de ajustes</div></div></div>
+   ${sem.length&&ed?`<div class="panel" style="border:2px solid var(--amber);margin-bottom:14px"><div style="padding:12px 16px"><b>Sem lista de ajustes (últimos 60 dias)</b> <button class="btn btn-a btn-sm" style="margin-left:8px" onclick="ajCriarTodas()">Criar as ${sem.length} listas</button><div style="margin-top:8px">${sem.slice(0,25).map(x=>`<span class="chip" style="cursor:pointer" title="Criar lista" onclick="ajCriarLista('${x.f.id}','${x.tipo}')">${esc(frNomeCurto(x.f.nome))} <small>${x.tipo==="adm"?"admissão "+fmt(x.ev):"deslig. "+fmt(x.ev)}</small> ＋</span>`).join("")}${sem.length>25?" …":""}</div></div></div>`:""}
+   ${desls.length?`<div class="frtit">Desligamentos (${desls.length})</div>${desls.map(r=>ajCardHtml(r,ed)).join("")}`:""}
+   ${adms.length?`<div class="frtit">Admissões (${adms.length})</div>${adms.map(r=>ajCardHtml(r,ed)).join("")}`:""}
+   ${(!desls.length&&!adms.length)?`<div class="panel"><div class="empty"><div class="big">✅</div><p>Nada pendente nesta semana${_ajSoPend?"":" com esses filtros"}.</p></div></div>`:""}`;
+}
+/* ---- salvar ---- */
+function _ajLerCard(card){
+  const f=DB.func.find(x=>x.id===card.dataset.f);if(!f)return false;
+  const tipo=card.dataset.t,l=listaAjuste(f,tipo);if(!l)return false;
+  const hoje=iso(today()),quem=nomeUsuarioLogado()||"";
+  card.querySelectorAll("tbody tr[data-iid]").forEach(tr=>{
+    const it=l.itens.find(x=>x.id===tr.dataset.iid);if(!it)return;
+    const st=tr.querySelector(".aj_st").value,obs=tr.querySelector(".aj_obs").value.trim();
+    if(st==="Feito"&&it.status!=="Feito"){it.feitoEm=hoje;it.feitoPor=quem;}
+    else if(st!=="Feito"&&it.status==="Feito"){it.feitoEm="";it.feitoPor="";}
+    it.status=st;it.obs=obs;
+  });
+  l.responsavel=card.querySelector(".aj_resp").value;
+  l.obs=card.querySelector(".aj_obsgeral").value.trim();
+  l.concluidoEm=l.itens.every(ajResolvido)?(l.concluidoEm||hoje):"";
+  return true;
+}
+function ajSalvarCard(fid,tipo){
+  if(!exigeEdicaoAjustes())return;
+  const card=document.querySelector('.ajcard[data-f="'+fid+'"][data-t="'+tipo+'"]');if(!card)return;
+  if(!_ajLerCard(card))return;
+  save("func");_ajSujo=false;render();toast("Ajustes salvos.");
+}
+function ajSalvarTodos(){
+  if(!exigeEdicaoAjustes())return;
+  let n=0;document.querySelectorAll(".ajcard").forEach(c=>{if(_ajLerCard(c))n++;});
+  if(!n){toast("Nada pra salvar.");return;}
+  save("func");_ajSujo=false;render();toast(n+" lista(s) salva(s).");
+}
+function ajCriarLista(fid,tipo){
+  if(!exigeEdicaoAjustes())return;
+  const f=DB.func.find(x=>x.id===fid);if(!f)return;
+  const l=criarListaAjuste(f,tipo,_usuarioLogadoId||"");if(tipo==="adm")f.ajusteAdm=l;else f.ajusteDesl=l;
+  save("func");render();toast("Lista criada para "+f.nome+".");
+}
+function ajCriarTodas(){
+  if(!exigeEdicaoAjustes())return;
+  const sem=ajSemLista();sem.forEach(x=>{const l=criarListaAjuste(x.f,x.tipo,_usuarioLogadoId||"");if(x.tipo==="adm")x.f.ajusteAdm=l;else x.f.ajusteDesl=l;});
+  save("func");render();toast(sem.length+" lista(s) criada(s).");
+}
+function ajNovoItem(fid,tipo){
+  if(!exigeEdicaoAjustes())return;
+  const nome=(prompt("Nome do passo a incluir nesta lista:")||"").trim();if(!nome)return;
+  const f=DB.func.find(x=>x.id===fid),l=f&&listaAjuste(f,tipo);if(!l)return;
+  const card=document.querySelector('.ajcard[data-f="'+fid+'"][data-t="'+tipo+'"]');if(card)_ajLerCard(card);
+  l.itens.push({id:uid(),nome,homolog:false,status:"Pendente",obs:"",feitoEm:"",feitoPor:""});
+  l.concluidoEm="";save("func");_ajSujo=false;render();
+}
+function ajSincronizar(fid,tipo){
+  if(!exigeEdicaoAjustes())return;
+  const f=DB.func.find(x=>x.id===fid),l=f&&listaAjuste(f,tipo);if(!l)return;
+  const card=document.querySelector('.ajcard[data-f="'+fid+'"][data-t="'+tipo+'"]');if(card)_ajLerCard(card);
+  const alojado=alojadoAgora(f.id);let n=0;
+  modeloAjuste(tipo).forEach(m=>{
+    if(m.cond&&!(m.cond==="alojado"&&alojado))return;
+    if(l.itens.some(i=>i.id===m.id||normalizaNome(i.nome)===normalizaNome(m.nome)))return;
+    l.itens.push({id:m.id||uid(),nome:m.nome,homolog:!!m.homolog,status:"Pendente",obs:"",feitoEm:"",feitoPor:""});n++;
+  });
+  if(n)l.concluidoEm="";save("func");_ajSujo=false;render();toast(n?n+" passo(s) incluído(s) do modelo.":"A lista já tem todos os passos do modelo.");
+}
+function ajExcluirLista(fid,tipo){
+  if(!exigeEdicaoAjustes())return;
+  const f=DB.func.find(x=>x.id===fid);if(!f)return;
+  if(!confirm("Excluir a lista de "+(tipo==="adm"?"admissão":"desligamento")+" de "+f.nome+"? Isso apaga as observações dela."))return;
+  if(tipo==="adm")delete f.ajusteAdm;else delete f.ajusteDesl;save("func");_ajSujo=false;render();
+}
+/* ---- modelos ---- */
+let _amEdit={adm:[],desl:[]};
+function formModelosAjuste(){
+  if(!exigeEdicaoAjustes())return;
+  _amEdit={adm:modeloAjuste("adm").map(x=>({...x})),desl:modeloAjuste("desl").map(x=>({...x}))};
+  openModal(`<div class="modal-h"><h3>⚙ Modelos das listas de ajustes</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Os modelos valem pras listas <b>novas</b>. "Só se alojado" inclui o passo apenas quando a pessoa está em alojamento ou hotel na hora de criar. Nas listas que já existem use ⟳ Sincronizar.</p><div id="am_lista"></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="salvarModelosAjuste()">Salvar modelos</button></div>`);
+  amRender();
+}
+function amRender(){
+  const el=$("#am_lista");if(!el)return;
+  const bloco=(tipo,tit)=>`<div class="frtit" style="margin-top:6px">${tit}</div>${_amEdit[tipo].map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input value="${esc(x.nome)}" oninput="_amEdit['${tipo}'][${i}].nome=this.value" style="flex:1"><select onchange="_amEdit['${tipo}'][${i}].cond=this.value" style="max-width:130px"><option value="">Sempre</option><option value="alojado" ${x.cond==="alojado"?"selected":""}>Só se alojado</option></select>${tipo==="desl"?`<label style="font-size:11.5px;white-space:nowrap;display:flex;gap:3px;align-items:center" title="Mostra a data de homologação (10 dias após a demissão)"><input type="checkbox" style="width:auto" ${x.homolog?"checked":""} onchange="_amEdit['desl'][${i}].homolog=this.checked">homologação</label>`:""}<button class="btn btn-g btn-sm" onclick="amMover('${tipo}',${i},-1)">▲</button><button class="btn btn-g btn-sm" onclick="amMover('${tipo}',${i},1)">▼</button><button class="btn btn-g btn-sm" style="color:var(--red)" onclick="_amEdit['${tipo}'].splice(${i},1);amRender()">×</button></div>`).join("")}<div style="display:flex;gap:8px"><button class="btn btn-g btn-sm" onclick="_amEdit['${tipo}'].push({id:uid(),nome:'Novo passo'});amRender()">＋ Passo</button><button class="btn btn-g btn-sm" onclick="if(confirm('Voltar ao modelo padrão?')){_amEdit['${tipo}']=(${tipo==="adm"?"AJ_ADM_PADRAO":"AJ_DESL_PADRAO"}).map(x=>({...x}));amRender();}">Restaurar padrão</button></div>`;
+  el.innerHTML=bloco("adm","Admissão")+bloco("desl","Desligamento");
+}
+function amMover(tipo,i,d){const l=_amEdit[tipo],j=i+d;if(j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];amRender();}
+function salvarModelosAjuste(){
+  if(!exigeEdicaoAjustes())return;
+  const lim=l=>l.map(x=>({id:x.id||uid(),nome:String(x.nome||"").trim(),cond:x.cond||"",homolog:!!x.homolog})).filter(x=>x.nome);
+  const a=lim(_amEdit.adm),d=lim(_amEdit.desl);
+  if(!a.length||!d.length){toast("Deixe pelo menos um passo em cada modelo.");return;}
+  DB.cfg.ajusteModelos={adm:a,desl:d};save("cfg");closeModal();render();toast("Modelos salvos.");
+}
+/* ---- Excel ---- */
+function exportAjustesExcel(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const regs=ajRegistros(),itens=[],resumo=[];
+  regs.forEach(r=>{
+    const res=ajResumo(r.lista),pr=prazoAjuste(r.f,r.tipo,r.lista);
+    resumo.push({Pessoa:r.f.nome,Função:r.f.funcao||"",Tipo:r.tipo==="adm"?"Admissão":"Desligamento",Data:r.ev?fmt(r.ev):"","Homologação":r.hom?fmt(r.hom.data):"",Responsável:funcNome(r.lista.responsavel)||"",Feitos:res.feitos,Total:res.total,Vencidos:r.venc,"Observação geral":r.lista.obs||""});
+    r.lista.itens.forEach(it=>itens.push({Pessoa:r.f.nome,Tipo:r.tipo==="adm"?"Admissão":"Desligamento",Passo:it.nome,Status:it.status,Observação:it.obs||"","Feito em":it.feitoEm?fmt(it.feitoEm):"","Feito por":it.feitoPor||"",Prazo:pr?fmt(pr):"",Vencido:ajVencido(r.f,r.tipo,r.lista,it)?"Sim":"",Responsável:funcNome(r.lista.responsavel)||""}));
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(resumo.length?resumo:[{"—":"sem listas"}]),"Resumo");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(itens.length?itens:[{"—":"sem passos"}]),"Passos");
+  XLSX.writeFile(wb,"ajustes-"+ajSemanaVis()+".xlsx");toast("Exportado.");
+}
+
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
 function vinculosDaNota(n){
   const out=[];
