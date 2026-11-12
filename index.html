@@ -624,23 +624,10 @@ function saldoBaixada(fid){
   const chegada=dataChegadaNestaObra(fid);
   const usaChegada=chegada.transferido;
   const ancora=pd(chegada.data);
-  const diasDesdeAncora=ancora?Math.max(0,diasEntre(ancora,today())+1):0;
-  const fer=diasFerias(fid);
-  const usadas=baixadasUsadas(fid);
-  const local=diasEmLocal(fid);
-  const afast=diasAfastado(fid);
-  const diasPerdidos=diasFaltaEAtestado(fid);
-  const descFaltas=countFaltasEAtestados(fid)*c.faltaDesc;
-  const efetivo=Math.max(0,diasDesdeAncora-fer-usadas-local-afast-diasPerdidos);
-  const emCarencia=usaChegada?false:efetivo<c.baixadaCarencia;
-  const saldoParcial=+((efetivo/30)*c.baixadaMes).toFixed(1);
-  const diasParaLiberar=emCarencia?(c.baixadaCarencia-efetivo):0;
-  const dataLiberacao=emCarencia?iso(new Date(today().getTime()+diasParaLiberar*MS)):"";
-  const acumulavel=usaChegada?efetivo:Math.max(0,efetivo-c.baixadaCarencia);
-  const inicial=usaChegada?(+f.saldoBaixadaInicial||0):0;
-  const bruto=Math.max(0,inicial+(acumulavel/30)*c.baixadaMes-usadas-descFaltas);
+  const N=baixadaNumeros(fid,f,c,chegada,usaChegada,ancora);
+ const {diasDesdeAncora,fer,usadas,local,afast,diasPerdidos,descFaltas,efetivo,emCarencia,saldoParcial,diasParaLiberar,dataLiberacao,acumulavel,inicial,bruto}=N;
   const saldoCalc=Math.max(0,bruto);
-  const manual=f.baixadaAjusteValor!==undefined&&f.baixadaAjusteValor!==null&&f.baixadaAjusteValor!=="";
+  const manual=f.baixadaAjusteValor!==undefined&&f.baixadaAjusteValor!==null&&f.baixadaAjusteValor!==""&&!(N.z&&(!f.baixadaAjusteData||String(f.baixadaAjusteData)<N.z));
   const semDireito=f.direitoBaixada==="Não"||vinculoDe(f)==="Sede";
   const estadiaAgora=estadiaAtual(fid);
   const localAgora=!estadiaAgora||estadiaAgora.tipo==="Local";
@@ -650,7 +637,7 @@ function saldoBaixada(fid){
   const saldo=semAcumulo?0:(manual?+f.baixadaAjusteValor:saldoCalc);
   const diasPorDia=c.baixadaMes/30;
   const faltamDias=(semAcumulo||manual)?null:(saldo>=c.alertaBaixada?0:Math.ceil((c.alertaBaixada-saldo)/diasPorDia));
-  return {hosp:diasDesdeAncora,hospAuto:diasDesdeAncora,fer,efetivo,bruto:+bruto.toFixed(1),descFaltas,usadas,saldo:+(+saldo).toFixed(1),manual,manualData:f.baixadaAjusteData,usaDataInicio:usaChegada,dataChegada:chegada.data,faltamDias,emCarencia,saldoParcial,diasParaLiberar,dataLiberacao,semAcumulo,localAgora,afastadoAgora};
+  return {hosp:diasDesdeAncora,hospAuto:diasDesdeAncora,fer,efetivo,bruto:+bruto.toFixed(1),descFaltas,usadas,saldo:+(+saldo).toFixed(1),manual,manualData:f.baixadaAjusteData,usaDataInicio:usaChegada,dataChegada:chegada.data,faltamDias,emCarencia,saldoParcial,diasParaLiberar,dataLiberacao,semAcumulo,localAgora,afastadoAgora,zeradoEm:N.z||""};
 }
 function expStatus(f){if(!f.admissao)return{txt:"—",cls:"t-grey",dias:null,alerta:false};const dias=diasEntre(pd(f.admissao),today());const c=DB.cfg;const f1=f.expData1?diasEntre(pd(f.admissao),pd(f.expData1)):c.expF1-1;const f2=f.expData2?diasEntre(pd(f.admissao),pd(f.expData2)):c.expF2-1;if(dias>f2)return{txt:"Efetivado",cls:"t-green",dias,alerta:false};if(dias<=f1){const rest=f1-dias;return{txt:"Exp. 1ª fase",cls:"t-amber",dias,rest,alerta:rest<=5,fase:1};}const rest=f2-dias;return{txt:"Exp. 2ª fase",cls:"t-amber",dias,rest,alerta:rest<=5,fase:2};}
 function calcExperienciaDatas(f){
@@ -771,7 +758,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.39";
+const APP_VERSAO="v2026-10-02.40";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -1663,7 +1650,7 @@ function vBaixada(){
   const alojados=ativosRaw.length-locais;
   const pctLocal=((locais/total)*100).toFixed(1),pctAlojado=((alojados/total)*100).toFixed(1);
   main.innerHTML=`<div class="head"><div><h1>Banco de baixada</h1><p>${DB.cfg.baixadaMes} dias/mês após ${DB.cfg.baixadaCarencia} dias alojado. Falta −${DB.cfg.faltaDesc}. Alerta em ${DB.cfg.alertaBaixada}.</p></div></div>
-   ${bpAbasHtml("banco")}
+   ${bpAbasHtml("banco")}${bpAvisoZeragemHtml()}
    <div class="grid stats">
      <div class="stat steel"><div class="n">${ativosRaw.length}</div><div class="l">Total ativos</div></div>
      <div class="stat"><div class="n">${locais}</div><div class="l">Locais (${pctLocal}%)</div></div>
@@ -6145,7 +6132,6 @@ function avisosCalcular(force){
   reg("pessoas","p_fluigfin","Fluig pago e ainda não finalizado","reemb",()=>{const l=DB.reemb.filter(prontoParaFinalizar);return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) pago(s) há mais de "+diasFinalizarFluig()+" dias":"nada esperando finalização",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.dataPagamento||r.data)));});
   reg("pessoas","p_fluigsem","Fluig sem número ou link (últimos 60 dias)","reemb",()=>{const lim=dAtras(60),l=DB.reemb.filter(r=>r.status!=="Finalizado"&&String(r.data||"")>=lim&&(!String(r.fluigNumero||"").trim()||!String(r.fluigLink||"").trim()));return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) sem número ou link":"todos com número e link",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.data)));});
   reg("pessoas","p_planobaixada","Planejamento de baixada do recesso","baixada",()=>{const P=bpPessoas();if(!P.some(p=>p.temPlano))return R("ok",0,"sem planejamento de baixada ativo");const al=bpAlertas(),alta=al.filter(a=>a.sev==="alta"),med=al.filter(a=>a.sev==="media");return R(alta.length?"atraso":med.length?"atencao":"ok",alta.length+med.length,alta.length?alta.length+" crítico(s) e "+med.length+" de atenção":med.length?med.length+" de atenção":"planejamento sem pendências",alta.concat(med).slice(0,5).map(a=>a.t+" — "+a.x.slice(0,70)));});
-  reg("pessoas","p_ferias","Férias vencidas ou vencendo (90 dias)","baixada",()=>{const rows=feLinhas(true),v=rows.filter(r=>r.s.k==="vencida"),u=rows.filter(r=>r.s.k==="vencendo");return R(v.length?"atraso":u.length?"atencao":"ok",v.length+u.length,v.length?v.length+" vencida(s)"+(u.length?" e "+u.length+" vencendo":""):u.length?u.length+" vencendo em até 90 dias":"férias em dia",v.concat(u).slice(0,5).map(r=>r.f.nome+" — "+r.s.txt));});
   /* ---- PONTO E ESCALA ---- */
   reg("ponto","t_chamada","Chamada de ontem fechada","ponto",()=>{
     const d=dAtras(1),fds=[0,6].includes(pd(d).getDay())||ehFeriado(d);
@@ -6280,7 +6266,7 @@ function bpExigeEdicao(){
 }
 function bpParams(){
   const c=DB.cfg.baixaPlano&&typeof DB.cfg.baixaPlano==="object"?DB.cfg.baixaPlano:{};
-  return{recIni:_bpDataOk(c.recIni)||"2026-12-19",recRet:_bpDataOk(c.recRet)||"2027-01-04",hIni:_bpDataOk(c.hIni)||"2026-11-12",hFim:_bpDataOk(c.hFim)||"2027-01-17",valorAlim:Number(c.valorAlim)||0,minimos:(c.minimos&&typeof c.minimos==="object")?c.minimos:{}};
+  return{recIni:_bpDataOk(c.recIni)||"2026-12-19",recRet:_bpDataOk(c.recRet)||"2027-01-04",hIni:_bpDataOk(c.hIni)||"2026-11-12",hFim:_bpDataOk(c.hFim)||"2027-01-17",valorAlim:Number(c.valorAlim)||0,minimos:(c.minimos&&typeof c.minimos==="object")?c.minimos:{},zerar:c.zerar!==false,zerarApos:Math.max(0,Math.min(10,parseInt(c.zerarApos)||0))};
 }
 function bpSalvarParams(patch){
   if(!bpExigeEdicao())return;
@@ -6444,7 +6430,7 @@ function bpBarraFiltros(P,extra){
 /* ---- barra de parâmetros e indicadores ---- */
 function bpParamsHtml(){
   const P=bpParams(),ed=bpPodeEditar()?"":" disabled";
-  return `<label>Recesso início <input type="date" data-bpcfg="recIni" value="${P.recIni}"${ed}></label><label>Retorno ao trabalho <input type="date" data-bpcfg="recRet" value="${P.recRet}"${ed}></label><label>Janela de <input type="date" data-bpcfg="hIni" value="${P.hIni}"${ed}> a <input type="date" data-bpcfg="hFim" value="${P.hFim}"${ed}></label>`;
+  return `<label>Recesso início <input type="date" data-bpcfg="recIni" value="${P.recIni}"${ed}></label><label>Retorno ao trabalho <input type="date" data-bpcfg="recRet" value="${P.recRet}"${ed}></label><label>Janela de <input type="date" data-bpcfg="hIni" value="${P.hIni}"${ed}> a <input type="date" data-bpcfg="hFim" value="${P.hFim}"${ed}></label><label title="Depois do retorno do recesso todo mundo recomeça com saldo zero; a contagem começa no dia útil seguinte ao retorno de cada um"><input type="checkbox" data-bpcfg="zerar" ${P.zerar?"checked":""}${ed}> Zerar o saldo de todos no retorno</label>${P.zerar?`<label>contar a partir de <input type="number" min="0" max="10" data-bpcfg="zerarApos" value="${P.zerarApos}" style="width:46px"${ed}> dia(s) útil(eis) após o retorno</label><span style="opacity:.92">→ recomeça em <b>${fmt(somarDiasUteis(P.recRet,P.zerarApos))}</b></span>`:""}`;
 }
 function bpTabsHtml(){
   const al=bpAlertas(),hi=al.filter(a=>a.sev==="alta").length;
@@ -6655,7 +6641,7 @@ function bpViewTabela(P){
   let h=bpBarraFiltros(P,bpPodeEditar()?'<button class="bp-btn" type="button" data-bpadd>＋ Incluir pessoas no planejamento</button> <button class="bp-btn sec" type="button" data-bpimp>⇪ Importar do controle atual</button>':"");
   h+=`<div class="bp-note">Clique no título da coluna pra ordenar. Edite direto nas células: as alterações são salvas no cadastro de cada pessoa e aparecem pra todos. A função vem do cadastro. Quem não está no planejamento é contado como fixo na obra; marque “mostrar fixos” pra ver e incluir.</div>`;
   const head=`<th class="l" data-bpsort="nome">Nome ${_bp.tsort==="nome"?(_bp.tdir>0?"▲":"▼"):""}</th>`+BP_COLS.slice(1).map(c=>`<th data-bpsort="${c[0]}">${c[1]} ${_bp.tsort===c[0]?(_bp.tdir>0?"▲":"▼"):""}</th>`).join("");
-  const grList=bpUniq(P.map(p=>p.grupo));
+  const head2=head+(zeragemCfg()?"<th>Saldo recomeça em</th>":"");const grList=bpUniq(P.map(p=>p.grupo));
   const body=list.map(p=>{
     let td=`<td class="l"><a href="#" data-bpopen="${esc(p.id)}" style="color:inherit">${esc(p.nome)}</a></td>`;
     BP_COLS.slice(1).forEach(c=>{
@@ -6667,9 +6653,9 @@ function bpViewTabela(P){
       else if(c[2]==="d")td+=`<td><input type="date"${base} data-bpt="d" value="${esc(v)}"${ed}></td>`;
       else td+=`<td><input type="text"${base} ${k==="grupo"?'list="bp-dl-gr"':""} ${k==="obs"||k==="sugestao"?'style="min-width:220px"':""} value="${esc(v)}"${ed}></td>`;
     });
-    return `<tr>${td}</tr>`;
+    if(zeragemCfg())td+=`<td style="font-size:11.5px;color:var(--bp-muted)">${p.temPlano?(zeragemDe(p.id)?fmt(zeragemDe(p.id)):""):""}</td>`;return `<tr>${td}</tr>`;
   }).join("");
-  return h+`<datalist id="bp-dl-gr">${grList.map(f=>`<option value="${esc(f)}">`).join("")}</datalist><div class="bp-twrap"><table class="bp-tb"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${list.length?"":'<div class="bp-empty">Nenhuma pessoa com esses filtros.</div>'}`;
+  return h+`<datalist id="bp-dl-gr">${grList.map(f=>`<option value="${esc(f)}">`).join("")}</datalist><div class="bp-twrap"><table class="bp-tb"><thead><tr>${head2}</tr></thead><tbody>${body}</tbody></table></div>${list.length?"":'<div class="bp-empty">Nenhuma pessoa com esses filtros.</div>'}`;
 }
 
 /* ---- alertas ---- */
@@ -6842,7 +6828,7 @@ function bpConfirmarImportacao(){
 function bpExportarExcel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
   const P=bpPessoas(),days=bpDiasDoHorizonte(),wb=XLSX.utils.book_new();
-  const plano=P.filter(p=>p.temPlano||(p.aus&&p.aus.length)).map(p=>{const li=bpLeaveInfo(p),t=bpTrav(p);return{Nome:p.nome,Função:p.funcao,Origem:p.origem,Destino:p.grupo,Status:p.status,Saldo:p.saldo,Saída:p.saida,Volta:p.volta,"Retorno ao trabalho":p.trabalha||(p.volta?bpN2iso(bpD2n(p.volta)+1):""),"Dias fora":li?li.fora:"","Dias além do recesso":li?li.extra:"","Fim experiência":p.expFim,Transporte:p.transporte,Passagem:p.passagem,"Valor passagem":p.valorPassagem==null?"":p.valorPassagem,"Horas ida":p.hIda,"Horas volta":p.hVolta,"Embarque ida":p.embIda,"Embarque volta":p.embVolta,"Dias trajeto":t.dias,"Alimentação trajeto (R$)":+t.valor.toFixed(2),"Baixada oficial":p.baixadaId?"Sim":"",Observações:p.obs,"Ausências do cadastro":(p.aus||[]).map(a=>a.tipo+" "+bpFmtN(a.ini)+"→"+bpFmtN(a.fim)).join("; ")};});
+  const plano=P.filter(p=>p.temPlano||(p.aus&&p.aus.length)).map(p=>{const li=bpLeaveInfo(p),t=bpTrav(p);return{Nome:p.nome,Função:p.funcao,Origem:p.origem,Destino:p.grupo,Status:p.status,Saldo:p.saldo,Saída:p.saida,Volta:p.volta,"Retorno ao trabalho":p.trabalha||(p.volta?bpN2iso(bpD2n(p.volta)+1):""),"Dias fora":li?li.fora:"","Dias além do recesso":li?li.extra:"","Fim experiência":p.expFim,Transporte:p.transporte,Passagem:p.passagem,"Valor passagem":p.valorPassagem==null?"":p.valorPassagem,"Horas ida":p.hIda,"Horas volta":p.hVolta,"Embarque ida":p.embIda,"Embarque volta":p.embVolta,"Dias trajeto":t.dias,"Alimentação trajeto (R$)":+t.valor.toFixed(2),"Baixada oficial":p.baixadaId?"Sim":"","Saldo recomeça em":zeragemCfg()?(zeragemDe(p.id)||""):"",Observações:p.obs,"Ausências do cadastro":(p.aus||[]).map(a=>a.tipo+" "+bpFmtN(a.ini)+"→"+bpFmtN(a.fim)).join("; ")};});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(plano.length?plano:[{"—":"sem planejamento"}]),"Plano");
   const cd=bpCovData(P),cob=cd.fs.map(f=>{const o={Função:f,Total:cd.map[f].length,Mínimo:bpMinimoDe(f)||""};days.forEach(n=>{o[bpFmtN(n)]=bpIsRec(n)?"recesso":bpPresentes(cd.map[f],n);});return o;});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cob.length?cob:[{"—":"sem dados"}]),"Cobertura");
@@ -6852,7 +6838,7 @@ function bpExportarExcel(){
 }
 /* ---- tela e eventos ---- */
 function bpAbasHtml(atual){
-  return `<div class="bp-abas"><button class="${atual==="banco"?"on":""}" onclick="_baixAba='banco';render()">Banco de baixada</button><button class="${atual==="plano"?"on":""}" onclick="_baixAba='plano';render()">🎄 Planejamento do recesso</button><button class="${atual==='ferias'?"on":""}" onclick="_baixAba='ferias';render()">🏖 Controle de férias</button></div>`;
+  return `<div class="bp-abas"><button class="${atual==="banco"?"on":""}" onclick="_baixAba='banco';render()">Banco de baixada</button><button class="${atual==="plano"?"on":""}" onclick="_baixAba='plano';render()">🎄 Planejamento do recesso</button><button class="${atual==='ferias'?"on":""}" onclick="_baixAba='ferias';render()">🏖 Férias</button></div>`;
 }
 function bpMontarMain(){
   if(_baixAba==="ferias"){feMontarMain();return;}
@@ -6914,7 +6900,7 @@ function bpInstalarEventos(){
   document.addEventListener("change",e=>{
     const el=e.target;if(!dentro(el))return;
     if(el.dataset.bpui){const k=el.dataset.bpui;_bp[k]=el.type==="checkbox"?el.checked:(el.type==="range"?+el.value:el.value);bpMontarMain();return;}
-    if(el.dataset.bpcfg){const key=el.dataset.bpcfg,v=el.type==="number"?(Number(el.value)||0):el.value;if(el.type==="date"&&!v)return;bpSalvarParams({[key]:v});return;}
+    if(el.dataset.bpcfg){const key=el.dataset.bpcfg,v=el.type==="checkbox"?el.checked:(el.type==="number"?(Number(el.value)||0):el.value);if(el.type==="date"&&!v)return;bpSalvarParams({[key]:v});return;}
     if(el.dataset.bpmin!==undefined){if(!bpExigeEdicao()){bpMontarMain();return;}const m={...bpParams().minimos},val=Number(el.value)||0,key=normalizaNome(el.dataset.bpmin);delete m[el.dataset.bpmin];if(val>0)m[key]=val;else delete m[key];bpSalvarParams({minimos:m});return;}
     if(el.dataset.bpk&&el.dataset.bpid)bpCampo(el);
   });
@@ -6953,163 +6939,90 @@ function bpInstalarEventos(){
 }
 
 
-/* ===== CONTROLE DE FÉRIAS (mesmo estilo do planejamento de baixada) ===== */
+/* ===== FÉRIAS: só marcar as datas (sem controle de direito/vencimento) ===== */
 let _bpHor=null;
 function bpHor(){return _bpHor||{a:bpD2n(bpParams().hIni),b:bpD2n(bpParams().hFim)};}
-let _fe={tab:"direitos",q:"",fFuncao:"",fSit:"",soAtencao:false,pending:false};
+let _fe={tab:"marcar",q:"",fFuncao:"",soMarcadas:false,pending:false};
 let _feC={t:0,v:null};
-const FE_TABS=[["direitos","Direitos e vencimentos"],["tempo","Linha do tempo"],["cobertura","Cobertura por função"],["alertas","Alertas"]];
-const FE_SIT={vencida:{t:"Vencida",c:"t-red",o:0},vencendo:{t:"Vencendo",c:"t-amber",o:1},programar:{t:"A programar",c:"t-steel",o:2},planejada:{t:"Planejada",c:"t-steel",o:3},emdia:{t:"Em dia",c:"t-green",o:4},semdireito:{t:"Sem direito ainda",c:"t-grey",o:5},semadm:{t:"Sem data de admissão",c:"t-grey",o:6}};
-function feAddM(i,m){const a=i.split("-"),y=+a[0],mo=+a[1]-1+m,d=+a[2],ty=y+Math.floor(mo/12),tm=((mo%12)+12)%12,last=new Date(Date.UTC(ty,tm+1,0)).getUTCDate();return new Date(Date.UTC(ty,tm,Math.min(d,last))).toISOString().slice(0,10);}
+const FE_TABS=[["marcar","Marcar férias"],["tempo","Linha do tempo"],["cobertura","Cobertura por função"],["conflitos","Conflitos"]];
 function feParams(){
   const c=DB.cfg.feriasPlano&&typeof DB.cfg.feriasPlano==="object"?DB.cfg.feriasPlano:{},hj=bpTodayN();
-  return{ini:_bpDataOk(c.ini)||bpN2iso(hj),fim:_bpDataOk(c.fim)||bpN2iso(hj+365),base:_bpDataOk(c.base)||bpN2iso(hj)};
+  return{ini:_bpDataOk(c.ini)||bpN2iso(hj),fim:_bpDataOk(c.fim)||bpN2iso(hj+365)};
 }
 function feSalvarParams(patch){if(!bpExigeEdicao())return;DB.cfg.feriasPlano={...feParams(),...patch};save("cfg");_feC.t=0;render();}
 function feArr(f){if(!Array.isArray(f.planoFerias))f.planoFerias=[];return f.planoFerias;}
 function feDias(x){return bpD2n(x.fim)-bpD2n(x.ini)+1;}
 function feValido(x){return x&&typeof x==="object"&&bpD2n(x.ini)!=null&&bpD2n(x.fim)!=null&&bpD2n(x.fim)>=bpD2n(x.ini);}
-/* ---- ciclos: período aquisitivo (12 meses) e concessivo (12 meses seguintes) ---- */
-function feCiclos(f){
-  const adm=_bpDataOk(f.admissao);if(!adm)return null;
-  const hoje=bpTodayN(),base=bpD2n(feParams().base),out=[];
-  const ferias=(Array.isArray(DB.ferias)?DB.ferias:[]).filter(x=>x&&x.func===f.id&&bpD2n(x.inicio)!=null&&bpD2n(x.fim)!=null).map(x=>({ini:bpD2n(x.inicio),fim:bpD2n(x.fim)}));
-  const plan=(Array.isArray(f.planoFerias)?f.planoFerias:[]).filter(x=>feValido(x)&&!x.oficialId).map(x=>({ini:bpD2n(x.ini),fim:bpD2n(x.fim),abono:!!x.abono})).sort((a,b)=>a.ini-b.ini);
-  const faltas=(Array.isArray(DB.faltas)?DB.faltas:[]).filter(r=>r&&r.func===f.id&&r.tipo==="Falta");
-  let proximo=null;
-  for(let n=1;n<=60;n++){
-    const aqIni=feAddM(adm,12*(n-1)),coIni=feAddM(adm,12*n),aqFim=bpN2iso(bpD2n(coIni)-1),coFim=bpN2iso(bpD2n(feAddM(adm,12*(n+1)))-1);
-    if(bpD2n(aqFim)>hoje){proximo={n,aqIni,aqFim,coIni,coFim};break;}
-    if(bpD2n(coFim)<base)continue;
-    const nf=faltas.filter(r=>String(r.data||"")>=aqIni&&String(r.data||"")<=aqFim).length;
-    const dir=nf<=5?30:nf<=14?24:nf<=23?18:nf<=32?12:0;
-    const gozados=ferias.filter(x=>x.ini>=bpD2n(coIni)&&x.ini<=bpD2n(coFim)).reduce((s,x)=>s+(x.fim-x.ini+1),0);
-    out.push({n,aqIni,aqFim,coIni,coFim,faltas:nf,dir,gozados,plan:[],planDias:0,abono:0});
-  }
-  plan.forEach(pl=>{
-    const c=out.find(c=>Math.max(0,c.dir-c.abono-c.gozados-c.planDias)>0)||out[out.length-1];
-    if(c){c.plan.push(pl);c.planDias+=pl.fim-pl.ini+1;if(pl.abono&&!c.abono)c.abono=Math.floor(c.dir/3);}
-  });
-  out.forEach(c=>{c.saldo=Math.max(0,c.dir-c.abono-c.gozados);c.livre=Math.max(0,c.saldo-c.planDias);c.faltamLimite=bpD2n(c.coFim)-hoje;});
-  return{ciclos:out,proximo};
-}
-function feSituacao(f,ci){
-  ci=ci===undefined?feCiclos(f):ci;
-  if(!ci)return{k:"semadm",saldo:0,plan:0,livre:0,txt:"cadastre a data de admissão",ciclo:null};
-  const pend=ci.ciclos.filter(c=>c.saldo>0),saldo=pend.reduce((s,c)=>s+c.saldo,0),plan=pend.reduce((s,c)=>s+Math.min(c.planDias,c.saldo),0),livre=saldo-plan;
-  const hoje=bpTodayN(),emFerias=(Array.isArray(DB.ferias)?DB.ferias:[]).some(x=>x&&x.func===f.id&&bpD2n(x.inicio)!=null&&bpD2n(x.inicio)<=hoje&&bpD2n(x.fim)>=hoje);
-  const base={saldo,plan,livre,emFerias,ciclo:pend[0]||null,prox:ci.proximo};
-  if(!pend.length){
-    if(ci.ciclos.length)return{...base,k:"emdia",txt:ci.proximo?"sem saldo · próximo direito em "+fmt(ci.proximo.coIni):"sem saldo"};
-    return{...base,k:"semdireito",txt:ci.proximo?"completa 12 meses em "+fmt(ci.proximo.coIni):"sem direito"};
-  }
-  const venc=pend.find(c=>c.faltamLimite<0);
-  if(venc)return{...base,k:"vencida",ciclo:venc,txt:"o limite foi "+fmt(venc.coFim)+" · saldo "+venc.saldo+" dia(s)"};
-  const urg=pend.find(c=>c.faltamLimite<=90&&c.livre>0);
-  if(urg)return{...base,k:"vencendo",ciclo:urg,txt:"limite "+fmt(urg.coFim)+" ("+urg.faltamLimite+" dias) · saldo "+urg.saldo+", sem programar "+urg.livre};
-  if(livre===0)return{...base,k:"planejada",txt:plan+" dia(s) planejado(s)"};
-  return{...base,k:"programar",txt:"limite "+fmt(pend[0].coFim)+" · saldo "+saldo+" dia(s)"};
-}
 function feLinhas(force){
   if(!force&&_feC.v&&Date.now()-_feC.t<1500)return _feC.v;
-  const rows=DB.func.filter(efetivoObra).map(f=>{const ci=feCiclos(f);return{f,ci,s:feSituacao(f,ci)};});
+  const rows=DB.func.filter(efetivoObra).map(f=>{const per=(Array.isArray(f.planoFerias)?f.planoFerias:[]).filter(x=>x&&typeof x==="object");return{f,per,marcada:per.some(feValido)};});
   _feC={t:Date.now(),v:rows};return rows;
 }
-/* ---- alertas de férias ---- */
-function feAlertas(){
-  const out=[],hoje=bpTodayN(),Pm=feParams();
-  feLinhas().forEach(({f,ci,s})=>{
+/* ---- conflitos (só o que a baixada e a cobertura precisam) ---- */
+function feConflitos(){
+  const out=[],Pm=feParams();
+  feLinhas().forEach(({f,per})=>{
     const add=(sev,x)=>out.push({sev,id:f.id,t:f.nome,x});
-    if(s.k==="semadm"){out.push({sev:"info",id:f.id,t:f.nome,x:"Sem data de admissão: não dá pra calcular o direito a férias."});return;}
-    if(s.k==="vencida")add("alta","Férias vencidas: ciclo "+fmt(s.ciclo.aqIni)+" a "+fmt(s.ciclo.aqFim)+", o limite foi "+fmt(s.ciclo.coFim)+", saldo "+s.ciclo.saldo+" dia(s). Pagamento em dobro se não gozar: regularize.");
-    if(s.k==="vencendo")add(s.ciclo.faltamLimite<=30?"alta":"media","Limite para gozar em "+s.ciclo.faltamLimite+" dia(s) ("+fmt(s.ciclo.coFim)+"). Saldo "+s.ciclo.saldo+", ainda sem programar "+s.ciclo.livre+".");
-    const per=(Array.isArray(f.planoFerias)?f.planoFerias:[]).filter(feValido);
-    per.forEach(x=>{
-      const i=bpD2n(x.ini),dias=feDias(x),c=ci?ci.ciclos.find(c=>c.plan.some(p=>p.ini===i))||(ci.ciclos.length?ci.ciclos[ci.ciclos.length-1]:null):null,rot=fmt(x.ini)+" a "+fmt(x.fim);
-      if(!x.oficialId){
-        if(c&&i<=bpD2n(c.aqFim))add("alta","Férias planejadas ("+rot+") começam antes do direito (período aquisitivo termina em "+fmt(c.aqFim)+").");
-        else if(c&&i>bpD2n(c.coFim))add("alta","Férias planejadas ("+rot+") começam depois do limite para gozar ("+fmt(c.coFim)+").");
-        if(!ci||!ci.ciclos.length)add("media","Férias planejadas ("+rot+") sem ciclo com direito calculado (admissão menos de 12 meses ou ciclo anterior ao início do controle).");
-      }
-      if(dias<5)add("media","Período de férias ("+rot+") com menos de 5 dias: a lei exige no mínimo 5 dias em cada período.");
-      const dw=bpDow(i),vedado=dw===0||dw===5||dw===6||ehFeriado(x.ini)||ehFeriado(bpN2iso(i+1))||ehFeriado(bpN2iso(i+2));
-      if(vedado)add("media","Férias começando em "+fmt(x.ini)+" ("+["domingo","segunda","terça","quarta","quinta","sexta","sábado"][dw]+"): é vedado iniciar nos 2 dias que antecedem feriado ou repouso semanal.");
-      if(!x.oficialId||i>hoje){
-        const falta=i-hoje;
-        if(falta<=30&&falta>=0&&!x.avisada)add("media","Aviso de férias não registrado (precisa ser feito com 30 dias de antecedência; começam em "+falta+" dia(s)).");
-        if(x.avisada&&bpD2n(x.avisada)!=null&&bpD2n(x.avisada)>i-30)add("media","Aviso de férias dado em "+fmt(x.avisada)+", com menos de 30 dias de antecedência.");
-        if(falta<=2&&!x.paga)add(falta<=0?"alta":"media","Pagamento das férias não registrado (deve sair até 2 dias antes do início, "+fmt(x.ini)+").");
-      }
-    });
-    if(per.length>3)add("media","Mais de 3 períodos de férias: a lei permite dividir em até 3.");
-    if(per.length>1&&!per.some(x=>feDias(x)>=14))add("media","Férias divididas sem nenhum período de 14 dias ou mais.");
+    per.forEach(x=>{if((x.ini||x.fim)&&!feValido(x))add("media","Período de férias com datas incompletas ou invertidas ("+(x.ini?fmt(x.ini):"?")+" a "+(x.fim?fmt(x.fim):"?")+").");});
+    const val=per.filter(feValido);if(!val.length)return;
     const p=bpPessoa(f);
-    if(per.length&&bpHasLeave(p)){per.forEach(x=>{const s2=bpD2n(p.saida)+1,e2=bpWorkDay(p)-1;if(bpD2n(x.ini)<=e2&&bpD2n(x.fim)>=s2)add("media","Férias ("+fmt(x.ini)+" a "+fmt(x.fim)+") se sobrepõem à baixada planejada ("+bpFmtN(s2)+" a "+bpFmtN(e2)+").");});}
+    val.forEach(x=>{
+      const a=bpD2n(x.ini),b=bpD2n(x.fim);
+      if(bpHasLeave(p)){const s2=bpD2n(p.saida)+1,e2=bpWorkDay(p)-1;if(a<=e2&&b>=s2)add("media","Férias ("+fmt(x.ini)+" a "+fmt(x.fim)+") se sobrepõem à baixada planejada ("+bpFmtN(s2)+" a "+bpFmtN(e2)+").");}
+      (p.aus||[]).filter(z=>/Baixada \(oficial\)|Afastado/.test(z.tipo)).forEach(z=>{if(a<=z.fim&&b>=z.ini)add("media","Férias ("+fmt(x.ini)+" a "+fmt(x.fim)+") se sobrepõem a "+z.tipo.toLowerCase()+" ("+bpFmtN(z.ini)+" a "+bpFmtN(z.fim)+").");});
+    });
+    if(val.length>1)for(let i=0;i<val.length;i++)for(let j=i+1;j<val.length;j++)if(bpD2n(val[i].ini)<=bpD2n(val[j].fim)&&bpD2n(val[j].ini)<=bpD2n(val[i].fim))add("media","Dois períodos de férias se sobrepõem entre si.");
   });
   _bpHor={a:bpD2n(Pm.ini),b:bpD2n(Pm.fim)};
   try{
     const P=bpPessoas(),cd=bpCovData(P);
-    cd.fs.forEach(fn=>{const min=bpMinimoDe(fn);if(!min)return;const list=cd.map[fn],bad=[];bpDiasDoHorizonte().forEach(n=>{if(bpDow(n)===0)return;const c=bpPresentes(list,n);if(c<min)bad.push({n,c});});if(bad.length)out.push({sev:"alta",id:null,t:"Função "+fn,x:"Abaixo do mínimo de "+min+" em "+bad.length+" dia(s) útil(eis) com férias, baixadas e afastamentos: "+bad.slice(0,5).map(b=>bpFmtN(b.n)+" ("+b.c+")").join(", ")+(bad.length>5?"…":"")+"."});});
+    cd.fs.forEach(fn=>{const min=bpMinimoDe(fn);if(!min)return;const list=cd.map[fn],bad=[];bpDiasDoHorizonte().forEach(n=>{if(bpDow(n)===0)return;const c=bpPresentes(list,n);if(c<min)bad.push({n,c});});if(bad.length)out.push({sev:"alta",id:null,t:"Função "+fn,x:"Abaixo do mínimo de "+min+" em "+bad.length+" dia(s) útil(eis), somando férias, baixadas e afastamentos: "+bad.slice(0,5).map(b=>bpFmtN(b.n)+" ("+b.c+")").join(", ")+(bad.length>5?"…":"")+"."});});
   }finally{_bpHor=null;}
   const rank={alta:0,media:1,info:2};out.sort((a,b)=>rank[a.sev]-rank[b.sev]);return out;
 }
-function feViewAlertas(){
-  const al=feAlertas(),c={alta:0,media:0,info:0};al.forEach(a=>c[a.sev]++);
-  let h=`<div class="bp-filtros"><span class="bp-tag bad">${c.alta} críticos</span><span class="bp-tag warn">${c.media} atenção</span><span class="bp-tag info">${c.info} informativos</span></div><div class="bp-al">`;
+function feViewConflitos(){
+  const al=feConflitos(),c={alta:0,media:0};al.forEach(a=>c[a.sev]=(c[a.sev]||0)+1);
+  let h=`<div class="bp-filtros"><span class="bp-tag bad">${c.alta} críticos</span><span class="bp-tag warn">${c.media} atenção</span></div><div class="bp-al">`;
   al.forEach(a=>{h+=`<div class="bp-ai ${a.sev}"><div class="sp"><b>${esc(a.t)}</b>${esc(a.x)}</div>${a.id?`<button class="bp-btn sm sec" type="button" data-feopen="${esc(a.id)}">Abrir</button>`:""}</div>`;});
-  if(!al.length)h+='<div class="bp-empty">Nenhum alerta de férias.</div>';
-  return h+`</div><div class="bp-card bp-about"><h3>Como o direito é calculado</h3><ul><li><b>Período aquisitivo:</b> 12 meses a partir da admissão. Depois dele a pessoa adquire <b>30 dias</b> (24, 18 ou 12 se teve 6, 15 ou 24 ou mais faltas injustificadas nesse período; perde o direito com mais de 32).</li><li><b>Período concessivo:</b> os 12 meses seguintes. As férias precisam ser <b>gozadas dentro dele</b>; passou disso, ficam vencidas (pagamento em dobro).</li><li>Podem ser divididas em até 3 períodos (um com 14 dias ou mais, os outros com 5 ou mais). Não podem começar nos 2 dias antes de feriado ou repouso semanal. Aviso 30 dias antes, pagamento até 2 dias antes.</li><li>Ciclos cujo prazo terminou <b>antes da data inicial do controle</b> (parâmetro acima) são considerados regularizados, porque a Central não tem o histórico antigo de férias.</li><li>Férias lançadas na Central (tela de ficha) contam como gozadas e <b>reduzem o saldo de baixada</b>; as <b>planejadas</b> aqui só viram oficiais quando você clica em “Lançar como férias”.</li></ul></div>`;
+  if(!al.length)h+='<div class="bp-empty">Nenhum conflito: as férias marcadas não batem com a baixada nem deixam função abaixo do mínimo.</div>';
+  return h+`</div><div class="bp-card bp-about"><h3>Como funciona</h3><ul><li>Aqui você só <b>marca as datas das férias</b>. Não há cálculo de direito nem de vencimento.</li><li>A <b>baixada do recesso</b> (do controle) e os <b>afastamentos</b> do cadastro aparecem junto, na linha do tempo e na cobertura, pra você não marcar férias em cima de uma baixada nem deixar uma função descoberta (defina o mínimo na aba Cobertura).</li><li>Férias marcadas ficam como <b>plano</b>. Se quiser que contem de verdade (Ponto marcando férias e saldo de baixada descontando), use <b>Lançar como férias</b> na ficha da pessoa.</li></ul></div>`;
 }
 /* ---- cabeçalho, indicadores, abas ---- */
-function feParamsHtml(){
-  const P=feParams(),ed=bpPodeEditar()?"":" disabled";
-  return `<label>Janela de <input type="date" data-fecfg="ini" value="${P.ini}"${ed}> a <input type="date" data-fecfg="fim" value="${P.fim}"${ed}></label><label title="Ciclos com prazo de gozo encerrado antes dessa data são tratados como regularizados">Controlar ciclos com limite a partir de <input type="date" data-fecfg="base" value="${P.base}"${ed}></label>`;
-}
-function feTabsHtml(){
-  const hi=feAlertas().filter(a=>a.sev==="alta").length;
-  return FE_TABS.map(t=>`<button class="bp-tab" type="button" data-fetab="${t[0]}" aria-selected="${_fe.tab===t[0]}">${t[1]}${t[0]==="alertas"&&hi?`<span class="bp-badge">${hi}</span>`:""}</button>`).join("");
-}
+function feParamsHtml(){const P=feParams(),ed=bpPodeEditar()?"":" disabled";return `<label>Janela de <input type="date" data-fecfg="ini" value="${P.ini}"${ed}> a <input type="date" data-fecfg="fim" value="${P.fim}"${ed}></label>`;}
+function feTabsHtml(){const hi=feConflitos().filter(a=>a.sev==="alta").length;return FE_TABS.map(t=>`<button class="bp-tab" type="button" data-fetab="${t[0]}" aria-selected="${_fe.tab===t[0]}">${t[1]}${t[0]==="conflitos"&&hi?`<span class="bp-badge">${hi}</span>`:""}</button>`).join("");}
 function feKpisHtml(){
-  const rows=feLinhas(),c=k=>rows.filter(r=>r.s.k===k).length,Pm=feParams(),a=bpD2n(Pm.ini),b=bpD2n(Pm.fim);
-  const planej=rows.filter(r=>(Array.isArray(r.f.planoFerias)?r.f.planoFerias:[]).some(x=>feValido(x)&&bpD2n(x.ini)<=b&&bpD2n(x.fim)>=a)).length;
-  const dias=rows.reduce((s,r)=>s+r.s.saldo,0),hi=feAlertas().filter(x=>x.sev==="alta").length;
-  const cards=[[c("vencida")?"bad":"ok","Férias vencidas",c("vencida"),"ciclos com limite já passado"],[c("vencendo")?"warn":"ok","Vencendo em até 90 dias",c("vencendo"),"com saldo sem programar"],["","A programar",c("programar"),"com direito e prazo folgado"],["","Planejadas na janela",planej,"com período marcado"],["","Em férias hoje",rows.filter(r=>r.s.emFerias).length,"lançadas na Central"],["","Sem direito ainda",c("semdireito"),"menos de 12 meses"],["warn","Dias de férias a gozar",dias,"saldo de todo o efetivo"],[hi?"bad":"ok","Alertas críticos",hi,"na janela"]];
+  const rows=feLinhas(),Pm=feParams(),a=bpD2n(Pm.ini),b=bpD2n(Pm.fim),hoje=bpTodayN();
+  const val=r=>r.per.filter(feValido),marc=rows.filter(r=>r.marcada),naJanela=rows.filter(r=>val(r).some(x=>bpD2n(x.ini)<=b&&bpD2n(x.fim)>=a)).length;
+  const hojeN=rows.filter(r=>val(r).some(x=>bpD2n(x.ini)<=hoje&&bpD2n(x.fim)>=hoje)||(Array.isArray(DB.ferias)?DB.ferias:[]).some(x=>x&&x.func===r.f.id&&bpD2n(x.inicio)!=null&&bpD2n(x.inicio)<=hoje&&bpD2n(x.fim)>=hoje)).length;
+  const dias=marc.reduce((s,r)=>s+val(r).reduce((t,x)=>t+feDias(x),0),0),al=feConflitos(),hi=al.filter(x=>x.sev==="alta").length;
+  const cards=[["","Com férias marcadas",marc.length,"de "+rows.length+" no efetivo"],["","Férias na janela",naJanela,"pessoas com período na janela"],["","Em férias hoje",hojeN,"marcadas ou lançadas"],["","Dias de férias marcados",dias,"soma dos períodos"],[al.length?(hi?"bad":"warn"):"ok","Conflitos",al.length,hi?hi+" crítico(s)":"com baixada/cobertura"]];
   return cards.map(x=>`<div class="bp-kpi ${x[0]}"><b>${esc(x[2])}</b>${esc(x[1])}<br><span>${esc(x[3])}</span></div>`).join("");
 }
-/* ---- tabela de direitos e vencimentos ---- */
-function feFiltrar(rows){
-  const q=normalizaNome(_fe.q);
-  return rows.filter(r=>{
-    if(_fe.fFuncao&&String(r.f.funcao||"")!==_fe.fFuncao)return false;
-    if(_fe.fSit&&r.s.k!==_fe.fSit)return false;
-    if(_fe.soAtencao&&!["vencida","vencendo","programar"].includes(r.s.k))return false;
-    if(q&&!normalizaNome(r.f.nome+" "+(r.f.funcao||"")).includes(q))return false;
-    return true;
-  }).sort((a,b)=>FE_SIT[a.s.k].o-FE_SIT[b.s.k].o||((a.s.ciclo?bpD2n(a.s.ciclo.coFim):9e9)-(b.s.ciclo?bpD2n(b.s.ciclo.coFim):9e9))||String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR"));
-}
-function feViewDireitos(){
-  const rows=feFiltrar(feLinhas()),ed=bpPodeEditar(),dis=ed?"":" disabled";
+/* ---- marcar as datas ---- */
+function feViewMarcar(){
+  const q=normalizaNome(_fe.q),ed=bpPodeEditar(),dis=ed?"":" disabled";
   const fn=bpUniq(DB.func.filter(efetivoObra).map(f=>f.funcao));
-  let h=`<div class="bp-filtros"><input type="search" placeholder="Buscar nome ou função…" data-feui="q" value="${esc(_fe.q)}"><select data-feui="fFuncao"><option value="">Todas as funções</option>${fn.map(x=>`<option ${_fe.fFuncao===x?"selected":""}>${esc(x)}</option>`).join("")}</select><select data-feui="fSit"><option value="">Todas as situações</option>${Object.keys(FE_SIT).map(k=>`<option value="${k}" ${_fe.fSit===k?"selected":""}>${FE_SIT[k].t}</option>`).join("")}</select><label><input type="checkbox" data-feui="soAtencao" ${_fe.soAtencao?"checked":""}> só quem precisa de atenção</label></div>`;
-  h+=`<div class="bp-note">O direito vem da <b>data de admissão</b> do cadastro; as férias já lançadas contam como gozadas. Programe o <b>1º período</b> direto na tabela (as datas viram plano) e use a ficha pra dividir em até 3 períodos, registrar aviso e pagamento e <b>lançar como férias oficiais</b>.</div>`;
-  const body=rows.map(({f,ci,s})=>{
-    const sit=FE_SIT[s.k],c=s.ciclo||(ci&&ci.ciclos[ci.ciclos.length-1])||null,per=(Array.isArray(f.planoFerias)?f.planoFerias:[]),p1=per[0]||{},resto=per.slice(1).filter(feValido).map(x=>fmt(x.ini).slice(0,5)+"→"+fmt(x.fim).slice(0,5)).join(" + ");
-    const p=bpPessoa(f),baix=bpHasLeave(p)?bpFmt(p.saida)+" → "+bpFmtN(bpWorkDay(p))+(p.baixadaId?" ✔":""):"";
-    return `<tr><td class="l"><a href="#" data-feopen="${esc(f.id)}" style="color:inherit">${esc(f.nome)}</a></td><td>${esc(f.funcao||"")}</td><td>${f.admissao?fmt(f.admissao):"—"}</td><td>${c?bpFmt(c.aqIni)+"/"+c.aqIni.slice(2,4)+" a "+bpFmt(c.aqFim)+"/"+c.aqFim.slice(2,4):"—"}</td><td class="num">${c?c.dir+(c.faltas?` <small title="${c.faltas} falta(s) no período">(${c.faltas}f)</small>`:""):""}</td><td class="num">${c?c.gozados:""}</td><td class="num"><b>${s.saldo||""}</b></td><td>${c?fmt(c.coFim):""}</td><td><span class="tag ${sit.c}">${sit.t}</span><br><small style="color:var(--muted)">${esc(s.txt)}</small></td><td><input type="date" data-feid="${esc(f.id)}" data-fep="0" data-fek="ini" value="${esc(p1.ini||"")}"${dis}></td><td><input type="date" data-feid="${esc(f.id)}" data-fep="0" data-fek="fim" value="${esc(p1.fim||"")}"${dis}></td><td class="num">${feValido(p1)?feDias(p1):""}</td><td style="font-size:11.5px">${esc(resto)}</td><td style="font-size:11.5px;color:var(--bp-muted)">${baix}</td></tr>`;
+  const rows=feLinhas().filter(r=>(!_fe.fFuncao||String(r.f.funcao||"")===_fe.fFuncao)&&(!_fe.soMarcadas||r.marcada)&&(!q||normalizaNome(r.f.nome+" "+(r.f.funcao||"")).includes(q))).sort((a,b)=>(b.marcada-a.marcada)||String(a.f.nome).localeCompare(String(b.f.nome),"pt-BR"));
+  let h=`<div class="bp-filtros"><input type="search" placeholder="Buscar nome ou função…" data-feui="q" value="${esc(_fe.q)}"><select data-feui="fFuncao"><option value="">Todas as funções</option>${fn.map(x=>`<option ${_fe.fFuncao===x?"selected":""}>${esc(x)}</option>`).join("")}</select><label><input type="checkbox" data-feui="soMarcadas" ${_fe.soMarcadas?"checked":""}> só quem tem férias marcadas</label></div>`;
+  h+=`<div class="bp-note">Marque as datas direto na tabela (1º e 2º período) ou abra a ficha pra um 3º período e observação. A <b>baixada do recesso</b> aparece ao lado pra você não marcar em cima dela. Ficam como <b>plano</b> até você lançar como férias oficiais.</div>`;
+  const inp=(f,i,k,v)=>`<input type="date" data-feid="${esc(f.id)}" data-fep="${i}" data-fek="${k}" value="${esc(v||"")}"${dis}>`;
+  const body=rows.map(({f,per})=>{
+    const p=bpPessoa(f),baix=bpHasLeave(p)?bpFmt(p.saida)+" → "+bpFmtN(bpWorkDay(p))+(p.baixadaId?" ✔":""):"",x0=per[0]||{},x1=per[1]||{};
+    const of=per.some(x=>x.oficialId),dias=per.filter(feValido).reduce((s,x)=>s+feDias(x),0);
+    return `<tr><td class="l"><a href="#" data-feopen="${esc(f.id)}" style="color:inherit">${esc(f.nome)}</a></td><td>${esc(f.funcao||"")}</td><td style="font-size:11.5px;color:var(--bp-muted)">${baix}</td><td>${inp(f,0,"ini",x0.ini)}</td><td>${inp(f,0,"fim",x0.fim)}</td><td>${inp(f,1,"ini",x1.ini)}</td><td>${inp(f,1,"fim",x1.fim)}</td><td class="num">${dias||""}</td><td>${of?'<span class="bp-tag ok">lançada</span>':""}</td><td><button class="bp-btn sm sec" type="button" data-feopen="${esc(f.id)}">Ficha</button></td></tr>`;
   }).join("");
-  h+=`<div class="bp-twrap"><table class="bp-tb"><thead><tr><th class="l">Nome</th><th>Função</th><th>Admissão</th><th>Período aquisitivo</th><th>Direito</th><th>Gozados</th><th>Saldo</th><th>Limite p/ gozar</th><th>Situação</th><th>Férias de</th><th>até</th><th>Dias</th><th>Outros períodos</th><th>Baixada do recesso</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  h+=`<div class="bp-twrap"><table class="bp-tb"><thead><tr><th class="l">Nome</th><th>Função</th><th>Baixada do recesso</th><th>1º período: de</th><th>até</th><th>2º período: de</th><th>até</th><th>Dias</th><th></th><th></th></tr></thead><tbody>${body}</tbody></table></div>`;
   return h+(rows.length?"":'<div class="bp-empty">Ninguém com esses filtros.</div>');
 }
-/* ---- gravar períodos de férias ---- */
+/* ---- gravar ---- */
 function feCampo(el){
   if(!bpExigeEdicao()){feMontarMain();return;}
   const fid=el.dataset.feid,idx=+el.dataset.fep||0,k=el.dataset.fek,f=DB.func.find(x=>x.id===fid);if(!f)return;
-  const arr=feArr(f);while(arr.length<=idx)arr.push({id:uid(),ini:"",fim:"",abono:false,avisada:"",paga:"",oficialId:"",obs:""});
-  const x=arr[idx];let v=el.value;if(el.type==="checkbox")v=el.checked;else if(el.type==="date")v=_bpDataOk(v);
+  const arr=feArr(f);while(arr.length<=idx)arr.push({id:uid(),ini:"",fim:"",oficialId:"",obs:""});
+  const x=arr[idx];let v=el.value;if(el.type==="date")v=_bpDataOk(v);
   x[k]=v;
-  if(k==="ini"&&v&&!x.fim)x.fim=bpN2iso(bpD2n(v)+29);
   if(x.oficialId&&(k==="ini"||k==="fim")){const o=DB.ferias.find(y=>y.id===x.oficialId);if(o&&x.ini&&x.fim){o.inicio=x.ini;o.fim=x.fim;save("ferias");}}
-  for(let i=arr.length-1;i>=0;i--){const y=arr[i];if(!y.ini&&!y.fim&&!y.oficialId&&!y.avisada&&!y.paga&&!y.obs)arr.splice(i,1);}
+  for(let i=arr.length-1;i>=0;i--){const y=arr[i];if(!y.ini&&!y.fim&&!y.oficialId&&!y.obs)arr.splice(i,1);}
   if(!arr.length)delete f.planoFerias;
   save("func");_feC.t=0;
   const a=document.activeElement,dentro=a&&a!==document.body&&a!==el&&a.dataset&&a.dataset.fek&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
@@ -7121,22 +7034,20 @@ function feOficializar(fid,idx){
   const f=DB.func.find(x=>x.id===fid),x=f&&f.planoFerias&&f.planoFerias[idx];
   if(!x||!feValido(x)){toast("Preencha as datas do período.");return;}
   if(x.oficialId){toast("Esse período já está lançado como férias.");return;}
-  const falta=[];if(!x.avisada)falta.push("aviso (30 dias antes)");if(!x.paga)falta.push("pagamento (até 2 dias antes)");
-  if(falta.length&&!confirm("Ainda falta registrar: "+falta.join(" e ")+". Lançar como férias oficiais mesmo assim?"))return;
-  const id=uid();DB.ferias.push({id,func:fid,inicio:x.ini,fim:x.fim,origem:"plano",obs:"Controle de férias"});save("ferias");
-  x.oficialId=id;save("func");_feC.t=0;feMontarMain();feSoft();feDesenharFicha(fid);
-  toast("Lançado como férias oficiais: "+fmt(x.ini)+" a "+fmt(x.fim)+". O Ponto passa a marcar férias e o saldo de baixada deixa de contar esses dias.");
+  if(!confirm("Lançar "+fmt(x.ini)+" a "+fmt(x.fim)+" como férias oficiais de "+f.nome+"? O Ponto passa a marcar férias e o saldo de baixada deixa de contar esses dias."))return;
+  const id=uid();DB.ferias.push({id,func:fid,inicio:x.ini,fim:x.fim,origem:"plano",obs:"Marcado no controle de férias"});save("ferias");
+  x.oficialId=id;save("func");_feC.t=0;feMontarMain();feSoft();feDesenharFicha(fid);toast("Lançado como férias: "+fmt(x.ini)+" a "+fmt(x.fim)+".");
 }
 function feDesfazerOficial(fid,idx){
   if(!bpExigeEdicao())return;
   const f=DB.func.find(x=>x.id===fid),x=f&&f.planoFerias&&f.planoFerias[idx];if(!x||!x.oficialId)return;
-  if(!confirm("Desfazer o lançamento oficial dessas férias? Elas deixam de constar na ficha e no Ponto (o plano continua)."))return;
+  if(!confirm("Desfazer o lançamento oficial dessas férias? Elas deixam de constar no Ponto (o plano continua)."))return;
   DB.ferias=DB.ferias.filter(y=>y.id!==x.oficialId);save("ferias");x.oficialId="";save("func");_feC.t=0;feMontarMain();feSoft();feDesenharFicha(fid);toast("Lançamento oficial desfeito.");
 }
 function feRemoverPeriodo(fid,idx){
   if(!bpExigeEdicao())return;
   const f=DB.func.find(x=>x.id===fid),x=f&&f.planoFerias&&f.planoFerias[idx];if(!x)return;
-  if(x.oficialId){toast("Esse período está lançado como férias oficiais. Desfaça o lançamento antes de remover.");return;}
+  if(x.oficialId){toast("Esse período está lançado como férias. Desfaça o lançamento antes de remover.");return;}
   f.planoFerias.splice(idx,1);if(!f.planoFerias.length)delete f.planoFerias;
   save("func");_feC.t=0;feMontarMain();feSoft();feDesenharFicha(fid);
 }
@@ -7145,28 +7056,27 @@ function feAbrirFicha(id){openModal('<div id="fe_ficha"></div>');feDesenharFicha
 function feFecharFicha(){closeModal();}
 function feDesenharFicha(id){
   const el=document.getElementById("fe_ficha");if(!el)return;
-  const f=DB.func.find(x=>x.id===id),r=f&&feLinhas(true).find(x=>x.f.id===id);
-  if(!f||!r){el.innerHTML='<div class="modal-b"><p>Pessoa não encontrada no efetivo.</p></div>';return;}
-  const ed=bpPodeEditar(),dis=ed?"":" disabled",s=r.s,sit=FE_SIT[s.k];
-  const per=Array.isArray(f.planoFerias)?f.planoFerias:[],linhas=[0,1,2].map(i=>{
+  const f=DB.func.find(x=>x.id===id);
+  if(!f){el.innerHTML='<div class="modal-b"><p>Pessoa não encontrada no efetivo.</p></div>';return;}
+  const ed=bpPodeEditar(),dis=ed?"":" disabled",per=Array.isArray(f.planoFerias)?f.planoFerias:[];
+  const linhas=[0,1,2].map(i=>{
     const x=per[i]||{},of=!!x.oficialId;
-    return `<tr><td><b>${i+1}º</b></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="ini" value="${esc(x.ini||"")}"${dis}></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="fim" value="${esc(x.fim||"")}"${dis}></td><td class="num">${feValido(x)?feDias(x):""}</td><td><label style="font-size:11px"><input type="checkbox" style="width:auto" data-feid="${esc(id)}" data-fep="${i}" data-fek="abono" ${x.abono?"checked":""}${dis}> vende 1/3</label></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="avisada" value="${esc(x.avisada||"")}"${dis}></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="paga" value="${esc(x.paga||"")}"${dis}></td><td style="white-space:nowrap">${x.ini||x.fim?(of?`<span class="tag t-green">✔ lançada</span> ${ed?`<button class="btn btn-g btn-sm" onclick="feDesfazerOficial('${esc(id)}',${i})">desfazer</button>`:""}`:(ed?`<button class="btn btn-a btn-sm" onclick="feOficializar('${esc(id)}',${i})">Lançar como férias</button> <button class="btn btn-g btn-sm" onclick="feRemoverPeriodo('${esc(id)}',${i})">✕</button>`:"")):""}</td></tr>`;}).join("");
-  const ciclos=(r.ci&&r.ci.ciclos.length)?`<table class="tbl" style="font-size:12px"><thead><tr><th>Aquisitivo</th><th>Concessivo (limite)</th><th>Direito</th><th>Gozados</th><th>Planejados</th><th>Saldo</th></tr></thead><tbody>${r.ci.ciclos.map(c=>`<tr style="${c.faltamLimite<0&&c.saldo>0?"background:#fbe7e4":""}"><td>${fmt(c.aqIni)} a ${fmt(c.aqFim)}</td><td>${fmt(c.coIni)} a <b>${fmt(c.coFim)}</b></td><td>${c.dir}${c.faltas?` (${c.faltas} falta(s))`:""}</td><td>${c.gozados}</td><td>${c.planDias}</td><td><b>${c.saldo}</b>${c.abono?` <small>(−${c.abono} vendidos)</small>`:""}</td></tr>`).join("")}</tbody></table>`:`<p class="hint">${esc(s.txt)}</p>`;
-  const ofs=(Array.isArray(DB.ferias)?DB.ferias:[]).filter(x=>x&&x.func===id).sort((a,b)=>String(b.inicio||"").localeCompare(String(a.inicio||"")));
-  const p=bpPessoa(f),bx=bpHasLeave(p)?`<div class="hint" style="margin-top:8px"><b>Baixada do recesso (do controle):</b> saída ${bpFmt(p.saida)} → retorno ${bpFmtN(bpWorkDay(p))} · ${esc(p.grupo||"sem destino")} · saldo de baixada ${p.saldo}</div>`:"";
-  const al=feAlertas().filter(a=>a.id===id);
-  el.innerHTML=`<div class="modal-h"><h3>${esc(f.nome)} — férias</h3><button class="x" onclick="feFecharFicha()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:8px">${esc(f.funcao||"")} · admissão ${f.admissao?fmt(f.admissao):"—"} · <span class="tag ${sit.c}">${sit.t}</span> ${esc(s.txt)}</p>${ciclos}${bx}<div class="frtit" style="margin-top:12px">Férias planejadas (até 3 períodos)</div><div class="tblwrap"><table class="tbl" style="font-size:12px"><thead><tr><th></th><th>Início</th><th>Fim</th><th>Dias</th><th></th><th>Aviso dado em</th><th>Pago em</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>${ofs.length?`<div class="hint" style="margin-top:8px"><b>Férias lançadas na Central:</b> ${ofs.map(x=>fmt(x.inicio)+" a "+fmt(x.fim)).join(" · ")}</div>`:""}${al.length?`<div style="margin-top:10px">${al.map(a=>`<div class="bp-ai ${a.sev}" style="margin-bottom:6px"><div class="sp">${esc(a.x)}</div></div>`).join("")}</div>`:""}</div><div class="modal-f"><button class="btn btn-a" onclick="feFecharFicha()">Fechar</button></div>`;
+    return `<tr><td><b>${i+1}º</b></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="ini" value="${esc(x.ini||"")}"${dis}></td><td><input type="date" data-feid="${esc(id)}" data-fep="${i}" data-fek="fim" value="${esc(x.fim||"")}"${dis}></td><td class="num">${feValido(x)?feDias(x):""}</td><td><input type="text" data-feid="${esc(id)}" data-fep="${i}" data-fek="obs" value="${esc(x.obs||"")}" placeholder="observação"${dis}></td><td style="white-space:nowrap">${x.ini||x.fim?(of?`<span class="tag t-green">✔ lançada</span> ${ed?`<button class="btn btn-g btn-sm" onclick="feDesfazerOficial('${esc(id)}',${i})">desfazer</button>`:""}`:(ed?`<button class="btn btn-a btn-sm" onclick="feOficializar('${esc(id)}',${i})">Lançar como férias</button> <button class="btn btn-g btn-sm" onclick="feRemoverPeriodo('${esc(id)}',${i})">✕</button>`:"")):""}</td></tr>`;}).join("");
+  const p=bpPessoa(f),bx=bpHasLeave(p)?`<div class="hint" style="margin-top:8px"><b>Baixada do recesso (do controle):</b> saída ${bpFmt(p.saida)} → retorno ${bpFmtN(bpWorkDay(p))} · ${esc(p.grupo||"sem destino")}${p.baixadaId?" · ✔ oficial":""}</div>`:"";
+  const out=(p.aus||[]).filter(a=>!/planejada/.test(a.tipo)).map(a=>esc(a.tipo)+" "+bpFmtN(a.ini)+" → "+bpFmtN(a.fim)).join(" · ");
+  const al=feConflitos().filter(a=>a.id===id);
+  el.innerHTML=`<div class="modal-h"><h3>${esc(f.nome)} — férias</h3><button class="x" onclick="feFecharFicha()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:8px">${esc(f.funcao||"")}${f.admissao?" · admissão "+fmt(f.admissao):""}</p>${bx}${out?`<div class="hint" style="margin-top:6px"><b>Do cadastro:</b> ${out}</div>`:""}<div class="frtit" style="margin-top:12px">Férias marcadas (até 3 períodos)</div><div class="tblwrap"><table class="tbl" style="font-size:12px"><thead><tr><th></th><th>Início</th><th>Fim</th><th>Dias</th><th>Observação</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>${al.length?`<div style="margin-top:10px">${al.map(a=>`<div class="bp-ai ${a.sev}" style="margin-bottom:6px"><div class="sp">${esc(a.x)}</div></div>`).join("")}</div>`:""}</div><div class="modal-f"><button class="btn btn-a" onclick="feFecharFicha()">Fechar</button></div>`;
 }
-/* ---- aplicar férias a várias pessoas ---- */
+/* ---- aplicar a várias pessoas (férias coletivas) ---- */
 function feAbrirAplicar(){
   if(!bpExigeEdicao())return;
   const P=bpParams();
-  openModal(`<div class="modal-h"><h3>＋ Aplicar férias a várias pessoas</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Cria um período de férias <b>planejado</b> pra cada pessoa marcada (útil pra férias coletivas no recesso). Quem já tem período que bate com essas datas é pulado. Depois você ajusta cada um na tabela.</p><div class="row2"><div class="fg"><label>Início</label><input type="date" id="fea_ini" value="${P.recIni}"></div><div class="fg"><label>Fim</label><input type="date" id="fea_fim" value="${bpN2iso(bpD2n(P.recRet)-1)}"></div></div><label style="display:flex;gap:6px;align-items:center;font-size:12.5px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="fea_abono" style="width:auto"> vender 1/3 (abono pecuniário)</label>${pkHtml("fea")}</div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="feConfirmarAplicar()">Aplicar</button></div>`);
-  pkInit("fea",[],[],f=>{const r=feLinhas().find(x=>x.f.id===f.id);return r?FE_SIT[r.s.k].t+(r.s.saldo?" · saldo "+r.s.saldo+"d":""):"";});
+  openModal(`<div class="modal-h"><h3>＋ Marcar férias de várias pessoas</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Marca o mesmo período pra cada pessoa selecionada (útil pra férias coletivas). Quem já tem período que bate com essas datas é pulado. Depois você ajusta cada um na tabela.</p><div class="row2"><div class="fg"><label>Início</label><input type="date" id="fea_ini" value="${P.recIni}"></div><div class="fg"><label>Fim</label><input type="date" id="fea_fim" value="${bpN2iso(bpD2n(P.recRet)-1)}"></div></div>${pkHtml("fea")}</div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="feConfirmarAplicar()">Marcar</button></div>`);
+  pkInit("fea",[],[],f=>{const p=bpPessoa(f);return bpHasLeave(p)?"baixada "+bpFmt(p.saida)+"→"+bpFmtN(bpWorkDay(p)):"";});
 }
 function feConfirmarAplicar(){
   if(!bpExigeEdicao())return;
-  const ini=_bpDataOk($("#fea_ini").value),fim=_bpDataOk($("#fea_fim").value),abono=$("#fea_abono").checked,ids=[..._pk.fea.sel];
+  const ini=_bpDataOk($("#fea_ini").value),fim=_bpDataOk($("#fea_fim").value),ids=[..._pk.fea.sel];
   if(!ini||!fim||fim<ini){toast("Confira as datas.");return;}
   if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
   const a=bpD2n(ini),b=bpD2n(fim);let n=0,pul=0;
@@ -7174,21 +7084,19 @@ function feConfirmarAplicar(){
     const f=DB.func.find(x=>x.id===id);if(!f)return;const arr=feArr(f);
     const bate=arr.some(x=>feValido(x)&&bpD2n(x.ini)<=b&&bpD2n(x.fim)>=a)||(Array.isArray(DB.ferias)?DB.ferias:[]).some(x=>x&&x.func===id&&bpD2n(x.inicio)!=null&&bpD2n(x.inicio)<=b&&bpD2n(x.fim)>=a);
     if(bate||arr.length>=3){pul++;if(!arr.length)delete f.planoFerias;return;}
-    arr.push({id:uid(),ini,fim,abono,avisada:"",paga:"",oficialId:"",obs:"Aplicado em lote"});n++;
+    arr.push({id:uid(),ini,fim,oficialId:"",obs:"Marcado em lote"});n++;
   });
-  save("func");_feC.t=0;closeModal();render();toast(n+" pessoa(s) com férias planejadas"+(pul?" · "+pul+" pulada(s) (já tinham período que bate ou 3 períodos)":"")+".");
+  save("func");_feC.t=0;closeModal();render();toast(n+" pessoa(s) com férias marcadas"+(pul?" · "+pul+" pulada(s) (já tinham período que bate)":"")+".");
 }
 /* ---- Excel ---- */
 function feExportarExcel(){
   if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
-  const rows=feLinhas(true),wb=XLSX.utils.book_new();
-  const dir=[];rows.forEach(({f,ci,s})=>{const base={Nome:f.nome,Função:f.funcao||"",Admissão:f.admissao||"",Situação:FE_SIT[s.k].t,Detalhe:s.txt};if(ci&&ci.ciclos.length)ci.ciclos.forEach(c=>dir.push({...base,"Aquisitivo de":c.aqIni,"Aquisitivo até":c.aqFim,"Limite para gozar":c.coFim,Direito:c.dir,"Faltas no período":c.faltas,Gozados:c.gozados,Planejados:c.planDias,Saldo:c.saldo}));else dir.push(base);});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dir.length?dir:[{"—":"sem dados"}]),"Direitos");
-  const pl=[];rows.forEach(({f})=>(Array.isArray(f.planoFerias)?f.planoFerias:[]).filter(feValido).forEach(x=>pl.push({Nome:f.nome,Função:f.funcao||"",Início:x.ini,Fim:x.fim,Dias:feDias(x),"Vende 1/3":x.abono?"Sim":"","Aviso dado em":x.avisada||"","Pago em":x.paga||"","Lançada como férias":x.oficialId?"Sim":"",Obs:x.obs||""})));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pl.length?pl:[{"—":"sem férias planejadas"}]),"Planejadas");
-  const alx=feAlertas().map(a=>({Gravidade:a.sev==="alta"?"Crítico":a.sev==="media"?"Atenção":"Informativo",Assunto:a.t,Detalhe:a.x}));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(alx.length?alx:[{"—":"sem alertas"}]),"Alertas");
-  XLSX.writeFile(wb,"controle-ferias-"+iso(today())+".xlsx");toast("Exportado.");
+  const wb=XLSX.utils.book_new(),pl=[];
+  feLinhas(true).forEach(({f,per})=>per.filter(feValido).forEach(x=>pl.push({Nome:f.nome,Função:f.funcao||"",Início:x.ini,Fim:x.fim,Dias:feDias(x),"Lançada como férias":x.oficialId?"Sim":"",Observação:x.obs||""})));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pl.length?pl:[{"—":"sem férias marcadas"}]),"Férias marcadas");
+  const alx=feConflitos().map(a=>({Gravidade:a.sev==="alta"?"Crítico":"Atenção",Assunto:a.t,Detalhe:a.x}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(alx.length?alx:[{"—":"sem conflitos"}]),"Conflitos");
+  XLSX.writeFile(wb,"ferias-marcadas-"+iso(today())+".xlsx");toast("Exportado.");
 }
 /* ---- tela, eventos ---- */
 function feMontarMain(){
@@ -7197,10 +7105,10 @@ function feMontarMain(){
   _bpHor={a:bpD2n(Pm.ini),b:bpD2n(Pm.fim),fe:true};
   try{
     let h;
-    if(_fe.tab==="direitos")h=feViewDireitos();
+    if(_fe.tab==="marcar")h=feViewMarcar();
     else if(_fe.tab==="tempo"){const P=bpPessoas();h=P.length?bpViewTempo(P):'<div class="bp-empty">Nenhum funcionário ativo no cadastro.</div>';}
     else if(_fe.tab==="cobertura"){const P=bpPessoas();h=P.length?bpViewCobertura(P):'<div class="bp-empty">Nenhum funcionário ativo no cadastro.</div>';}
-    else h=feViewAlertas();
+    else h=feViewConflitos();
     el.innerHTML=h;
   }finally{_bpHor=null;}
   const sc2=el.querySelector(".bp-gwrap,.bp-mxwrap,.bp-twrap");
@@ -7211,11 +7119,9 @@ function feSoft(){
   if(a&&!a.contains(document.activeElement))a.innerHTML=feParamsHtml();if(b)b.innerHTML=feKpisHtml();if(c)c.innerHTML=feTabsHtml();
 }
 function vFerias(){
-  const ed=bpPodeEditar();
-  if(ed&&!DB.cfg.feriasPlano){DB.cfg.feriasPlano=feParams();save("cfg");}
-  _feC.t=0;
+  const ed=bpPodeEditar();_feC.t=0;
   if(!_fe.dwInit){_fe.dwInit=true;_fe.dwAnt=_bp.dw;_bp.dw=8;}
-  main.innerHTML=`<div class="head"><div><h1>Baixada — controle de férias</h1><p>Direito, vencimento e programação das férias de todo o efetivo, junto com a baixada do recesso e os afastamentos. O direito vem da data de admissão; as datas de férias você ajusta à mão.</p></div><div class="acts">${ed?'<button class="btn btn-g" onclick="feAbrirAplicar()">＋ Aplicar férias a várias pessoas</button>':""}<button class="btn btn-g" onclick="feExportarExcel()">⭳ Excel</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>Baixada — férias</h1><p>Marque as datas das férias de quem precisar, vendo a baixada do recesso e os afastamentos no mesmo quadro. Sem cálculo de direito ou vencimento.</p></div><div class="acts">${ed?'<button class="btn btn-g" onclick="feAbrirAplicar()">＋ Marcar várias pessoas</button>':""}<button class="btn btn-g" onclick="feExportarExcel()">⭳ Excel</button></div></div>
    ${bpAbasHtml("ferias")}
    <div id="fpw" class="bpw"><div class="bp-params" id="fe_params">${feParamsHtml()}</div><div class="bp-kpis" id="fe_kpis">${feKpisHtml()}</div><div class="bp-tabs" id="fe_tabs">${feTabsHtml()}</div><div id="fe_main"></div><div class="bp-gtip" id="bp_gtip"></div></div>`;
   feMontarMain();
@@ -7239,6 +7145,62 @@ function feInstalarEventos(){
     _fe.q=el.value;clearTimeout(feInstalarEventos._t);feInstalarEventos._t=setTimeout(()=>{feMontarMain();const s=document.querySelector('[data-feui="q"]');if(s){s.focus();const l=s.value.length;s.setSelectionRange(l,l);}},250);
   });
   document.addEventListener("focusout",()=>{if(_fe.pending){setTimeout(()=>{const a=document.activeElement;if(!(a&&a.dataset&&a.dataset.fek&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))){_fe.pending=false;feMontarMain();feSoft();}},0);}});
+}
+
+/* ===== ZERAGEM DO SALDO DE BAIXADA APÓS O RECESSO ===== */
+function zeragemCfg(){
+  const c=(DB.cfg.baixaPlano&&typeof DB.cfg.baixaPlano==="object")?DB.cfg.baixaPlano:null;
+  if(!c||c.zerar===false)return null;
+  if(!DB.func.some(f=>f&&f.planoBaixada))return null;
+  return{apos:Math.max(0,Math.min(10,parseInt(c.zerarApos)||0))};
+}
+function _diaUtil(n){const d=bpDow(n);return d!==0&&d!==6&&!ehFeriado(bpN2iso(n));}
+function proximoDiaUtil(i){let n=bpD2n(i);if(n==null)return i;for(let k=0;k<30&&!_diaUtil(n);k++)n++;return bpN2iso(n);}
+function somarDiasUteis(i,k){let n=bpD2n(proximoDiaUtil(i)),c=0;while(c<k&&c<30){n++;if(_diaUtil(n))c++;}return bpN2iso(n);}
+function zeragemRetorno(fid){
+  const P=bpParams();let ret=P.recRet;
+  const f=DB.func.find(x=>x.id===fid),r=f&&f.planoBaixada;
+  if(r&&r.status==="Baixada"){const p=bpPessoa(f);if(bpHasLeave(p)){const w=bpWorkDay(p);if(w!=null&&w>bpD2n(ret))ret=bpN2iso(w);}}
+  const antes=bpN2iso(bpD2n(P.recRet)-1);
+  (Array.isArray(DB.baixadas)?DB.baixadas:[]).forEach(b=>{if(b&&b.func===fid&&_bpDataOk(b.dataInicio)&&_bpDataOk(b.dataFim)&&b.dataInicio<=antes&&b.dataFim>=P.recRet){const w=bpN2iso(bpD2n(b.dataFim)+1);if(w>ret)ret=w;}});
+  return ret;
+}
+function zeragemDe(fid){const c=zeragemCfg();return c?somarDiasUteis(zeragemRetorno(fid),c.apos):null;}
+function zeragemAtiva(fid){const z=zeragemDe(fid);return(z&&iso(today())>=z)?z:null;}
+function bxOverlap(i,f,a,b){if(!i||!f||!a||!b)return 0;const s=i>a?i:a,e=f<b?f:b;return e>=s?diasEntre(s,e)+1:0;}
+function bxJanela(fid,a,b){
+  if(!a||!b||b<a)return{dias:0,fer:0,usadas:0,local:0,afast:0,perdidos:0,efetivo:0};
+  const dias=diasEntre(a,b)+1;let fer=0,usadas=0,local=0,afast=0,perdidos=0;
+  const ia=iso(a),ib=iso(b);
+  DB.ferias.filter(x=>x&&x.func===fid).forEach(x=>{fer+=bxOverlap(pd(x.inicio),pd(x.fim),a,b);});
+  DB.baixadas.filter(x=>x&&x.func===fid&&String(x.dataInicio||"")>=ia&&String(x.dataInicio||"")<=ib).forEach(x=>{usadas+=(+x.dias||0);});
+  estadias(fid).filter(m=>m.tipo==="Local").forEach(m=>{const e=pd(m.entrada);if(!e)return;local+=bxOverlap(e,m.saida?pd(m.saida):today(),a,b);});
+  const f=DB.func.find(x=>x.id===fid);
+  if(f&&f.dataInicioAfastamento){const i=pd(f.dataInicioAfastamento);if(i)afast=bxOverlap(i,f.dataFimAfastamento?pd(f.dataFimAfastamento):today(),a,b);}
+  DB.faltas.filter(x=>x&&x.func===fid&&(x.tipo==="Falta"||x.tipo==="Atestado")&&String(x.data||"")>=ia&&String(x.data||"")<=ib).forEach(()=>{perdidos++;});
+  return{dias,fer,usadas,local,afast,perdidos,efetivo:Math.max(0,dias-fer-usadas-local-afast-perdidos)};
+}
+function baixadaNumeros(fid,f,c,chegada,usaChegada,ancora){
+  const z=zeragemAtiva(fid),diasDesdeAncora=ancora?Math.max(0,diasEntre(ancora,today())+1):0;
+  if(!z){
+    const fer=diasFerias(fid),usadas=baixadasUsadas(fid),local=diasEmLocal(fid),afast=diasAfastado(fid),diasPerdidos=diasFaltaEAtestado(fid),descFaltas=countFaltasEAtestados(fid)*c.faltaDesc;
+    const efetivo=Math.max(0,diasDesdeAncora-fer-usadas-local-afast-diasPerdidos),emCarencia=usaChegada?false:efetivo<c.baixadaCarencia;
+    const saldoParcial=+((efetivo/30)*c.baixadaMes).toFixed(1),diasParaLiberar=emCarencia?(c.baixadaCarencia-efetivo):0,dataLiberacao=emCarencia?iso(new Date(today().getTime()+diasParaLiberar*MS)):"";
+    const acumulavel=usaChegada?efetivo:Math.max(0,efetivo-c.baixadaCarencia),inicial=usaChegada?(+f.saldoBaixadaInicial||0):0;
+    const bruto=Math.max(0,inicial+(acumulavel/30)*c.baixadaMes-usadas-descFaltas);
+    return{diasDesdeAncora,fer,usadas,local,afast,diasPerdidos,descFaltas,efetivo,emCarencia,saldoParcial,diasParaLiberar,dataLiberacao,acumulavel,inicial,bruto,z:""};
+  }
+  const zd=pd(z),antes=new Date(zd.getTime()-MS),pre=ancora?bxJanela(fid,ancora,antes):{efetivo:0},pos=bxJanela(fid,zd,today());
+  const carRest=usaChegada?0:Math.max(0,c.baixadaCarencia-pre.efetivo),efetivo=pre.efetivo+pos.efetivo,emCarencia=usaChegada?false:efetivo<c.baixadaCarencia;
+  const descFaltas=pos.perdidos*c.faltaDesc,acumulavel=Math.max(0,pos.efetivo-carRest),saldoParcial=+((pos.efetivo/30)*c.baixadaMes).toFixed(1);
+  const diasParaLiberar=emCarencia?(c.baixadaCarencia-efetivo):0,dataLiberacao=emCarencia?iso(new Date(today().getTime()+diasParaLiberar*MS)):"";
+  const bruto=Math.max(0,(acumulavel/30)*c.baixadaMes-pos.usadas-descFaltas);
+  return{diasDesdeAncora,fer:pos.fer,usadas:pos.usadas,local:pos.local,afast:pos.afast,diasPerdidos:pos.perdidos,descFaltas,efetivo,emCarencia,saldoParcial,diasParaLiberar,dataLiberacao,acumulavel,inicial:0,bruto,z};
+}
+function bpAvisoZeragemHtml(){
+  const c=zeragemCfg();if(!c)return"";
+  const z=bpParams().recRet,ini=somarDiasUteis(z,c.apos),hj=iso(today());
+  return `<div class="bp-note" style="margin:0 0 10px;padding:8px 12px;background:#fff8e8;border:1px solid #f0d9a8;border-radius:8px">🔄 <b>Saldo zerado depois do recesso.</b> ${ini>hj?"A partir de":"Desde"} <b>${fmt(ini)}</b> todo mundo recomeça do zero: o saldo passa a contar só o que vier depois, com a contagem começando no <b>dia útil ${c.apos?c.apos+" depois ":"seguinte "}do retorno</b> de cada um (quem volta mais tarde recomeça mais tarde). Até lá o saldo continua o atual. Para desligar: Planejamento do recesso → desmarcar “Zerar o saldo”.</div>`;
 }
 
 bpInstalarEventos();feInstalarEventos();
