@@ -758,7 +758,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.41";
+const APP_VERSAO="v2026-10-02.42";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -6780,10 +6780,60 @@ function bpCasar(nome,funcs){
   funcs.forEach(f=>{const tf=_bpTokens(f.nome);if(!tf.length||!tk.length||tf[0]!==tk[0])return;const inter=tk.filter(w=>tf.includes(w)).length,sc=inter/Math.min(tk.length,tf.length);if(inter>=2&&sc>=0.6&&sc>bs){bs=sc;best=f;}});
   return best?{estado:"sugestao",f:best}:{estado:"sem",f:null};
 }
+function _xlData(v){
+  if(v==null||v==="")return"";
+  if(v instanceof Date&&!isNaN(v))return v.toISOString().slice(0,10);
+  if(typeof v==="number"&&v>20000&&v<80000)return new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10);
+  const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+"-"+m[2]+"-"+m[3];
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[1]).padStart(2,"0");
+  return"";
+}
+function _xlNum(v){if(v==null||v==="")return null;const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:null;}
+function bpLerXlsx(buf){
+  const wb=XLSX.read(buf,{type:"array"}),H0=c=>normalizaNome(c==null?"":c);
+  const linhasDe=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:null});
+  const temCab=aoa=>aoa.findIndex(r=>r&&r.some(c=>H0(c)==="NOME")&&r.some(c=>/SAIDA/.test(H0(c))));
+  const nomeAba=wb.SheetNames.find(n=>H0(n)==="BAIXADA"&&temCab(linhasDe(n))>=0)||wb.SheetNames.find(n=>temCab(linhasDe(n))>=0);
+  if(!nomeAba)return null;
+  const aoa=linhasDe(nomeAba),hi=temCab(aoa),H=aoa[hi].map(H0);
+  const col=(...ns)=>{for(const n of ns){const i=H.indexOf(H0(n));if(i>=0)return i;}return -1;};
+  const C={nome:col("Nome"),funcao:col("Função","Funcao"),origem:col("Origem"),grupo:col("Destino / grupo","Destino","Grupo"),status:col("Status"),saldo:col("Saldo (dias)","Saldo"),saida:col("Saída","Saida"),volta:col("Volta (chegada)","Volta"),trabalha:col("Retorno ao trabalho"),expFim:col("Fim da experiência","Fim experiência","Fim da experiencia"),transporte:col("Transporte"),passagem:col("Passagem"),valorPassagem:col("Valor passagem (R$)","Valor passagem"),hIda:col("Horas viagem ida","Horas ida"),hVolta:col("Horas viagem volta","Horas volta"),sugestao:col("Sugestão","Sugestao"),obs:col("Observações","Observacoes"),embIda:col("Embarque ida"),embVolta:col("Embarque volta")};
+  const g=(r,k)=>C[k]>=0?r[C[k]]:null,t=(r,k)=>{const v=g(r,k);return v==null?"":String(v).trim();};
+  const pessoas=[];
+  aoa.slice(hi+1).forEach(r=>{
+    if(!r||!r[C.nome])return;
+    const st=t(r,"status"),fixo=H0(st)==="FIXO NA OBRA";
+    pessoas.push({nome:t(r,"nome"),funcao:t(r,"funcao"),origem:t(r,"origem"),grupo:t(r,"grupo"),saldo:_xlNum(g(r,"saldo"))||0,saida:_xlData(g(r,"saida")),volta:_xlData(g(r,"volta")),trabalha:_xlData(g(r,"trabalha")),expFim:_xlData(g(r,"expFim")),expTexto:"",expAprox:false,obs:t(r,"obs"),sugestao:t(r,"sugestao"),status:st||"Baixada",nota:"",transporte:t(r,"transporte"),passagem:t(r,"passagem"),valorPassagem:_xlNum(g(r,"valorPassagem")),hIda:_xlNum(g(r,"hIda"))||0,hVolta:_xlNum(g(r,"hVolta"))||0,embIda:_xlData(g(r,"embIda")),embVolta:_xlData(g(r,"embVolta")),fixo});
+  });
+  const params={};
+  const resumo=wb.SheetNames.find(n=>H0(n)==="RESUMO");
+  if(resumo)linhasDe(resumo).forEach(r=>{
+    if(!r||r[0]==null)return;const k=H0(r[0]);
+    if(k.includes("INICIO DO RECESSO"))params.recIni=_xlData(r[1]);
+    else if(k.includes("RETORNO AO TRABALHO"))params.recRet=_xlData(r[1]);
+    else if(k.includes("VALOR DA ALIMENTACAO"))params.valorAlim=_xlNum(r[1])||0;
+    else if(k.includes("INICIO DA JANELA"))params.hIni=_xlData(r[1]);
+  });
+  const cob=wb.SheetNames.find(n=>H0(n)==="COBERTURA");
+  if(cob){
+    const a=linhasDe(cob),h=a.findIndex(r=>r&&H0(r[0])==="FUNCAO"&&H0(r[2]).startsWith("MIN"));
+    if(h>=0){
+      const datas=a[h].map(_xlData).filter((x,i)=>i>=3&&x);if(datas.length)params.hFim=datas[datas.length-1];
+      const mins={};a.slice(h+1).forEach(r=>{if(!r||!r[0])return;const n=_xlNum(r[2]);if(n>0&&!/^EFETIVO|^SAEM|^VOLTAM/.test(H0(r[0])))mins[H0(r[0])]=n;});params.minimos=mins;
+    }
+  }
+  Object.keys(params).forEach(k=>{if(params[k]===""||params[k]==null)delete params[k];});
+  return{versao:1,origem:"planilha Excel",params,pessoas};
+}
 function bpImportarArquivo(file){
   if(!bpExigeEdicao())return;if(!file)return;
   const rd=new FileReader();
-  rd.onload=()=>{let obj;try{obj=JSON.parse(rd.result);}catch(e){toast("Esse arquivo não é um JSON válido.");return;}bpAbrirImportacao(obj);};
+  if(/\.xlsx?$/i.test(file.name||"")){
+    if(typeof XLSX==="undefined"){toast("O leitor de Excel não carregou (precisa de internet). Tente de novo ou use o arquivo .json.");return;}
+    rd.onload=()=>{let obj;try{obj=bpLerXlsx(rd.result);}catch(e){toast("Não consegui ler essa planilha.");return;}if(!obj||!obj.pessoas.length){toast("Não achei a aba com Nome, Função e Saída nessa planilha.");return;}bpAbrirImportacao(obj);};
+    rd.readAsArrayBuffer(file);return;
+  }
+  rd.onload=()=>{let obj;try{obj=JSON.parse(rd.result);}catch(e){toast("Esse arquivo não é um JSON nem uma planilha Excel válida.");return;}bpAbrirImportacao(obj);};
   rd.readAsText(file);
 }
 function bpCriarFuncionario(r,admPad,extra){
@@ -6902,7 +6952,7 @@ function vPlanoBaixada(){
   if(_fe.dwInit){_bp.dw=_fe.dwAnt||18;_fe.dwInit=false;}
   const P=bpPessoas(),tem=P.some(p=>p.temPlano),ed=bpPodeEditar();
   main.innerHTML=`<div class="head"><div><h1>Baixada — planejamento do recesso</h1><p>Quem sai, quando volta, passagens, alimentação e a cobertura da obra no recesso. Quem não está no planejamento conta como presente. Férias e afastamentos do cadastro entram sozinhos.</p></div><div class="acts">${ed?'<button class="btn btn-g" onclick="bpNovoFuncionario()">＋ Novo funcionário</button><button class="btn btn-g" data-bpimp>⇪ Importar do controle atual</button>':""}<button class="btn btn-g" onclick="bpExportarExcel()">⭳ Excel</button></div></div>
-   ${bpAbasHtml("plano")}<input type="file" id="bp_file" accept=".json,application/json" style="display:none" onchange="bpImportarArquivo(this.files[0]);this.value=''">
+   ${bpAbasHtml("plano")}<input type="file" id="bp_file" accept=".xlsx,.xls,.json,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none" onchange="bpImportarArquivo(this.files[0]);this.value=''">
    ${iso(today())>bpParams().hFim?`<div class="bp-note" style="margin:0 0 10px;padding:8px 12px;background:#e9f6ee;border:1px solid #bfe0cb;border-radius:8px">✅ A janela do recesso terminou em <b>${fmt(bpParams().hFim)}</b>. O novo controle de baixada segue pelo <b>Banco de baixada</b> (saldo zerado, contagem a partir do retorno de cada um). Esta tela fica como histórico.</div>`:""}<div id="bpw" class="bpw"><div class="bp-params" id="bp_params">${bpParamsHtml()}</div><div class="bp-kpis" id="bp_kpis">${bpKpisHtml()}</div><div class="bp-tabs" id="bp_tabs">${bpTabsHtml()}</div>${tem?"":'<div class="bp-note" style="margin:10px 0">Ainda não há planejamento. Use <b>Importar do controle atual</b> (arquivo que o assistente gerou; ele também cadastra quem ainda não está na Central), <b>Incluir pessoas</b> ou <b>Novo funcionário</b> na Tabela editável.</div>'}<div id="bp_main"></div><div class="bp-gtip" id="bp_gtip"></div></div>`;
   bpMontarMain();
 }
