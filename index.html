@@ -162,6 +162,114 @@
 .perCard{border:1px solid #e3e8ef;border-radius:10px;padding:10px 14px;margin-bottom:10px;background:#fff}
 .perAtivo{border-color:var(--steel);box-shadow:0 0 0 2px rgba(60,100,150,.14)}
 .inlnk{color:var(--steel);text-decoration:none;font-size:13px;padding:2px 0}.inlnk:hover{text-decoration:underline}
+.bpw{--bp-brand:#0b514f;--bp-lime:#97d700;--bp-ok:#2e7d32;--bp-okbg:#dcefd9;--bp-warn:#8a5a00;--bp-warnbg:#fdecc4;--bp-warn2bg:#fbd5ab;--bp-bad:#b3261e;--bp-badbg:#f8d2ce;--bp-we:rgba(11,81,79,.06);--bp-rec:rgba(151,215,0,.24);--bp-today:#d32f2f;--bp-surface:#fff;--bp-surface2:#e9f1ef;--bp-line:#d2dedb;--bp-muted:#5a706d;--bp-ink:#12302d;color:var(--bp-ink)}
+.bp-abas{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}
+.bp-abas button{border:1px solid #d2dedb;background:#fff;border-radius:8px;padding:7px 14px;font-weight:600;cursor:pointer;color:#5a706d}
+.bp-abas button.on{background:#0b514f;color:#fff;border-color:#0b514f}
+.bp-params{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:12px;background:var(--bp-brand);color:#fff;border-radius:10px;padding:8px 12px;border-bottom:4px solid var(--bp-lime)}
+.bp-params label{display:flex;align-items:center;gap:5px}
+.bp-params input{background:rgba(255,255,255,.95);color:#12302d;border:0;border-radius:6px;padding:3px 6px}
+.bp-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:12px 0}
+.bp-kpi{background:var(--bp-surface);border:1px solid var(--bp-line);border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.bp-kpi b{display:block;font-size:22px;line-height:1.1}.bp-kpi span{color:var(--bp-muted);font-size:12px}
+.bp-kpi.bad b{color:var(--bp-bad)}.bp-kpi.warn b{color:var(--bp-warn)}.bp-kpi.ok b{color:var(--bp-ok)}
+.bp-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--bp-line);margin-bottom:10px}
+.bp-tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;cursor:pointer;white-space:nowrap;color:var(--bp-muted);font-weight:600}
+.bp-tab[aria-selected="true"]{color:var(--bp-brand);border-bottom-color:var(--bp-lime)}
+.bp-badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--bp-bad);color:#fff;font-size:11px;text-align:center}
+.bp-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bp-filtros select,.bp-filtros input[type=search],.bp-filtros input[type=number],.bp-filtros input[type=date]{background:var(--bp-surface);border:1px solid var(--bp-line);border-radius:8px;padding:5px 8px;width:auto}
+.bp-filtros label{display:flex;align-items:center;gap:5px;color:var(--bp-muted);font-size:12px}
+.bp-btn{background:var(--bp-brand);color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.bp-btn.sec{background:var(--bp-surface);color:var(--bp-ink);border:1px solid var(--bp-line)}.bp-btn.sm{padding:3px 8px;font-size:12px}
+.bp-card{background:var(--bp-surface);border:1px solid var(--bp-line);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.bp-note{color:var(--bp-muted);font-size:12px;margin:6px 0 10px}
+.bp-empty{padding:40px 16px;text-align:center;color:var(--bp-muted)}
+.bp-gwrap{overflow:auto;max-height:72vh;border:1px solid var(--bp-line);border-radius:12px;background:var(--bp-surface)}
+.bp-gbody{position:relative}
+.bp-ghdr{position:sticky;top:0;z-index:5;display:flex;background:var(--bp-surface2);border-bottom:1px solid var(--bp-line)}
+.bp-glab{position:sticky;left:0;z-index:4;background:var(--bp-surface);flex:none;padding:0 8px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--bp-line);overflow:hidden;cursor:pointer}
+.bp-glab small{color:var(--bp-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp-glab span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:12px}
+.bp-ghdr .bp-glab{background:var(--bp-surface2);font-weight:700}
+.bp-grow{display:flex;height:32px;border-bottom:1px solid var(--bp-line)}
+.bp-grow:hover .bp-glab,.bp-grow:hover .bp-gtrack{background-color:var(--bp-surface2)}
+.bp-gtrack{position:relative;flex:none}
+.bp-ghead{display:flex;height:24px;background:var(--bp-surface2);border-bottom:1px solid var(--bp-line);font-weight:700;font-size:12px}
+.bp-ghead span{position:sticky;left:0;padding:3px 8px;white-space:nowrap}
+.bp-hm{display:flex;height:20px;font-size:11px;font-weight:700;color:var(--bp-muted)}
+.bp-hm div{border-left:1px solid var(--bp-line);padding:2px 4px;overflow:hidden;white-space:nowrap}
+.bp-hd{display:flex;height:26px}
+.bp-hd div{flex:none;text-align:center;font-size:10px;line-height:12px;padding-top:2px;color:var(--bp-muted);border-left:1px solid var(--bp-line)}
+.bp-hd div.we{background:var(--bp-we)}.bp-hd div.rc{background:var(--bp-rec)}
+.bp-bands{position:absolute;top:46px;bottom:0;pointer-events:none;z-index:1}
+.bp-band{position:absolute;top:0;bottom:0}
+.bp-band.we{background:var(--bp-we)}
+.bp-band.rec{background:var(--bp-rec);border-left:2px solid var(--bp-lime);border-right:2px solid var(--bp-lime)}
+.bp-band.rec i{position:absolute;top:2px;left:4px;font-style:normal;font-size:10px;font-weight:700;color:var(--bp-muted);letter-spacing:.08em}
+.bp-band.today{width:2px;background:var(--bp-today)}
+.bp-gtrack .bp-bar{position:absolute;top:5px;height:22px;border-radius:6px;color:#fff;font-size:11px;line-height:22px;padding:0 8px;white-space:nowrap;overflow:hidden;cursor:grab;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.3);touch-action:none;user-select:none}
+.bp-gtrack .bp-bar:active{cursor:grabbing}
+.bp-gtrack .bp-bar .h{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize}
+.bp-gtrack .bp-bar .h.l{left:0;background:rgba(255,255,255,.28)}.bp-gtrack .bp-bar .h.r{right:0;background:rgba(255,255,255,.28)}
+.bp-gtrack .bp-bar2{position:absolute;top:9px;height:14px;border-radius:4px;color:#fff;font-size:10px;line-height:14px;padding:0 5px;white-space:nowrap;overflow:hidden;z-index:2;opacity:.9}
+.bp-gtrack .bp-bar2.of{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.25),rgba(255,255,255,.25) 4px,transparent 4px,transparent 8px)}
+.bp-gtrack .bp-nobar{position:absolute;top:8px;left:6px;font-size:11px;color:var(--bp-muted);z-index:2;white-space:nowrap}
+.bp-gtip{position:fixed;z-index:200;background:#111;color:#fff;padding:4px 8px;border-radius:6px;font-size:12px;pointer-events:none;display:none}
+.bp-mxwrap{overflow:auto;max-height:72vh;border:1px solid var(--bp-line);border-radius:12px;background:var(--bp-surface)}
+table.bp-mx{border-collapse:separate;border-spacing:0;font-size:12px}
+.bp-mx th,.bp-mx td{border-bottom:1px solid var(--bp-line);border-right:1px solid var(--bp-line);padding:0;text-align:center}
+.bp-mx thead th{position:sticky;top:0;background:var(--bp-surface2);z-index:3;font-size:10px;color:var(--bp-muted);height:22px}
+.bp-mx thead tr:nth-child(2) th{top:22px}
+.bp-mx .fx{position:sticky;left:0;z-index:2;background:var(--bp-surface);text-align:left;padding:0 8px;min-width:190px;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.bp-mx thead .fx{z-index:4;background:var(--bp-surface2)}
+.bp-mx .tt{min-width:38px;font-weight:700;background:var(--bp-surface)}.bp-mx .mn{min-width:46px;background:var(--bp-surface)}
+.bp-mx .mn input{width:42px;border:1px solid var(--bp-line);background:var(--bp-surface);border-radius:5px;text-align:center;padding:1px}
+.bp-mx td.c{min-width:26px;height:26px;cursor:pointer;font-weight:600}
+.bp-mx td.c.ok{background:var(--bp-okbg);color:var(--bp-ok)}.bp-mx td.c.warn{background:var(--bp-warnbg);color:var(--bp-warn)}.bp-mx td.c.warn2{background:var(--bp-warn2bg);color:var(--bp-warn)}.bp-mx td.c.bad{background:var(--bp-badbg);color:var(--bp-bad)}
+.bp-mx td.c.rec{background:repeating-linear-gradient(45deg,var(--bp-rec),var(--bp-rec) 4px,transparent 4px,transparent 8px);color:var(--bp-muted);cursor:default}
+.bp-mx td.c.sel,.bp-mx td.c:hover{outline:2px solid var(--bp-brand);outline-offset:-2px}
+.bp-mx tr.sum td,.bp-mx tr.sum th{background:var(--bp-surface2)}.bp-mx tr.sum td.c{background:var(--bp-surface2);color:var(--bp-ink)}
+.bp-mx th.we{background:var(--bp-we)}.bp-mx th.rc{background:var(--bp-rec)}
+.bp-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--bp-muted);margin:6px 0}
+.bp-legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-3px;margin-right:4px;border:1px solid var(--bp-line)}
+.bp-covdet{margin-top:10px;padding:12px}
+.bp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.bp-chip{background:var(--bp-surface2);border:1px solid var(--bp-line);border-radius:14px;padding:2px 9px;font-size:12px}
+.bp-chip.out{background:var(--bp-badbg);color:var(--bp-bad);border-color:transparent}.bp-chip.in{background:var(--bp-okbg);color:var(--bp-ok);border-color:transparent}
+.bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.bp-gc{padding:12px}.bp-gc h3{margin:0 0 4px;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.bp-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.bp-tag.ok{background:var(--bp-okbg);color:var(--bp-ok)}.bp-tag.warn{background:var(--bp-warnbg);color:var(--bp-warn)}.bp-tag.bad{background:var(--bp-badbg);color:var(--bp-bad)}.bp-tag.info{background:var(--bp-surface2);color:var(--bp-muted)}
+.bp-t2{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.bp-t2 td,.bp-t2 th{padding:3px 4px;border-bottom:1px solid var(--bp-line);text-align:left}.bp-t2 th{color:var(--bp-muted);font-weight:600}
+.bp-alignrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--bp-line);font-size:12px}
+.bp-alignrow input{background:var(--bp-surface);border:1px solid var(--bp-line);border-radius:6px;padding:2px 4px;width:auto}
+.bp-twrap{overflow:auto;max-height:72vh;border:1px solid var(--bp-line);border-radius:12px;background:var(--bp-surface)}
+table.bp-tb{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.bp-tb th{position:sticky;top:0;background:var(--bp-surface2);z-index:2;text-align:left;padding:6px 6px;white-space:nowrap;cursor:pointer;border-bottom:1px solid var(--bp-line)}
+.bp-tb td{padding:2px 4px;border-bottom:1px solid var(--bp-line);white-space:nowrap}
+.bp-tb tr:hover td{background:var(--bp-surface2)}
+.bp-tb td.l{position:sticky;left:0;background:var(--bp-surface);z-index:1;font-weight:600;min-width:210px;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.bp-tb th.l{left:0;z-index:3}
+.bp-tb input,.bp-tb select{background:transparent;border:1px solid transparent;border-radius:5px;padding:2px 3px;width:100%;min-width:60px}
+.bp-tb input:hover,.bp-tb select:hover,.bp-tb input:focus,.bp-tb select:focus{border-color:var(--bp-line);background:var(--bp-surface)}
+.bp-tb input[type=number]{width:64px;min-width:64px}.bp-tb input[type=date]{width:128px;min-width:128px}
+.bp-tb .est{font-style:italic;color:var(--bp-muted)}.bp-tb td.num{text-align:right}
+.bp-tb tfoot td{font-weight:700;background:var(--bp-surface2);position:sticky;bottom:0}
+.bp-al{display:grid;gap:8px}
+.bp-ai{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--bp-surface);border:1px solid var(--bp-line);border-left:5px solid var(--bp-muted);border-radius:10px}
+.bp-ai.alta{border-left-color:var(--bp-bad)}.bp-ai.media{border-left-color:var(--bp-warn)}.bp-ai.info{border-left-color:var(--bp-brand)}
+.bp-ai b{display:block}.bp-ai .sp{flex:1}
+.bp-about{padding:12px 14px;margin-top:14px}.bp-about h3{margin:0 0 6px;font-size:14px}.bp-about ul{margin:4px 0 0 18px;padding:0}
+.bp-fld{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bp-fld label{display:block;font-size:11px;color:var(--bp-muted);margin-top:6px}
+.bp-fld input,.bp-fld select,.bp-fld textarea{width:100%;background:#fff;border:1px solid var(--bp-line);border-radius:7px;padding:5px 7px;margin-top:2px}
+.bp-fld .full{grid-column:1/-1}
+.bp-calc{background:var(--bp-surface2);border-radius:10px;padding:8px 10px;margin-top:10px;font-size:12px}
+.bp-calc div{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
+.bp-ofic{border:1px solid var(--bp-line);border-radius:10px;padding:8px 10px;margin-top:10px;font-size:12.5px;background:#fff}
+.bp-ofic.ok{background:var(--bp-okbg);border-color:transparent}
 </style>
 </head>
 <body>
@@ -663,7 +771,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.37";
+const APP_VERSAO="v2026-10-02.38";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -1543,6 +1651,7 @@ function confirmarImportacaoTransporteFds(){
   save("func");window._itfPendente=null;closeModal();render();toast(resultados.length+" funcionário(s) atualizado(s) com dados de transporte.");
 }
 function vBaixada(){
+ if(_baixAba==="plano"){vPlanoBaixada();return;}
   const ativosRaw=DB.func.filter(efetivoObra);
   let ativos=ativosRaw.map(f=>({f,s:saldoBaixada(f.id)}));
   if(_baixBusca){const q=_baixBusca.toLowerCase();ativos=ativos.filter(({f})=>f.nome.toLowerCase().includes(q));}
@@ -1553,6 +1662,7 @@ function vBaixada(){
   const alojados=ativosRaw.length-locais;
   const pctLocal=((locais/total)*100).toFixed(1),pctAlojado=((alojados/total)*100).toFixed(1);
   main.innerHTML=`<div class="head"><div><h1>Banco de baixada</h1><p>${DB.cfg.baixadaMes} dias/mês após ${DB.cfg.baixadaCarencia} dias alojado. Falta −${DB.cfg.faltaDesc}. Alerta em ${DB.cfg.alertaBaixada}.</p></div></div>
+   ${bpAbasHtml("banco")}
    <div class="grid stats">
      <div class="stat steel"><div class="n">${ativosRaw.length}</div><div class="l">Total ativos</div></div>
      <div class="stat"><div class="n">${locais}</div><div class="l">Locais (${pctLocal}%)</div></div>
@@ -6005,7 +6115,7 @@ function exportRelatorioExcel(){
 
 /* ===== ESTÁ SENDO FEITO? — avisos de rotina por área + resumo diário ===== */
 const AV_AREAS=[
- {id:"pessoas",nome:"Pessoas",ic:"👷",telas:["func","contratacao","ajustes"]},
+ {id:"pessoas",nome:"Pessoas",ic:"👷",telas:["func","contratacao","ajustes","baixada"]},
  {id:"ponto",nome:"Ponto e escala",ic:"🕒",telas:["ponto","escala"]},
  {id:"compras",nome:"Compras",ic:"🛒",telas:["pedidos","notasfiscais","painelCompras","lancamentos","contratos","listasemana"]},
  {id:"geral",nome:"Rotina da Central",ic:"🗂",telas:["inicio"]}];
@@ -6033,6 +6143,7 @@ function avisosCalcular(force){
   reg("pessoas","p_cadastro","Cadastro incompleto (CPF, nascimento ou PIX)","func",()=>{const l=efet.map(f=>{const falta=[];if(!String(f.cpf||"").trim())falta.push("CPF");if(!f.nascimento)falta.push("nascimento");if(!String(f.pixChave||"").trim())falta.push("PIX");return{f,falta};}).filter(x=>x.falta.length);return R(l.length?"atencao":"ok",l.length,l.length?l.length+" de "+efet.length+" com dado faltando":"cadastros completos",nomes(l,x=>x.f.nome+" — falta "+x.falta.join(", ")));});
   reg("pessoas","p_fluigfin","Fluig pago e ainda não finalizado","reemb",()=>{const l=DB.reemb.filter(prontoParaFinalizar);return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) pago(s) há mais de "+diasFinalizarFluig()+" dias":"nada esperando finalização",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.dataPagamento||r.data)));});
   reg("pessoas","p_fluigsem","Fluig sem número ou link (últimos 60 dias)","reemb",()=>{const lim=dAtras(60),l=DB.reemb.filter(r=>r.status!=="Finalizado"&&String(r.data||"")>=lim&&(!String(r.fluigNumero||"").trim()||!String(r.fluigLink||"").trim()));return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) sem número ou link":"todos com número e link",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.data)));});
+  reg("pessoas","p_planobaixada","Planejamento de baixada do recesso","baixada",()=>{const P=bpPessoas();if(!P.some(p=>p.temPlano))return R("ok",0,"sem planejamento de baixada ativo");const al=bpAlertas(),alta=al.filter(a=>a.sev==="alta"),med=al.filter(a=>a.sev==="media");return R(alta.length?"atraso":med.length?"atencao":"ok",alta.length+med.length,alta.length?alta.length+" crítico(s) e "+med.length+" de atenção":med.length?med.length+" de atenção":"planejamento sem pendências",alta.concat(med).slice(0,5).map(a=>a.t+" — "+a.x.slice(0,70)));});
   /* ---- PONTO E ESCALA ---- */
   reg("ponto","t_chamada","Chamada de ontem fechada","ponto",()=>{
     const d=dAtras(1),fds=[0,6].includes(pd(d).getDay())||ehFeriado(d);
@@ -6138,6 +6249,704 @@ function salvarPrazosAvisos(){
   save("cfg");_avCache.t=0;closeModal();render();toast("Prazos e responsáveis salvos.");
 }
 
+/* ===== PLANEJAMENTO DE BAIXADA (RECESSO) — porte do controle do recesso 2026/27 para dentro da Baixada ===== */
+const BP_DAY=864e5;
+const BP_STATUS=["Baixada","Sem baixada","Sem viagem","Possível desligamento","Transferência de obra","Verificar","Fixo na obra","Férias","Afastado"];
+const BP_TRANSP=["A definir","Ônibus","Avião","Van/Fretado","Carona","Sem viagem"];
+const BP_PASS=["Pendente","Cotada","Comprada","N/A"];
+const BP_MESES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const BP_DOWL=["D","S","T","Q","Q","S","S"];
+const BP_TABS=[["tempo","Linha do tempo"],["cobertura","Cobertura por função"],["destinos","Destinos e grupos"],["alimentacao","Alimentação e passagens"],["tabela","Tabela editável"],["alertas","Alertas"]];
+let _baixAba="banco";
+let _bp={tab:"tempo",group:"funcao",sort:"saida",fFuncao:"",fGrupo:"",fStatus:"",q:"",showFixos:false,covFixos:true,dw:18,colorBy:"funcao",covMode:"present",cov:null,month:"",sundays:false,tsort:"nome",tdir:1};
+const _bpDataOk=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||""))?String(s):"";
+function bpD2n(i){i=_bpDataOk(i);if(!i)return null;const a=i.split("-");return Math.round(Date.UTC(+a[0],+a[1]-1,+a[2])/BP_DAY);}
+function bpN2iso(n){return new Date(n*BP_DAY).toISOString().slice(0,10);}
+function bpFmt(i){i=_bpDataOk(i);return i?i.slice(8,10)+"/"+i.slice(5,7):"—";}
+function bpFmtN(n){return n==null?"—":bpFmt(bpN2iso(n));}
+function bpDow(n){return new Date(n*BP_DAY).getUTCDay();}
+function bpTodayN(){return bpD2n(iso(today()));}
+function bpMoney(v){return "R$ "+(Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function bpHue(s){let h=0;s=String(s||"—");for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h%360;}
+function bpColorOf(s){return "hsl("+bpHue(s)+" 52% 38%)";}
+function bpUniq(a){return Array.from(new Set(a.filter(Boolean))).sort((x,y)=>String(x).localeCompare(String(y),"pt-BR"));}
+function bpPodeEditar(){return!!_usuarioLogadoId&&nivelPermissaoUsuario("baixada")==="salvar";}
+function bpExigeEdicao(){
+  if(!_usuarioLogadoId){toast("Identifique-se (CPF) antes de editar o planejamento.");abrirLoginUsuario();return false;}
+  if(!bpPodeEditar()){toast("Você não tem permissão de salvar em Baixada.");return false;}
+  return true;
+}
+function bpParams(){
+  const c=DB.cfg.baixaPlano&&typeof DB.cfg.baixaPlano==="object"?DB.cfg.baixaPlano:{};
+  return{recIni:_bpDataOk(c.recIni)||"2026-12-19",recRet:_bpDataOk(c.recRet)||"2027-01-04",hIni:_bpDataOk(c.hIni)||"2026-11-12",hFim:_bpDataOk(c.hFim)||"2027-01-17",valorAlim:Number(c.valorAlim)||0,minimos:(c.minimos&&typeof c.minimos==="object")?c.minimos:{}};
+}
+function bpSalvarParams(patch){
+  if(!bpExigeEdicao())return;
+  DB.cfg.baixaPlano={...bpParams(),...patch};save("cfg");render();
+}
+function bpLinhaPadrao(){return{fixo:false,funcao:"",origem:"",grupo:"",saldo:0,saida:"",volta:"",trabalha:"",expFim:"",expTexto:"",expAprox:false,obs:"",sugestao:"",status:"Baixada",nota:"",transporte:"A definir",passagem:"Pendente",valorPassagem:null,hIda:0,hVolta:0,embIda:"",embVolta:"",confirmada:false,baixadaId:"",movId:""};}
+/* ---- pessoas (efetivo do cadastro + plano de cada uma) ---- */
+function bpAusenciasOficiais(f,r){
+  const P=bpParams(),a=bpD2n(P.hIni),b=bpD2n(P.hFim),out=[];
+  const add=(ini,fim,tipo,id)=>{const i=bpD2n(ini);let e=bpD2n(fim);if(i==null)return;if(e==null)e=b;if(e<i)return;if(e<a||i>b)return;out.push({ini:i,fim:e,tipo,id:id||""});};
+  (Array.isArray(DB.ferias)?DB.ferias:[]).forEach(x=>{if(x&&x.func===f.id)add(x.inicio,x.fim,"Férias (cadastro)",x.id);});
+  if(f.dataInicioAfastamento)add(f.dataInicioAfastamento,f.dataFimAfastamento||"",f.dataFimAfastamento?"Afastado (cadastro)":"Afastado (sem previsão)","");
+  (Array.isArray(DB.baixadas)?DB.baixadas:[]).forEach(x=>{if(!x||x.func!==f.id)return;if(r&&r.baixadaId&&x.id===r.baixadaId)return;let fim=x.dataFim;if(!_bpDataOk(fim)&&_bpDataOk(x.dataInicio)&&+x.dias>0)fim=bpN2iso(bpD2n(x.dataInicio)+Math.round(+x.dias)-1);add(x.dataInicio,fim,"Baixada (oficial)",x.id);});
+  return out;
+}
+function bpPessoa(f){
+  const r=(f.planoBaixada&&typeof f.planoBaixada==="object"&&!Array.isArray(f.planoBaixada))?f.planoBaixada:null;
+  const base=r?{...bpLinhaPadrao(),...r}:{...bpLinhaPadrao(),status:"Fixo na obra",fixo:true,passagem:"N/A",transporte:""};
+  const p=Object.assign(base,{id:f.id,nome:String(f.nome||""),funcao:String(f.funcao||base.funcao||"—"),temPlano:!!r});
+  ["saida","volta","trabalha","expFim","embIda","embVolta"].forEach(k=>{p[k]=_bpDataOk(p[k]);});
+  p.saldo=Number(p.saldo)||0;p.hIda=Number(p.hIda)||0;p.hVolta=Number(p.hVolta)||0;
+  p.fixo=!r||p.status==="Fixo na obra";
+  p.aus=bpAusenciasOficiais(f,r);
+  return p;
+}
+function bpPessoas(){return DB.func.filter(efetivoObra).map(bpPessoa);}
+function bpPorId(id){return bpPessoas().find(p=>p.id===id)||null;}
+/* ---- regras (iguais às do controle) ---- */
+function bpWorkDay(p){
+  if(p.trabalha)return bpD2n(p.trabalha);
+  if(p.volta)return bpD2n(p.volta)+1;
+  if(p.status==="Afastado"&&p.saida)return bpD2n(bpParams().hFim)+1;
+  return null;
+}
+function bpHasLeave(p){return!p.fixo&&!!p.saida&&p.status!=="Sem baixada"&&p.status!=="Fixo na obra"&&bpWorkDay(p)!=null;}
+function bpIsAbsent(p,n){
+  if(bpHasLeave(p)&&n>bpD2n(p.saida)&&n<bpWorkDay(p))return true;
+  return(p.aus||[]).some(a=>n>=a.ini&&n<=a.fim);
+}
+function bpRecIni(){return bpD2n(bpParams().recIni);}
+function bpRecRet(){return bpD2n(bpParams().recRet);}
+function bpIsRec(n){return n>=bpRecIni()&&n<bpRecRet();}
+function bpNeedsTravel(p){return bpHasLeave(p)&&p.status!=="Afastado"&&p.transporte!=="Sem viagem"&&p.passagem!=="N/A";}
+function bpLeaveInfo(p){
+  if(!bpHasLeave(p))return null;
+  const s=bpD2n(p.saida)+1,e=bpWorkDay(p)-1,fora=Math.max(0,e-s+1);
+  const rs=Math.max(s,bpRecIni()),re=Math.min(e,bpRecRet()-1),rec=Math.max(0,re-rs+1);
+  const extra=fora-rec,saldo=Number(p.saldo)||0;
+  return{fora,rec,extra,saldo,diff:extra-Math.max(saldo,0)};
+}
+function bpTrav(p){
+  const hI=Number(p.hIda)||0,hV=Number(p.hVolta)||0;
+  const dias=(hI>0?Math.ceil(hI/24):0)+(hV>0?Math.ceil(hV/24):0);
+  const cheg=(p.embVolta&&hV>0)?bpD2n(p.embVolta)+Math.ceil(hV/24):null;
+  return{dias,valor:dias*(bpParams().valorAlim||0),cheg};
+}
+function bpDiasDoHorizonte(){const out=[],a=bpD2n(bpParams().hIni),b=bpD2n(bpParams().hFim);if(a==null||b==null)return out;for(let n=a;n<=b&&out.length<400;n++)out.push(n);return out;}
+function bpPresentes(list,n){let c=0;for(const p of list)if(!bpIsAbsent(p,n))c++;return c;}
+/* ---- gravar uma alteração no plano da pessoa ---- */
+function bpGarantirLinha(f){if(!f.planoBaixada||typeof f.planoBaixada!=="object"||Array.isArray(f.planoBaixada))f.planoBaixada={...bpLinhaPadrao(),funcao:f.funcao||""};return f.planoBaixada;}
+function bpSalvar(fid,patch,opts){
+  if(!bpExigeEdicao())return false;
+  const f=DB.func.find(x=>x.id===fid);if(!f)return false;
+  const r=bpGarantirLinha(f);Object.keys(patch).forEach(k=>{r[k]=patch[k];});
+  const msg=bpSincronizarOficial(f);
+  save("func");
+  if(!(opts&&opts.quiet))render();
+  if(msg)toast(msg);
+  return true;
+}
+function bpIncluirNoPlano(fid){
+  if(!bpExigeEdicao())return;
+  const f=DB.func.find(x=>x.id===fid);if(!f)return;
+  if(f.planoBaixada){toast("Já está no planejamento.");return;}
+  f.planoBaixada={...bpLinhaPadrao(),funcao:f.funcao||""};save("func");render();toast(f.nome+" incluído(a) no planejamento.");
+}
+function bpRemoverDoPlano(fid){
+  if(!bpExigeEdicao())return;
+  const f=DB.func.find(x=>x.id===fid);if(!f||!f.planoBaixada)return;
+  if(f.planoBaixada.baixadaId){toast("Essa pessoa tem baixada oficial criada pelo plano. Desfaça a baixada oficial antes de remover.");return;}
+  if(!confirm("Tirar "+f.nome+" do planejamento? Ela volta a ser contada como fixa na obra."))return;
+  delete f.planoBaixada;save("func");bpFecharFicha();render();
+}
+/* ---- oficialização: só depois da passagem comprada ---- */
+function bpDesejaOficial(p){
+  if(!p.temPlano||p.status!=="Baixada"||!bpHasLeave(p))return false;
+  return bpNeedsTravel(p)?(p.passagem==="Comprada"||!!p.confirmada):!!p.confirmada;
+}
+function bpDadosOficial(p){
+  const li=bpLeaveInfo(p),ini=bpN2iso(bpD2n(p.saida)+1),fim=bpN2iso(bpWorkDay(p)-1);
+  return{ini,fim,dias:Math.max(0,li?li.extra:0),obs:"Planejamento de baixada ("+(li?li.fora+" dias fora, "+li.rec+" no recesso":"")+")"};
+}
+function bpSincronizarOficial(f){
+  const r=f.planoBaixada;if(!r)return"";
+  const p=bpPessoa(f),desejo=bpDesejaOficial(p),existe=r.baixadaId?DB.baixadas.find(b=>b.id===r.baixadaId):null;
+  if(r.baixadaId&&!existe){r.baixadaId="";r.movId="";}
+  if(desejo){
+    const d=bpDadosOficial(p);
+    if(existe){
+      if(existe.dataInicio!==d.ini||existe.dataFim!==d.fim||+existe.dias!==d.dias){existe.dataInicio=d.ini;existe.dataFim=d.fim;existe.dias=d.dias;save("baixadas");
+        const mv=r.movId?DB.mov.find(m=>m.id===r.movId):null;if(mv){mv.entrada=d.ini;mv.saida=d.fim;save("mov");}
+        return "Baixada oficial atualizada: "+bpFmt(d.ini)+" a "+bpFmt(d.fim)+".";}
+      return"";
+    }
+    const bid=uid(),mid=uid();
+    DB.baixadas.push({id:bid,func:f.id,dataInicio:d.ini,dataFim:d.fim,dias:d.dias,obs:d.obs,origem:"plano"});save("baixadas");
+    DB.mov.push({id:mid,func:f.id,tipo:"Baixada",entrada:d.ini,saida:d.fim,motivo:d.obs,origem:"plano"});save("mov");
+    r.baixadaId=bid;r.movId=mid;
+    return "Baixada oficial criada para "+f.nome+": "+bpFmt(d.ini)+" a "+bpFmt(d.fim)+" ("+d.dias+" dia(s) descontado(s) do saldo). O Ponto já marca baixada.";
+  }
+  return"";
+}
+function bpOficialDivergente(p){return!!(p.temPlano&&p.baixadaId&&!bpDesejaOficial(p));}
+function bpEfetivarAgora(fid){
+  if(!bpExigeEdicao())return;
+  const f=DB.func.find(x=>x.id===fid);if(!f||!f.planoBaixada)return;
+  const p=bpPessoa(f);
+  if(p.status!=="Baixada"||!bpHasLeave(p)){toast("Preencha saída e retorno e deixe o status como Baixada.");return;}
+  if(bpNeedsTravel(p)&&p.passagem!=="Comprada"&&!confirm("A passagem ainda não está como Comprada. Criar a baixada oficial mesmo assim? (a passagem continua como está)"))return;
+  f.planoBaixada.confirmada=true;
+  const msg=bpSincronizarOficial(f);save("func");render();bpAtualizarFicha(fid);toast(msg||"Já está oficializada.");
+}
+function bpDesfazerOficial(fid){
+  if(!bpExigeEdicao())return;
+  const f=DB.func.find(x=>x.id===fid),r=f&&f.planoBaixada;if(!r||!r.baixadaId){toast("Não há baixada oficial criada pelo plano.");return;}
+  if(!confirm("Desfazer a baixada oficial de "+f.nome+"? Ela deixa de aparecer no Banco de baixada e no Ponto, e o saldo é devolvido."))return;
+  DB.baixadas=DB.baixadas.filter(b=>b.id!==r.baixadaId);save("baixadas");
+  if(r.movId){DB.mov=DB.mov.filter(m=>m.id!==r.movId);save("mov");}
+  r.baixadaId="";r.movId="";r.confirmada=false;save("func");render();bpAtualizarFicha(fid);toast("Baixada oficial desfeita.");
+}
+
+/* ---- filtros e ordenação ---- */
+function bpFiltrados(P){
+  const q=normalizaNome(_bp.q);
+  return P.filter(p=>{
+    if(!_bp.showFixos&&p.fixo&&!(p.aus&&p.aus.length))return false;
+    if(_bp.fFuncao&&p.funcao!==_bp.fFuncao)return false;
+    if(_bp.fGrupo&&p.grupo!==_bp.fGrupo)return false;
+    if(_bp.fStatus&&p.status!==_bp.fStatus)return false;
+    if(q&&!normalizaNome(p.nome+" "+p.funcao+" "+p.origem+" "+p.grupo).includes(q))return false;
+    return true;
+  });
+}
+function bpOrdenar(list){
+  const k=_bp.sort,nm=(a,b)=>a.nome.localeCompare(b.nome,"pt-BR");
+  return list.slice().sort((a,b)=>{
+    if(a.fixo!==b.fixo)return a.fixo?1:-1;
+    if(k==="nome")return nm(a,b);
+    if(k==="funcao")return(a.funcao||"").localeCompare(b.funcao||"","pt-BR")||nm(a,b);
+    if(k==="grupo")return(a.grupo||"").localeCompare(b.grupo||"","pt-BR")||nm(a,b);
+    if(k==="retorno")return((bpWorkDay(a)||9e9)-(bpWorkDay(b)||9e9))||nm(a,b);
+    return((bpD2n(a.saida)||9e9)-(bpD2n(b.saida)||9e9))||nm(a,b);
+  });
+}
+function bpBarraFiltros(P,extra){
+  const fn=bpUniq(P.map(p=>p.funcao)),gr=bpUniq(P.map(p=>p.grupo));
+  const o=(arr,cur,all)=>`<option value="">${all}</option>`+arr.map(x=>`<option ${cur===x?"selected":""}>${esc(x)}</option>`).join("");
+  return `<div class="bp-filtros"><input type="search" placeholder="Buscar nome, função, origem…" data-bpui="q" value="${esc(_bp.q)}"><select data-bpui="fFuncao">${o(fn,_bp.fFuncao,"Todas as funções")}</select><select data-bpui="fGrupo">${o(gr,_bp.fGrupo,"Todos os grupos/destinos")}</select><select data-bpui="fStatus">${o(BP_STATUS,_bp.fStatus,"Todos os status")}</select><label><input type="checkbox" data-bpui="showFixos" ${_bp.showFixos?"checked":""}> mostrar fixos</label>${extra||""}</div>`;
+}
+/* ---- barra de parâmetros e indicadores ---- */
+function bpParamsHtml(){
+  const P=bpParams(),ed=bpPodeEditar()?"":" disabled";
+  return `<label>Recesso início <input type="date" data-bpcfg="recIni" value="${P.recIni}"${ed}></label><label>Retorno ao trabalho <input type="date" data-bpcfg="recRet" value="${P.recRet}"${ed}></label><label>Janela de <input type="date" data-bpcfg="hIni" value="${P.hIni}"${ed}> a <input type="date" data-bpcfg="hFim" value="${P.hFim}"${ed}></label>`;
+}
+function bpTabsHtml(){
+  const al=bpAlertas(),hi=al.filter(a=>a.sev==="alta").length;
+  return BP_TABS.map(t=>`<button class="bp-tab" type="button" data-bptab="${t[0]}" aria-selected="${_bp.tab===t[0]}">${t[1]}${t[0]==="alertas"&&hi?`<span class="bp-badge">${hi}</span>`:""}</button>`).join("");
+}
+function bpKpisHtml(){
+  const P=bpPessoas();if(!P.length)return"";
+  const L=P.filter(bpHasLeave),fx=P.filter(p=>p.fixo&&!(p.aus&&p.aus.length)).length,rn=bpRecRet(),ri=bpRecIni();
+  let min=null,minN=null;
+  bpDiasDoHorizonte().forEach(n=>{if(bpIsRec(n)||bpDow(n)===0)return;const c=bpPresentes(P,n);if(min==null||c<min){min=c;minN=n;}});
+  const dep={},ret={};L.forEach(p=>{const s=bpD2n(p.saida),r=bpWorkDay(p);dep[s]=(dep[s]||0)+1;ret[r]=(ret[r]||0)+1;});
+  let peakS=null,peakC=0,peakR=null,peakRC=0;for(const k in dep)if(dep[k]>peakC){peakC=dep[k];peakS=+k;}for(const k in ret)if(ret[k]>peakRC){peakRC=ret[k];peakR=+k;}
+  const prec=L.filter(bpNeedsTravel),comp=prec.filter(p=>p.passagem==="Comprada").length;
+  const antes=L.filter(p=>bpD2n(p.saida)<ri-1).length,depois=L.filter(p=>bpWorkDay(p)>rn).length;
+  const outros=P.filter(p=>(p.aus&&p.aus.length)||p.status==="Férias"||p.status==="Afastado").length;
+  const al=bpAlertas(),hi=al.filter(a=>a.sev==="alta").length;
+  const cards=[["","Com baixada",L.length,"+ "+fx+" fixos na obra"],["warn","Saem antes do recesso",antes,"último dia antes de "+bpFmtN(ri-1)],["warn","Voltam depois de "+bpFmtN(rn),depois,"retorno após o fim do recesso"],[min!=null&&min<P.length*0.5?"bad":"ok","Menor efetivo na obra",min==null?"—":min,min==null?"":"em "+bpFmtN(minN)+" de "+P.length],["","Pico de saídas",peakC||"—",peakS!=null?"em "+bpFmtN(peakS):""],["","Pico de retornos",peakRC||"—",peakR!=null?"em "+bpFmtN(peakR):""],[comp===prec.length&&prec.length?"ok":"warn","Passagens compradas",comp+" / "+prec.length,(prec.length-comp)+" pendentes/cotadas"],["","Férias / afastados",outros,"do cadastro e do plano"],[hi?"bad":"ok","Alertas críticos",hi,al.length+" no total"]];
+  return cards.map(c=>`<div class="bp-kpi ${c[0]}"><b>${esc(c[2])}</b>${esc(c[1])}<br><span>${esc(c[3])}</span></div>`).join("");
+}
+/* ---- linha do tempo ---- */
+function bpCorBarra(p){
+  const c=_bp.colorBy;
+  if(c==="grupo")return bpColorOf(p.grupo);
+  if(c==="passagem")return p.passagem==="Comprada"?"#2e7d32":(p.passagem==="Cotada"?"#b26a00":(p.passagem==="N/A"?"#607d8b":"#8d6e63"));
+  if(c==="status")return p.status==="Baixada"?"#0b514f":p.status==="Possível desligamento"?"#b3261e":p.status==="Transferência de obra"?"#6a1b9a":p.status==="Férias"?"#7b1fa2":p.status==="Afastado"?"#8a5a00":"#607d8b";
+  return bpColorOf(p.funcao);
+}
+function bpCorAus(t){return/^Férias/.test(t)?"#7b1fa2":/^Afastado/.test(t)?"#8a5a00":"#0b514f";}
+function bpAgrupar(list){
+  if(_bp.group==="none")return[{label:"",items:list}];
+  const key=_bp.group,map={},ordem=[];
+  list.forEach(p=>{const k=(key==="funcao"?p.funcao:key==="grupo"?p.grupo:p.status)||"(sem "+key+")";if(!map[k]){map[k]=[];ordem.push(k);}map[k].push(p);});
+  ordem.sort((a,b)=>map[b].length-map[a].length||a.localeCompare(b,"pt-BR"));
+  return ordem.map(k=>({label:k,items:map[k]}));
+}
+function bpViewTempo(P){
+  const list=bpOrdenar(bpFiltrados(P)),Pm=bpParams();
+  const hN=bpD2n(Pm.hIni),eN=bpD2n(Pm.hFim),days=eN-hN+1,dw=_bp.dw,W=days*dw,LW=230,hoje=bpTodayN();
+  const sel=(k,arr)=>`<select data-bpui="${k}">${arr.map(a=>`<option value="${a[0]}" ${_bp[k]===a[0]?"selected":""}>${a[1]}</option>`).join("")}</select>`;
+  const extra=sel("group",[["none","Sem agrupar"],["funcao","Agrupar por função"],["grupo","Agrupar por destino"],["status","Agrupar por status"]])+sel("sort",[["saida","Ordenar por saída"],["retorno","Ordenar por retorno"],["nome","Ordenar por nome"],["funcao","Ordenar por função"],["grupo","Ordenar por destino"]])+sel("colorBy",[["funcao","Cor: função"],["grupo","Cor: destino"],["passagem","Cor: passagem"],["status","Cor: status"]])+`<label>Zoom <input type="range" min="10" max="34" value="${dw}" data-bpui="dw"></label>`;
+  let h=bpBarraFiltros(P,extra);
+  h+=`<div class="bp-note">${bpPodeEditar()?"Arraste a barra para mover a baixada inteira, ou as pontas para ajustar a saída e o retorno. ":""}Clique no nome ou na barra para abrir a ficha. Faixa verde = recesso; linha vermelha = hoje. Barras roxas e marrons são <b>férias</b> e <b>afastamentos</b> do cadastro; a barra tracejada é uma baixada oficial já lançada.</div>`;
+  let mh="",dh="",cur=-1;const segs=[];
+  for(let n=hN;n<=eN;n++){const d=new Date(n*BP_DAY),key=d.getUTCFullYear()*12+d.getUTCMonth();if(key!==cur){segs.push({l:BP_MESES[d.getUTCMonth()]+"/"+String(d.getUTCFullYear()).slice(2),c:0});cur=key;}segs[segs.length-1].c++;}
+  segs.forEach(s=>{mh+=`<div style="width:${s.c*dw}px">${s.l.toUpperCase()}</div>`;});
+  for(let n=hN;n<=eN;n++){const wd=bpDow(n),cls=bpIsRec(n)?"rc":(wd===0||wd===6?"we":""),dn=+bpN2iso(n).slice(8,10);dh+=`<div class="${cls}" style="width:${dw}px">${dw>=15?dn:(dn%2===1?dn:"")}${dw>=22?"<br>"+BP_DOWL[wd]:""}</div>`;}
+  let bands=`<div class="bp-bands" style="left:${LW}px;width:${W}px">`;
+  for(let n=hN;n<=eN;n++){const w2=bpDow(n);if((w2===0||w2===6)&&!bpIsRec(n))bands+=`<div class="bp-band we" style="left:${(n-hN)*dw}px;width:${dw}px"></div>`;}
+  const rs=Math.max(bpRecIni(),hN),re=Math.min(bpRecRet()-1,eN);
+  if(re>=rs)bands+=`<div class="bp-band rec" style="left:${(rs-hN)*dw}px;width:${(re-rs+1)*dw}px"><i>RECESSO</i></div>`;
+  if(hoje>=hN&&hoje<=eN)bands+=`<div class="bp-band today" style="left:${(hoje-hN)*dw}px"></div>`;
+  bands+="</div>";
+  let rows="";
+  bpAgrupar(list).forEach(g=>{
+    if(_bp.group!=="none")rows+=`<div class="bp-ghead" style="width:${LW+W}px"><span>${esc(g.label)} · ${g.items.length}</span></div>`;
+    g.items.forEach(p=>{
+      let bar="";
+      if(bpHasLeave(p)){
+        const s=bpD2n(p.saida)+1,e=bpWorkDay(p)-1;
+        if(e>=hN&&s<=eN){
+          const a=Math.max(s,hN),b=Math.min(e,eN),left=(a-hN)*dw,wid=(b-a+1)*dw;
+          const txt=wid>=88?bpFmt(p.saida)+" → "+bpFmtN(bpWorkDay(p)):"",ico=p.status==="Possível desligamento"?"⚠ ":p.status==="Transferência de obra"?"⇄ ":p.baixadaId?"✔ ":"",li=bpLeaveInfo(p);
+          bar=`<div class="bp-bar" data-bpbar="${esc(p.id)}" style="left:${left}px;width:${wid}px;background:${bpCorBarra(p)}" title="${esc(p.nome+" — saída "+bpFmt(p.saida)+" → retorno "+bpFmtN(bpWorkDay(p))+" ("+li.fora+" dias fora) · "+(p.grupo||"")+" · passagem: "+p.passagem+(p.baixadaId?" · baixada oficial criada":""))}"><span class="h l" data-bph="l"></span>${ico}${esc(txt)}<span class="h r" data-bph="r"></span></div>`;
+        }
+      }else if(!p.fixo)bar=`<div class="bp-nobar">${esc(p.status)}</div>`;
+      (p.aus||[]).forEach(a=>{
+        if(a.fim<hN||a.ini>eN)return;const aa=Math.max(a.ini,hN),bb=Math.min(a.fim,eN);
+        bar+=`<div class="bp-bar2 ${/oficial/.test(a.tipo)?"of":""}" style="left:${(aa-hN)*dw}px;width:${(bb-aa+1)*dw}px;background:${bpCorAus(a.tipo)}" title="${esc(p.nome+" — "+a.tipo+": "+bpFmtN(a.ini)+" → "+bpFmtN(a.fim))}">${(bb-aa+1)*dw>=80?esc(a.tipo.replace(/ \(.*\)/,"")):""}</div>`;
+      });
+      rows+=`<div class="bp-grow"><div class="bp-glab" style="width:${LW}px" data-bpopen="${esc(p.id)}"><span>${esc(p.nome)}</span><small>${esc(p.funcao)}${p.grupo?" · "+esc(p.grupo):""}</small></div><div class="bp-gtrack" style="width:${W}px">${bar}</div></div>`;
+    });
+  });
+  h+=`<div class="bp-gwrap"><div class="bp-gbody" style="width:${LW+W}px"><div class="bp-ghdr"><div class="bp-glab" style="width:${LW}px;cursor:default">Colaborador</div><div style="width:${W}px"><div class="bp-hm">${mh}</div><div class="bp-hd">${dh}</div></div></div>${bands}${rows}</div></div>`;
+  if(!list.length)h+=`<div class="bp-empty">Nenhum colaborador com esses filtros. ${P.some(p=>p.temPlano)?"":"Importe o controle do recesso ou inclua pessoas no planejamento (aba Tabela editável)."}</div>`;
+  return h;
+}
+/* ---- cobertura por função ---- */
+function bpLvl(present,total,min){
+  if(min>0)return present<min?"bad":(present===min?"warn":"ok");
+  if(total>0&&present===0)return"bad";
+  const r=total?present/total:1;return r<0.5?"warn2":(r<0.8?"warn":"ok");
+}
+function bpMinimoDe(f){const m=bpParams().minimos;return Number(m[normalizaNome(f)])||Number(m[f])||0;}
+function bpCovData(P){
+  const all=P.filter(p=>_bp.covFixos||!p.fixo||(p.aus&&p.aus.length)),map={};
+  all.forEach(p=>{const f=p.funcao||"—";(map[f]=map[f]||[]).push(p);});
+  const fs=Object.keys(map).sort((a,b)=>map[b].length-map[a].length||a.localeCompare(b,"pt-BR"));
+  return{all,map,fs};
+}
+function bpViewCobertura(P){
+  const cd=bpCovData(P),days=bpDiasDoHorizonte();
+  let h=`<div class="bp-filtros"><label><input type="checkbox" data-bpui="covFixos" ${_bp.covFixos?"checked":""}> incluir fixos (sem baixada) na cobertura</label><select data-bpui="covMode"><option value="present" ${_bp.covMode==="present"?"selected":""}>Mostrar presentes na obra</option><option value="absent" ${_bp.covMode==="absent"?"selected":""}>Mostrar ausentes (baixada, férias, afastado)</option></select></div>`;
+  h+=`<div class="bp-note">Cada célula mostra quantas pessoas da função estão na obra no dia (baixada, férias e afastamentos contam como ausência). Defina o <b>mínimo necessário</b> por função (coluna “Mín.”) pra pintar de vermelho os dias em que a obra não comporta. Clique numa célula pra ver quem está fora.</div>`;
+  h+=`<div class="bp-legend"><span><i style="background:var(--bp-okbg)"></i>ok</span><span><i style="background:var(--bp-warnbg)"></i>atenção / no mínimo</span><span><i style="background:var(--bp-warn2bg)"></i>metade ou menos</span><span><i style="background:var(--bp-badbg)"></i>abaixo do mínimo / zero</span><span><i style="background:var(--bp-rec)"></i>recesso (obra parada)</span></div>`;
+  let mh="",dh="",cur=-1;const segs=[];
+  days.forEach(n=>{const d=new Date(n*BP_DAY),key=d.getUTCFullYear()*12+d.getUTCMonth();if(key!==cur){segs.push({l:BP_MESES[d.getUTCMonth()].toUpperCase(),c:0});cur=key;}segs[segs.length-1].c++;});
+  segs.forEach(s=>{mh+=`<th colspan="${s.c}">${s.l}</th>`;});
+  days.forEach(n=>{const wd=bpDow(n);dh+=`<th class="${bpIsRec(n)?"rc":(wd===0||wd===6?"we":"")}">${+bpN2iso(n).slice(8,10)}<br>${BP_DOWL[wd]}</th>`;});
+  const ed=bpPodeEditar()?"":" disabled";
+  let t=`<table class="bp-mx"><thead><tr><th class="fx" rowspan="2">Função</th><th class="tt" rowspan="2">Total</th><th class="mn" rowspan="2">Mín.</th>${mh}</tr><tr>${dh}</tr></thead><tbody>`;
+  let sum=`<tr class="sum"><th class="fx">EFETIVO NA OBRA (refeições)</th><td class="tt">${cd.all.length}</td><td class="mn"></td>`,dep=`<tr class="sum"><th class="fx">Saem (último dia na obra)</th><td class="tt"></td><td class="mn"></td>`,ret=`<tr class="sum"><th class="fx">Voltam (retorno ao trabalho)</th><td class="tt"></td><td class="mn"></td>`;
+  const L=cd.all.filter(bpHasLeave);
+  days.forEach(n=>{
+    const rec=bpIsRec(n),c=bpPresentes(cd.all,n);
+    sum+=`<td class="c ${rec?"rec":""}" style="font-weight:700">${rec?"—":c}</td>`;
+    const dc=L.filter(p=>bpD2n(p.saida)===n).length,rc=L.filter(p=>bpWorkDay(p)===n).length;
+    dep+=`<td class="c ${rec?"rec":""}">${dc&&!rec?`<span style="color:var(--bp-bad)">${dc}</span>`:""}</td>`;
+    ret+=`<td class="c ${rec?"rec":""}">${rc&&!rec?`<span style="color:var(--bp-ok)">${rc}</span>`:""}</td>`;
+  });
+  t+=sum+"</tr>"+dep+"</tr>"+ret+"</tr>";
+  cd.fs.forEach(f=>{
+    const list=cd.map[f],tot=list.length,min=bpMinimoDe(f);
+    t+=`<tr><th class="fx" title="${esc(f)}">${esc(f)}</th><td class="tt">${tot}</td><td class="mn"><input type="number" min="0" max="${tot}" data-bpmin="${esc(f)}" value="${min||""}" placeholder="0"${ed}></td>`;
+    days.forEach(n=>{
+      const rec=bpIsRec(n),pr=bpPresentes(list,n),shown=_bp.covMode==="present"?pr:tot-pr;
+      const sel=_bp.cov&&_bp.cov.f===f&&_bp.cov.n===n?" sel":"";
+      t+=rec?`<td class="c rec"></td>`:`<td class="c ${bpLvl(pr,tot,min)}${sel}" data-bpf="${esc(f)}" data-bpn="${n}">${shown}</td>`;
+    });
+    t+="</tr>";
+  });
+  t+="</tbody></table>";
+  return h+`<div class="bp-mxwrap">${t}</div><div class="bp-card bp-covdet" id="bp_covdet">${bpCovDetHtml(P)}</div>`;
+}
+function bpCovDetHtml(P){
+  if(!_bp.cov)return`<span class="bp-note">Clique em uma célula da matriz para ver quem está presente e quem está fora naquele dia.</span>`;
+  const f=_bp.cov.f,n=_bp.cov.n,list=P.filter(p=>(_bp.covFixos||!p.fixo||(p.aus&&p.aus.length))&&(p.funcao||"—")===f);
+  const out=list.filter(p=>bpIsAbsent(p,n)),inn=list.filter(p=>!bpIsAbsent(p,n)),min=bpMinimoDe(f);
+  const motivo=p=>{const a=(p.aus||[]).find(x=>n>=x.ini&&n<=x.fim);return a?a.tipo:(p.status==="Férias"?"férias":p.status==="Afastado"?"afastado":"baixada");};
+  return `<b>${esc(f)} · ${bpFmtN(n)} (${["domingo","segunda","terça","quarta","quinta","sexta","sábado"][bpDow(n)]})</b> — ${inn.length} de ${list.length} presentes${min?" (mínimo "+min+")":""}<div style="margin-top:8px"><b>Fora:</b></div><div class="bp-chips">${out.length?out.map(p=>`<span class="bp-chip out" data-bpopen="${esc(p.id)}" style="cursor:pointer">${esc(p.nome)} · ${esc(motivo(p))}${bpHasLeave(p)?" · volta "+bpFmtN(bpWorkDay(p)):""}</span>`).join(""):'<span class="bp-chip">ninguém</span>'}</div><div style="margin-top:8px"><b>Na obra:</b></div><div class="bp-chips">${inn.length?inn.map(p=>`<span class="bp-chip in" data-bpopen="${esc(p.id)}" style="cursor:pointer">${esc(p.nome)}${p.fixo?" (fixo)":""}</span>`).join(""):'<span class="bp-chip">ninguém</span>'}</div>`;
+}
+/* ---- destinos e grupos ---- */
+function bpModa(arr){const m={};let best=null,bc=0;arr.forEach(v=>{m[v]=(m[v]||0)+1;if(m[v]>bc){bc=m[v];best=v;}});return best;}
+function bpViewDestinos(P){
+  const L=P.filter(p=>!p.fixo),map={};
+  L.forEach(p=>{const g=p.grupo||"(sem destino)";(map[g]=map[g]||[]).push(p);});
+  const gs=Object.keys(map).sort((a,b)=>map[b].length-map[a].length||a.localeCompare(b,"pt-BR"));
+  let h=`<div class="bp-note">Pessoas do mesmo destino devem sair e voltar juntas sempre que possível (ônibus/van compartilhados, passagem em grupo, menos custo e menos risco de atraso). Cada cartão mostra a diferença de datas dentro do grupo${bpPodeEditar()?" e permite alinhar todos de uma vez":""}.</div><div class="bp-grid">`;
+  gs.forEach(g=>{
+    const all=map[g],m=all.filter(bpHasLeave),sn=m.map(p=>bpD2n(p.saida)),rn=m.map(bpWorkDay);
+    const sp=sn.length?Math.max(...sn)-Math.min(...sn):0,rp=rn.length?Math.max(...rn)-Math.min(...rn):0;
+    const okTag=(sp<=0&&rp<=0)?'<span class="bp-tag ok">alinhado</span>':`<span class="bp-tag ${(sp>2||rp>2)?"bad":"warn"}">saída ±${sp}d · retorno ±${rp}d</span>`;
+    const combos={};m.forEach(p=>{const k=bpFmt(p.saida)+" → "+bpFmtN(bpWorkDay(p));combos[k]=(combos[k]||0)+1;});
+    const defS=m.length?bpN2iso(bpModa(sn)):"",defR=m.length?bpN2iso(bpModa(rn)):"";
+    const pend=all.filter(bpNeedsTravel).filter(p=>p.passagem!=="Comprada").length,mS=m.length?bpModa(sn):null,mR=m.length?bpModa(rn):null;
+    h+=`<div class="bp-card bp-gc"><h3><span>${esc(g)} <small style="color:var(--bp-muted);font-weight:400">· ${all.length} pessoa${all.length>1?"s":""}</small></span>${okTag}</h3><div class="bp-chips">${Object.keys(combos).map(k=>`<span class="bp-chip">${esc(k)} · ${combos[k]}</span>`).join("")}<span class="bp-chip">${pend?pend+" passagem(ns) por comprar":"passagens ok"}</span></div><table class="bp-t2"><thead><tr><th>Nome</th><th>Função</th><th>Saída</th><th>Retorno</th><th>Passagem</th></tr></thead><tbody>${all.slice().sort((a,b)=>(bpD2n(a.saida)||0)-(bpD2n(b.saida)||0)||a.nome.localeCompare(b.nome,"pt-BR")).map(p=>{const odd=m.length&&bpHasLeave(p)&&(bpD2n(p.saida)!==mS||bpWorkDay(p)!==mR);return `<tr><td><a href="#" data-bpopen="${esc(p.id)}" style="color:inherit">${esc(p.nome)}</a></td><td>${esc(p.funcao)}</td><td${odd&&bpD2n(p.saida)!==mS?' style="color:var(--bp-bad);font-weight:700"':""}>${bpFmt(p.saida)}</td><td${odd&&bpWorkDay(p)!==mR?' style="color:var(--bp-bad);font-weight:700"':""}>${bpFmtN(bpWorkDay(p))}</td><td>${esc(p.passagem)}</td></tr>`;}).join("")}</tbody></table>${m.length&&bpPodeEditar()?`<div class="bp-alignrow">Alinhar grupo: saída <input type="date" data-bpas="${esc(g)}" value="${defS}"> retorno <input type="date" data-bpar="${esc(g)}" value="${defR}"> <button class="bp-btn sm" type="button" data-bpalign="${esc(g)}">Aplicar a todos</button></div>`:""}</div>`;
+  });
+  return h+"</div>";
+}
+function bpAlinharGrupo(g){
+  if(!bpExigeEdicao())return;
+  const s=[...document.querySelectorAll("[data-bpas]")].find(x=>x.dataset.bpas===g),r=[...document.querySelectorAll("[data-bpar]")].find(x=>x.dataset.bpar===g);
+  if(!s||!r||!s.value||!r.value){toast("Informe a data de saída e de retorno.");return;}
+  const members=bpPessoas().filter(p=>!p.fixo&&(p.grupo||"(sem destino)")===g&&bpHasLeave(p));
+  if(!confirm("Aplicar saída "+bpFmt(s.value)+" e retorno "+bpFmt(r.value)+" para "+members.length+" pessoa(s) de "+g+"?"))return;
+  members.forEach(p=>bpSalvar(p.id,{saida:s.value,trabalha:r.value,volta:bpN2iso(bpD2n(r.value)-1)},{quiet:true}));
+  render();toast("Grupo "+g+" alinhado.");
+}
+/* ---- alimentação e passagens ---- */
+function bpMesesDoHorizonte(){
+  const a=bpD2n(bpParams().hIni),b=bpD2n(bpParams().hFim),out=[];if(a==null||b==null)return out;
+  const da=new Date(a*BP_DAY),db=new Date(b*BP_DAY);let y=da.getUTCFullYear(),m=da.getUTCMonth();
+  while((y<db.getUTCFullYear()||(y===db.getUTCFullYear()&&m<=db.getUTCMonth()))&&out.length<24){out.push(y+"-"+String(m+1).padStart(2,"0"));m++;if(m>11){m=0;y++;}}
+  return out;
+}
+function bpSelHtml(p,k,opts){return `<select data-bpid="${esc(p.id)}" data-bpk="${k}"${bpPodeEditar()?"":" disabled"}>${opts.map(o=>`<option ${p[k]===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;}
+function bpViewAlim(P){
+  const list=bpOrdenar(bpFiltrados(P)).filter(p=>!p.fixo),meses=bpMesesDoHorizonte(),Pm=bpParams();
+  if(!_bp.month||!meses.includes(_bp.month))_bp.month=meses.includes("2026-12")?"2026-12":(meses[0]||"");
+  const ed=bpPodeEditar()?"":" disabled";
+  const extra=`<label>Valor alimentação por dia de trajeto (R$) <input type="number" min="0" step="0.01" data-bpcfg="valorAlim" value="${Pm.valorAlim}"${ed}></label><select data-bpui="month">${meses.map(m=>`<option value="${m}" ${_bp.month===m?"selected":""}>Mês de apuração: ${m.slice(5)}/${m.slice(0,4)}</option>`).join("")}</select><label><input type="checkbox" data-bpui="sundays" ${_bp.sundays?"checked":""}> contar domingos</label>`;
+  let h=bpBarraFiltros(P,extra);
+  h+=`<div class="bp-note">Regra de trajeto: cada trecho conta ⌈horas ÷ 24⌉ dias de alimentação. As horas em <i>itálico</i> são <b>estimativas</b> (ônibus saindo de BH) e deixam de ser estimativa quando a passagem estiver “Comprada”: ajuste com o tempo real do bilhete. “Dias na obra” desconta baixada, férias, afastamento e recesso (e domingos, se desmarcado) no mês escolhido, para controlar as refeições.</div>`;
+  const mY=+_bp.month.slice(0,4),mM=+_bp.month.slice(5)-1,first=Math.round(Date.UTC(mY,mM,1)/BP_DAY),last=Math.round(Date.UTC(mY,mM+1,0)/BP_DAY);
+  const diasObra=p=>{let c=0;for(let n=first;n<=last;n++){if(bpIsRec(n))continue;if(!_bp.sundays&&bpDow(n)===0)continue;if(!bpIsAbsent(p,n))c++;}return c;};
+  let totVal=0,totPass=0,totDias=0,totObra=0,comp=0;
+  const rows=list.map(p=>{
+    const t=bpTrav(p),est=p.passagem==="Pendente"||p.passagem==="Cotada",dO=diasObra(p);totObra+=dO;totVal+=t.valor;totDias+=t.dias;totPass+=Number(p.valorPassagem)||0;if(p.passagem==="Comprada")comp++;
+    let warn="";
+    if(p.embIda&&bpHasLeave(p)){const dEmb=bpD2n(p.embIda),s=bpD2n(p.saida);if(dEmb<s)warn+='<span class="bp-tag bad">embarca antes da saída</span> ';else if(dEmb>s+1)warn+=`<span class="bp-tag warn">embarca ${dEmb-s}d após a saída</span> `;}
+    if(t.cheg!=null&&bpHasLeave(p)){const wd=bpWorkDay(p);if(t.cheg>wd)warn+=`<span class="bp-tag bad">chega ${t.cheg-wd}d depois do retorno</span> `;}
+    const adj=(p.embIda||p.embVolta)&&bpPodeEditar()?`<button class="bp-btn sm sec" type="button" data-bpadj="${esc(p.id)}" title="Define a saída = embarque de ida e o retorno = chegada estimada da volta">Ajustar plano</button>`:"";
+    const num=(k,step,cls)=>`<input type="number" min="0" step="${step}" ${cls?`class="${cls}"`:""} data-bpid="${esc(p.id)}" data-bpk="${k}" data-bpt="n" value="${p[k]==null||p[k]===0&&k==="valorPassagem"?"":p[k]}"${ed}>`;
+    const dt=k=>`<input type="date" data-bpid="${esc(p.id)}" data-bpk="${k}" data-bpt="d" value="${esc(p[k])}"${ed}>`;
+    return `<tr><td class="l" data-bpopen="${esc(p.id)}" style="cursor:pointer">${esc(p.nome)}</td><td>${esc(p.grupo)}</td><td>${bpFmt(p.saida)} → ${bpFmtN(bpWorkDay(p))}</td><td>${bpSelHtml(p,"transporte",BP_TRANSP)}</td><td>${bpSelHtml(p,"passagem",BP_PASS)}${p.baixadaId?' <span class="bp-tag ok" title="Baixada oficial criada">oficial ✔</span>':""}</td><td>${num("valorPassagem","0.01")}</td><td>${dt("embIda")}</td><td>${dt("embVolta")}</td><td>${num("hIda","0.5",est?"est":"")}</td><td>${num("hVolta","0.5",est?"est":"")}</td><td class="num">${t.dias}</td><td class="num">${bpMoney(t.valor)}</td><td class="num">${dO}</td><td>${warn}${adj}</td></tr>`;
+  }).join("");
+  h+=`<div class="bp-twrap"><table class="bp-tb"><thead><tr><th class="l">Colaborador</th><th>Destino</th><th>Saída → retorno</th><th>Transporte</th><th>Passagem</th><th>Valor (R$)</th><th>Embarque ida</th><th>Embarque volta</th><th>Horas ida</th><th>Horas volta</th><th>Dias trajeto</th><th>Alimentação trajeto</th><th>Dias na obra (mês)</th><th>Conferência</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td class="l">Totais (${list.length} pessoas)</td><td></td><td></td><td></td><td>${comp} compradas</td><td class="num">${bpMoney(totPass)}</td><td></td><td></td><td></td><td></td><td class="num">${totDias}</td><td class="num">${bpMoney(totVal)}</td><td class="num">${totObra}</td><td></td></tr></tfoot></table></div>`;
+  let allMeals=0;P.forEach(p=>{for(let n=first;n<=last;n++){if(bpIsRec(n))continue;if(!_bp.sundays&&bpDow(n)===0)continue;if(!bpIsAbsent(p,n))allMeals++;}});
+  return h+`<div class="bp-note" style="margin-top:10px"><b>Refeições-dia previstas no restaurante em ${_bp.month.slice(5)}/${_bp.month.slice(0,4)} (todo o efetivo, inclusive fixos): ${allMeals}.</b></div>`;
+}
+function bpAjustarPlano(id){
+  const p=bpPorId(id);if(!p)return;const t=bpTrav(p),patch={};
+  if(p.embIda)patch.saida=p.embIda;
+  if(t.cheg!=null){patch.trabalha=bpN2iso(t.cheg);patch.volta=bpN2iso(t.cheg-1);}
+  if(!Object.keys(patch).length){toast("Informe o embarque de ida e/ou de volta.");return;}
+  if(bpSalvar(id,patch))toast("Plano ajustado pelo bilhete.");
+}
+/* ---- tabela editável ---- */
+const BP_COLS=[["nome","Nome","t"],["funcao","Função","t"],["origem","Origem","t"],["grupo","Destino / grupo","t"],["status","Status","s"],["saldo","Saldo","n"],["saida","Saída","d"],["volta","Volta (chegada)","d"],["trabalha","Volta ao trabalho","d"],["expFim","Fim experiência","d"],["sugestao","Sugestão","t"],["obs","Observações","t"]];
+function bpViewTabela(P){
+  const list=bpFiltrados(P).slice().sort((a,b)=>{
+    const k=_bp.tsort;let va=a[k],vb=b[k];
+    if(k==="saldo")return((+va||0)-(+vb||0))*_bp.tdir;
+    if(va==null)va="";if(vb==null)vb="";
+    if(va===""&&vb!=="")return 1;if(vb===""&&va!=="")return -1;
+    return String(va).localeCompare(String(vb),"pt-BR")*_bp.tdir;
+  });
+  const ed=bpPodeEditar()?"":" disabled";
+  let h=bpBarraFiltros(P,bpPodeEditar()?'<button class="bp-btn" type="button" data-bpadd>＋ Incluir pessoas no planejamento</button> <button class="bp-btn sec" type="button" data-bpimp>⇪ Importar do controle atual</button>':"");
+  h+=`<div class="bp-note">Clique no título da coluna pra ordenar. Edite direto nas células: as alterações são salvas no cadastro de cada pessoa e aparecem pra todos. A função vem do cadastro. Quem não está no planejamento é contado como fixo na obra; marque “mostrar fixos” pra ver e incluir.</div>`;
+  const head=`<th class="l" data-bpsort="nome">Nome ${_bp.tsort==="nome"?(_bp.tdir>0?"▲":"▼"):""}</th>`+BP_COLS.slice(1).map(c=>`<th data-bpsort="${c[0]}">${c[1]} ${_bp.tsort===c[0]?(_bp.tdir>0?"▲":"▼"):""}</th>`).join("");
+  const grList=bpUniq(P.map(p=>p.grupo));
+  const body=list.map(p=>{
+    let td=`<td class="l"><a href="#" data-bpopen="${esc(p.id)}" style="color:inherit">${esc(p.nome)}</a></td>`;
+    BP_COLS.slice(1).forEach(c=>{
+      const k=c[0],v=p[k]==null?"":p[k],base=` data-bpid="${esc(p.id)}" data-bpk="${k}"`;
+      if(!p.temPlano&&k!=="funcao"){td+=`<td style="color:var(--bp-muted);font-size:11.5px">${k==="status"?"Fixo na obra":""}</td>`;return;}
+      if(k==="funcao")td+=`<td style="white-space:nowrap">${esc(p.funcao)}</td>`;
+      else if(c[2]==="s")td+=`<td>${bpSelHtml(p,"status",BP_STATUS)}</td>`;
+      else if(c[2]==="n")td+=`<td><input type="number" step="0.1"${base} data-bpt="n" value="${esc(v)}"${ed}></td>`;
+      else if(c[2]==="d")td+=`<td><input type="date"${base} data-bpt="d" value="${esc(v)}"${ed}></td>`;
+      else td+=`<td><input type="text"${base} ${k==="grupo"?'list="bp-dl-gr"':""} ${k==="obs"||k==="sugestao"?'style="min-width:220px"':""} value="${esc(v)}"${ed}></td>`;
+    });
+    return `<tr>${td}</tr>`;
+  }).join("");
+  return h+`<datalist id="bp-dl-gr">${grList.map(f=>`<option value="${esc(f)}">`).join("")}</datalist><div class="bp-twrap"><table class="bp-tb"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>${list.length?"":'<div class="bp-empty">Nenhuma pessoa com esses filtros.</div>'}`;
+}
+
+/* ---- alertas ---- */
+function bpAlertas(){
+  const P=bpPessoas(),out=[],ri=bpRecIni(),rn=bpRecRet(),hoje=bpTodayN();
+  P.forEach(p=>{
+    if(p.fixo&&!(p.aus&&p.aus.length))return;
+    const li=bpLeaveInfo(p),wd=bpWorkDay(p);
+    if(p.volta&&p.trabalha&&bpD2n(p.volta)>bpD2n(p.trabalha))out.push({sev:"alta",id:p.id,t:p.nome,x:"A “volta” sugerida ("+bpFmt(p.volta)+") é depois do retorno ao trabalho ("+bpFmt(p.trabalha)+"). Corrigir uma das datas."});
+    if(li){
+      if(li.saldo<0)out.push({sev:"media",id:p.id,t:p.nome,x:"Saldo negativo ("+li.saldo.toLocaleString("pt-BR")+" dias). Conferir regra de desconto."});
+      else if(li.diff>=2&&p.status==="Baixada")out.push({sev:"media",id:p.id,t:p.nome,x:"Fica "+li.extra+" dia(s) fora além do recesso, mas o saldo é "+li.saldo.toLocaleString("pt-BR")+": excede em "+li.diff+" dia(s). Conferir banco/desconto."});
+    }
+    if(p.expFim&&bpHasLeave(p)){const ef=bpD2n(p.expFim);if(ef>=hoje&&ef>=bpD2n(p.saida)-7&&ef<=wd)out.push({sev:"media",id:p.id,t:p.nome,x:"Contrato de experiência termina "+(p.expAprox?"por volta de ":"em ")+bpFmt(p.expFim)+", perto/durante a baixada. Definir efetivação, prorrogação ou término antes de liberar."});}
+    if(["Possível desligamento","Transferência de obra","Verificar"].includes(p.status))out.push({sev:"info",id:p.id,t:p.nome,x:p.status+(p.obs?": "+p.obs:"")+"."});
+    if(bpNeedsTravel(p)&&p.passagem!=="Comprada"){const dd=bpD2n(p.saida)-hoje;if(dd<=21)out.push({sev:"alta",id:p.id,t:p.nome,x:"Passagem "+p.passagem.toLowerCase()+" e saída "+(dd<0?"já passou":"em "+dd+" dia(s)")+" ("+bpFmt(p.saida)+"). Comprar com urgência."});}
+    const t=bpTrav(p);
+    if(p.embIda&&bpHasLeave(p)&&bpD2n(p.embIda)<bpD2n(p.saida))out.push({sev:"alta",id:p.id,t:p.nome,x:"Embarque de ida ("+bpFmt(p.embIda)+") antes do último dia de trabalho ("+bpFmt(p.saida)+")."});
+    if(t.cheg!=null&&bpHasLeave(p)&&t.cheg>wd)out.push({sev:"alta",id:p.id,t:p.nome,x:"Pela passagem de volta, chega ≈ "+bpFmtN(t.cheg)+", depois do retorno planejado ("+bpFmtN(wd)+")."});
+    if(bpHasLeave(p)&&p.status==="Baixada"&&!p.grupo)out.push({sev:"info",id:p.id,t:p.nome,x:"Sem destino/grupo definido."});
+    if(bpHasLeave(p)&&p.status==="Baixada"){
+      const s=bpD2n(p.saida)+1,e=wd-1,sob=(p.aus||[]).find(a=>!/Baixada/.test(a.tipo)&&a.ini<=e&&a.fim>=s);
+      if(sob)out.push({sev:"media",id:p.id,t:p.nome,x:"A baixada planejada ("+bpFmtN(s)+" a "+bpFmtN(e)+") se sobrepõe a "+sob.tipo.toLowerCase()+" ("+bpFmtN(sob.ini)+" a "+bpFmtN(sob.fim)+"). Conferir."});
+      if(!bpNeedsTravel(p)&&!p.confirmada&&!p.baixadaId&&bpD2n(p.saida)-hoje<=14)out.push({sev:"media",id:p.id,t:p.nome,x:"Baixada sem passagem: confirme na ficha pra oficializar (a Central só cria a baixada oficial depois da passagem comprada ou da confirmação)."});
+    }
+    if(bpOficialDivergente(p))out.push({sev:"alta",id:p.id,t:p.nome,x:"A baixada oficial já foi criada, mas o plano mudou (status ou passagem). Atualize o plano ou desfaça a baixada oficial.",desfazer:true});
+  });
+  const pg={};P.filter(bpNeedsTravel).forEach(p=>{if(p.passagem==="Comprada")return;const dd=bpD2n(p.saida)-hoje;if(dd<=21||dd>60)return;const g=p.grupo||"(sem destino)";(pg[g]=pg[g]||[]).push(p);});
+  Object.keys(pg).forEach(g=>{const m=pg[g],first=Math.min(...m.map(p=>bpD2n(p.saida)));out.push({sev:"media",id:null,t:"Passagens – "+g,x:m.length+" pessoa(s) ainda sem passagem comprada; a primeira saída é em "+bpFmtN(first)+" ("+(first-hoje)+" dias). Compre em grupo pra alinhar datas e custo."});});
+  const antes=P.filter(p=>bpHasLeave(p)&&bpD2n(p.saida)<ri-1),depois=P.filter(p=>bpHasLeave(p)&&bpWorkDay(p)>rn);
+  if(antes.length)out.push({sev:"info",id:null,t:"Saídas antes do recesso",x:antes.length+" pessoa(s) saem antes de "+bpFmtN(ri-1)+" (a mais cedo em "+bpFmtN(Math.min(...antes.map(p=>bpD2n(p.saida))))+"). A obra opera com efetivo menor nesses dias: veja a aba Cobertura."});
+  if(depois.length)out.push({sev:"info",id:null,t:"Retornos depois do recesso",x:depois.length+" pessoa(s) só voltam depois de "+bpFmtN(rn)+" (a última em "+bpFmtN(Math.max(...depois.map(bpWorkDay)))+"). Confira a cobertura por função em janeiro."});
+  const gmap={};P.filter(bpHasLeave).forEach(p=>{const g=p.grupo||"";if(!g)return;(gmap[g]=gmap[g]||[]).push(p);});
+  Object.keys(gmap).forEach(g=>{
+    const m=gmap[g];if(m.length<2)return;const sn=m.map(p=>bpD2n(p.saida)),rr=m.map(bpWorkDay),sp=Math.max(...sn)-Math.min(...sn),rp=Math.max(...rr)-Math.min(...rr);
+    if(sp>1||rp>1)out.push({sev:"media",id:null,t:"Grupo "+g,x:"Diferença de "+sp+" dia(s) na saída e "+rp+" no retorno entre "+m.length+" pessoas do mesmo destino. Avalie alinhar (aba Destinos e grupos)."});
+  });
+  const cd=bpCovData(P);
+  cd.fs.forEach(f=>{
+    const min=bpMinimoDe(f);if(!min)return;const list=cd.map[f],bad=[];
+    bpDiasDoHorizonte().forEach(n=>{if(bpIsRec(n)||bpDow(n)===0)return;const c=bpPresentes(list,n);if(c<min)bad.push({n,c});});
+    if(bad.length)out.push({sev:"alta",id:null,t:"Função "+f,x:"Abaixo do mínimo de "+min+" em "+bad.length+" dia(s) útil(eis): "+bad.slice(0,6).map(b=>bpFmtN(b.n)+" ("+b.c+")").join(", ")+(bad.length>6?"…":"")+"."});
+  });
+  const rank={alta:0,media:1,info:2};out.sort((a,b)=>rank[a.sev]-rank[b.sev]);
+  return out;
+}
+function bpViewAlertas(){
+  const al=bpAlertas(),c={alta:0,media:0,info:0};al.forEach(a=>c[a.sev]++);
+  let h=`<div class="bp-filtros"><span class="bp-tag bad">${c.alta} críticos</span><span class="bp-tag warn">${c.media} atenção</span><span class="bp-tag info">${c.info} informativos</span></div><div class="bp-al">`;
+  al.forEach(a=>{h+=`<div class="bp-ai ${a.sev}"><div class="sp"><b>${esc(a.t)}</b>${esc(a.x)}</div>${a.id?`<button class="bp-btn sm sec" type="button" data-bpopen="${esc(a.id)}">Abrir</button>`:""}${a.desfazer&&bpPodeEditar()?`<button class="bp-btn sm" type="button" data-bpdesfazer="${esc(a.id)}">Desfazer oficial</button>`:""}</div>`;});
+  if(!al.length)h+='<div class="bp-empty">Nenhum alerta. Tudo conferido.</div>';
+  h+=`</div><div class="bp-card bp-about"><h3>Como ler as datas</h3><ul><li><b>Saída</b> = último dia na obra. A pessoa fica ausente do dia seguinte até a véspera do <b>retorno ao trabalho</b>.</li><li><b>Volta (chegada)</b> = quando chega ao destino da obra; se o retorno ao trabalho não estiver preenchido, o painel usa volta + 1 dia.</li><li>No recesso (obra parada) as células ficam hachuradas e não entram nas contas de cobertura.</li><li><b>Fixos</b> são as pessoas do efetivo que não estão no planejamento: contam como presentes todos os dias. Se alguma sair, inclua-a no planejamento.</li><li><b>Férias, afastamentos e baixadas oficiais</b> do cadastro entram sozinhos no tempo e na cobertura.</li><li><b>Baixada oficial:</b> quando a passagem está “Comprada” (ou, sem viagem, quando você confirma na ficha), a Central cria a baixada no Banco de baixada e o Ponto passa a marcá-la. Os dias descontados do saldo são só os que passam do recesso.</li></ul></div>`;
+  return h;
+}
+/* ---- ficha da pessoa ---- */
+let _bpFicha="";
+function bpAbrirFicha(id){_bpFicha=id;openModal(`<div id="bp_ficha"></div>`);bpDesenharFicha(id);}
+function bpFecharFicha(){if(_bpFicha){_bpFicha="";closeModal();}}
+function bpDesenharFicha(id){
+  const el=document.getElementById("bp_ficha");if(!el)return;
+  const p=bpPorId(id),f=DB.func.find(x=>x.id===id);
+  if(!p||!f){el.innerHTML='<div class="modal-b"><p>Pessoa não encontrada no efetivo.</p></div>';return;}
+  const ed=bpPodeEditar(),dis=ed?"":" disabled";
+  const fn=bpUniq(bpPessoas().map(x=>x.grupo));
+  const inp=(k,label,type,cls)=>{const v=p[k]==null?"":p[k];return `<div class="${cls||""}"><label>${label}<input ${type==="number"?'type="number" step="0.1"':type==="date"?'type="date"':'type="text"'} data-bpid="${esc(p.id)}" data-bpk="${k}" data-bpt="${type==="number"?"n":type==="date"?"d":"t"}" ${k==="grupo"?'list="bp-dl-gr2"':""} value="${esc(v)}"${dis}></label></div>`;};
+  const sl=(k,label,opts)=>`<div><label>${label}<select data-bpid="${esc(p.id)}" data-bpk="${k}"${dis}>${opts.map(o=>`<option ${p[k]===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label></div>`;
+  let h=`<div class="modal-h"><h3>${esc(p.nome)}</h3><button class="x" onclick="bpFecharFicha()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">${esc(p.funcao)}${p.temPlano?"":" · fixo na obra (fora do planejamento)"}</p>`;
+  if(!p.temPlano){
+    h+=`<p class="hint">Essa pessoa conta como presente todos os dias. Para planejar baixada, férias ou afastamento, inclua no planejamento.</p>${ed?`<button class="btn btn-a" onclick="bpIncluirNoPlano('${esc(p.id)}');bpDesenharFicha('${esc(p.id)}')">＋ Incluir no planejamento</button>`:""}`;
+    h+=bpHtmlAusenciasCadastro(p);
+  }else{
+    h+=`<datalist id="bp-dl-gr2">${fn.map(x=>`<option value="${esc(x)}">`).join("")}</datalist><div class="bp-fld">${inp("grupo","Destino / grupo","text")}${inp("origem","Origem","text")}${sl("status","Status",BP_STATUS)}${inp("saldo","Saldo de dias","number")}${inp("saida","Saída (último dia na obra)","date")}${inp("volta","Volta (chegada)","date")}${inp("trabalha","Retorno ao trabalho","date")}${inp("expFim","Fim da experiência","date")}${sl("transporte","Transporte",BP_TRANSP)}${sl("passagem","Passagem",BP_PASS)}${inp("valorPassagem","Valor da passagem (R$)","number")}${inp("hIda","Horas de viagem – ida","number")}${inp("hVolta","Horas de viagem – volta","number")}${inp("embIda","Embarque ida","date")}${inp("embVolta","Embarque volta","date")}<div class="full"><label>Observações<textarea rows="2" data-bpid="${esc(p.id)}" data-bpk="obs"${dis}>${esc(p.obs)}</textarea></label></div><div class="full"><label>Anotações internas<textarea rows="2" data-bpid="${esc(p.id)}" data-bpk="nota"${dis}>${esc(p.nota)}</textarea></label></div></div><div class="bp-calc" id="bp_calc"></div><div id="bp_ofic"></div>${bpHtmlAusenciasCadastro(p)}`;
+  }
+  h+=`</div><div class="modal-f">${ed&&p.temPlano?`<button class="btn btn-g" style="color:var(--red)" onclick="bpRemoverDoPlano('${esc(p.id)}')">Tirar do planejamento</button>`:""}<button class="btn btn-a" onclick="bpFecharFicha()">Fechar</button></div>`;
+  el.innerHTML=h;bpAtualizarFicha(id);
+}
+function bpHtmlAusenciasCadastro(p){
+  if(!(p.aus&&p.aus.length))return"";
+  return `<div class="hint" style="margin-top:10px"><b>Do cadastro da Central:</b> ${p.aus.map(a=>esc(a.tipo)+" "+bpFmtN(a.ini)+" → "+(a.fim>=bpD2n(bpParams().hFim)&&/sem previsão/.test(a.tipo)?"sem previsão":bpFmtN(a.fim))).join(" · ")}</div>`;
+}
+function bpAtualizarFicha(id){
+  const p=bpPorId(id);if(!p||!p.temPlano)return;
+  const c=document.getElementById("bp_calc"),o=document.getElementById("bp_ofic");if(!c)return;
+  const li=bpLeaveInfo(p),t=bpTrav(p),rows=[];
+  if(li){rows.push(["Dias fora (calendário)",li.fora]);rows.push(["Dias cobertos pelo recesso",li.rec]);rows.push(["Dias além do recesso (descontam do saldo)",li.extra]);rows.push(["Saldo informado",li.saldo.toLocaleString("pt-BR")]);rows.push(["Diferença (extra − saldo)",(li.diff>0?"+":"")+li.diff.toLocaleString("pt-BR")]);}
+  else rows.push(["Baixada","sem baixada no período"]);
+  try{const sb=saldoBaixada(p.id);if(sb&&typeof sb.saldo==="number")rows.push(["Saldo calculado pela Central hoje",sb.saldo.toLocaleString("pt-BR")]);}catch(e){}
+  rows.push(["Dias de alimentação no trajeto",t.dias]);rows.push(["Alimentação no trajeto",bpMoney(t.valor)]);
+  if(t.cheg!=null)rows.push(["Chegada estimada (volta)",bpFmtN(t.cheg)]);
+  c.innerHTML=rows.map(r=>`<div><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("");
+  if(!o)return;
+  const ed=bpPodeEditar();let h="";
+  if(p.baixadaId){
+    const b=DB.baixadas.find(x=>x.id===p.baixadaId);
+    h=`<div class="bp-ofic ok"><b>✔ Baixada oficial criada</b>${b?" · "+bpFmt(b.dataInicio)+" a "+bpFmt(b.dataFim)+" · "+(+b.dias||0)+" dia(s) descontado(s) do saldo":""}<br><span class="hint">O Ponto e o alojamento já tratam como baixada. Mudar as datas aqui atualiza a oficial.</span>${bpOficialDivergente(p)?`<br><b style="color:var(--red)">O plano mudou (status/passagem) e não bate mais com a oficial.</b>`:""}${ed?` <button class="btn btn-g btn-sm" onclick="bpDesfazerOficial('${esc(p.id)}')">Desfazer baixada oficial</button>`:""}</div>`;
+  }else if(p.status==="Baixada"&&bpHasLeave(p)){
+    h=`<div class="bp-ofic"><b>Baixada oficial ainda não criada.</b><br><span class="hint">${bpNeedsTravel(p)?"A Central cria quando a passagem estiver como <b>Comprada</b>.":"Sem passagem: confirme abaixo pra oficializar."}</span>${!bpNeedsTravel(p)?`<br><label style="display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" style="width:auto" data-bpid="${esc(p.id)}" data-bpk="confirmada" ${p.confirmada?"checked":""}${ed?"":" disabled"}> Baixada confirmada (sem passagem)</label>`:""}${ed?` <button class="btn btn-a btn-sm" style="margin-top:6px" onclick="bpEfetivarAgora('${esc(p.id)}')">Oficializar agora</button>`:""}</div>`;
+  }
+  o.innerHTML=h;
+}
+/* ---- incluir pessoas no planejamento ---- */
+function bpAbrirIncluir(){
+  if(!bpExigeEdicao())return;
+  const ja=DB.func.filter(f=>f.planoBaixada).map(f=>f.id);
+  openModal(`<div class="modal-h"><h3>＋ Incluir pessoas no planejamento</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Quem está no efetivo e fora do planejamento já conta como <b>presente todos os dias</b>. Inclua só quem terá baixada, férias ou afastamento (ou quem você quer acompanhar).</p><div class="fg" style="max-width:320px"><label>Status inicial</label><select id="bpi_status">${["Baixada","Férias","Afastado","Sem baixada","Verificar"].map(x=>`<option>${x}</option>`).join("")}</select></div>${pkHtml("bpi")}</div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="bpConfirmarIncluir()">Incluir</button></div>`);
+  pkInit("bpi",[],ja,()=>"");
+}
+function bpConfirmarIncluir(){
+  if(!bpExigeEdicao())return;
+  const ids=[..._pk.bpi.sel],st=$("#bpi_status").value;if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
+  ids.forEach(id=>{const f=DB.func.find(x=>x.id===id);if(f&&!f.planoBaixada)f.planoBaixada={...bpLinhaPadrao(),funcao:f.funcao||"",status:st,transporte:st==="Baixada"?"A definir":"Sem viagem",passagem:st==="Baixada"?"Pendente":"N/A"};});
+  save("func");closeModal();_bp.showFixos=true;render();toast(ids.length+" pessoa(s) incluída(s). Preencha as datas na tabela.");
+}
+/* ---- importação do controle atual (arquivo JSON) ---- */
+let _bpImp=null;
+const _BP_PART=["DE","DA","DO","DAS","DOS","E"];
+function _bpTokens(n){return normalizaNome(n).split(/\s+/).filter(w=>w.length>1&&!_BP_PART.includes(w));}
+function bpCasar(nome,funcs){
+  const key=normalizaNome(nome),exatos=funcs.filter(f=>normalizaNome(f.nome)===key);
+  if(exatos.length)return{estado:"exato",f:exatos.find(efetivoObra)||exatos[0]};
+  const tk=_bpTokens(nome);let best=null,bs=0;
+  funcs.forEach(f=>{const tf=_bpTokens(f.nome);if(!tf.length||!tk.length||tf[0]!==tk[0])return;const inter=tk.filter(w=>tf.includes(w)).length,sc=inter/Math.min(tk.length,tf.length);if(inter>=2&&sc>=0.6&&sc>bs){bs=sc;best=f;}});
+  return best?{estado:"sugestao",f:best}:{estado:"sem",f:null};
+}
+function bpImportarArquivo(file){
+  if(!bpExigeEdicao())return;if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{let obj;try{obj=JSON.parse(rd.result);}catch(e){toast("Esse arquivo não é um JSON válido.");return;}bpAbrirImportacao(obj);};
+  rd.readAsText(file);
+}
+function bpAbrirImportacao(obj){
+  const linhas=Array.isArray(obj&&obj.pessoas)?obj.pessoas.filter(x=>x&&typeof x==="object"&&x.nome):[];
+  if(!linhas.length){toast("O arquivo não tem pessoas do controle.");return;}
+  const funcs=DB.func.slice(),usados=new Set(),itens=[];let fixosOk=0,fixosSem=0;
+  linhas.forEach((r,i)=>{
+    const m=bpCasar(r.nome,funcs);
+    if(r.fixo){if(m.estado==="sem")fixosSem++;else fixosOk++;return;}
+    itens.push({i,r,estado:m.estado,alvo:m.f?m.f.id:""});
+  });
+  _bpImp={obj,itens,fixosOk,fixosSem};
+  const exatos=itens.filter(x=>x.estado==="exato"),pend=itens.filter(x=>x.estado!=="exato");
+  const opts=sel=>`<option value="">— ignorar (não está no cadastro) —</option>`+DB.func.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${f.id}" ${f.id===sel?"selected":""}>${esc(f.nome)}${efetivoObra(f)?"":" (inativo/sede)"}</option>`).join("");
+  openModal(`<div class="modal-h"><h3>⇪ Importar o controle do recesso</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="grid stats" style="margin-bottom:12px"><div class="stat green"><div class="n">${exatos.length}</div><div class="l">Casaram com o cadastro</div></div><div class="stat amber"><div class="n">${itens.filter(x=>x.estado==="sugestao").length}</div><div class="l">Parecidos (confira)</div></div><div class="stat red"><div class="n">${itens.filter(x=>x.estado==="sem").length}</div><div class="l">Sem cadastro</div></div><div class="stat"><div class="n">${fixosOk+fixosSem}</div><div class="l">“Fixos” (ficam presentes sem plano)</div></div></div>
+   <p class="hint" style="margin-bottom:8px">${fixosSem?fixosSem+" fixo(s) não constam no cadastro (não precisa fazer nada; só vale cadastrar se trabalham na obra). ":""}Quem está no cadastro do efetivo e não está no controle continua contado como presente. Se a pessoa não casar por diferença de grafia, escolha o nome certo; senão ela fica de fora (cadastre em Funcionários e importe de novo).</p>
+   ${pend.length?`<div class="tblwrap" style="max-height:34vh;overflow:auto"><table class="tbl" style="font-size:12.5px"><thead><tr><th>No controle</th><th>Função</th><th>Vincular a</th></tr></thead><tbody>${pend.map(x=>`<tr><td><b>${esc(x.r.nome)}</b><br><small style="color:var(--muted)">${x.estado==="sugestao"?"parecido":"sem cadastro"}</small></td><td>${esc(x.r.funcao||"")}</td><td><select data-bpvinc="${x.i}" style="max-width:260px">${opts(x.alvo)}</select></td></tr>`).join("")}</tbody></table></div>`:'<p class="hint">Todos casaram direto.</p>'}
+   <p class="hint" style="margin-top:10px">Quem já tem plano na Central será <b>atualizado</b> com os dados do arquivo (a baixada oficial já criada é preservada). Quem já está com a passagem <b>comprada</b> ganha a baixada oficial na hora.${obj.params?" Também importo as datas do recesso e a janela.":""}</p></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="bpConfirmarImportacao()">Importar ${itens.length} pessoa(s)</button></div>`);
+}
+function bpConfirmarImportacao(){
+  if(!bpExigeEdicao()||!_bpImp)return;
+  document.querySelectorAll("select[data-bpvinc]").forEach(s=>{const it=_bpImp.itens.find(x=>String(x.i)===s.dataset.bpvinc);if(it)it.alvo=s.value;});
+  const usados={};let dup="";
+  _bpImp.itens.forEach(it=>{if(!it.alvo)return;if(usados[it.alvo])dup=it.r.nome+" e "+usados[it.alvo];usados[it.alvo]=it.r.nome;});
+  if(dup){toast("Duas linhas do controle apontam para a mesma pessoa: "+dup+". Ajuste os vínculos.");return;}
+  let n=0,atual=0,ign=0,oficiais=0;
+  _bpImp.itens.forEach(it=>{
+    if(!it.alvo){ign++;return;}
+    const f=DB.func.find(x=>x.id===it.alvo);if(!f)return;
+    const r=it.r,ant=f.planoBaixada&&typeof f.planoBaixada==="object"?f.planoBaixada:null;
+    if(ant)atual++;
+    const nova={...bpLinhaPadrao(),funcao:r.funcao||f.funcao||"",origem:r.origem||"",grupo:r.grupo||"",saldo:Number(r.saldo)||0,saida:_bpDataOk(r.saida),volta:_bpDataOk(r.volta),trabalha:_bpDataOk(r.trabalha),expFim:_bpDataOk(r.expFim),expTexto:r.expTexto||"",expAprox:!!r.expAprox,obs:r.obs||"",sugestao:r.sugestao||"",status:BP_STATUS.includes(r.status)?r.status:"Baixada",nota:r.nota||"",transporte:BP_TRANSP.includes(r.transporte)?r.transporte:"A definir",passagem:BP_PASS.includes(r.passagem)?r.passagem:"Pendente",valorPassagem:r.valorPassagem==null?null:Number(r.valorPassagem),hIda:Number(r.hIda)||0,hVolta:Number(r.hVolta)||0,embIda:_bpDataOk(r.embIda),embVolta:_bpDataOk(r.embVolta)};
+    if(ant){nova.baixadaId=ant.baixadaId||"";nova.movId=ant.movId||"";nova.confirmada=!!ant.confirmada;}
+    f.planoBaixada=nova;n++;const mo=bpSincronizarOficial(f);if(mo&&/criada/.test(mo))oficiais++;
+  });
+  const pr=_bpImp.obj&&_bpImp.obj.params;
+  if(pr&&typeof pr==="object")DB.cfg.baixaPlano={...bpParams(),recIni:_bpDataOk(pr.recIni)||bpParams().recIni,recRet:_bpDataOk(pr.recRet)||bpParams().recRet,hIni:_bpDataOk(pr.hIni)||bpParams().hIni,hFim:_bpDataOk(pr.hFim)||bpParams().hFim,valorAlim:Number(pr.valorAlim)||bpParams().valorAlim,minimos:pr.minimos&&typeof pr.minimos==="object"?pr.minimos:bpParams().minimos};
+  save("func");save("cfg");_bpImp=null;closeModal();_baixAba="plano";_bp.tab="tempo";render();
+  toast(n+" pessoa(s) importada(s) ("+atual+" atualizada(s)); "+ign+" ignorada(s)."+(oficiais?" "+oficiais+" baixada(s) oficial(is) criada(s): a passagem já estava comprada.":""));
+}
+/* ---- Excel ---- */
+function bpExportarExcel(){
+  if(typeof XLSX==="undefined"){toast("Excel indisponível offline.");return;}
+  const P=bpPessoas(),days=bpDiasDoHorizonte(),wb=XLSX.utils.book_new();
+  const plano=P.filter(p=>p.temPlano||(p.aus&&p.aus.length)).map(p=>{const li=bpLeaveInfo(p),t=bpTrav(p);return{Nome:p.nome,Função:p.funcao,Origem:p.origem,Destino:p.grupo,Status:p.status,Saldo:p.saldo,Saída:p.saida,Volta:p.volta,"Retorno ao trabalho":p.trabalha||(p.volta?bpN2iso(bpD2n(p.volta)+1):""),"Dias fora":li?li.fora:"","Dias além do recesso":li?li.extra:"","Fim experiência":p.expFim,Transporte:p.transporte,Passagem:p.passagem,"Valor passagem":p.valorPassagem==null?"":p.valorPassagem,"Horas ida":p.hIda,"Horas volta":p.hVolta,"Embarque ida":p.embIda,"Embarque volta":p.embVolta,"Dias trajeto":t.dias,"Alimentação trajeto (R$)":+t.valor.toFixed(2),"Baixada oficial":p.baixadaId?"Sim":"",Observações:p.obs,"Ausências do cadastro":(p.aus||[]).map(a=>a.tipo+" "+bpFmtN(a.ini)+"→"+bpFmtN(a.fim)).join("; ")};});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(plano.length?plano:[{"—":"sem planejamento"}]),"Plano");
+  const cd=bpCovData(P),cob=cd.fs.map(f=>{const o={Função:f,Total:cd.map[f].length,Mínimo:bpMinimoDe(f)||""};days.forEach(n=>{o[bpFmtN(n)]=bpIsRec(n)?"recesso":bpPresentes(cd.map[f],n);});return o;});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cob.length?cob:[{"—":"sem dados"}]),"Cobertura");
+  const al=bpAlertas().map(a=>({Gravidade:a.sev==="alta"?"Crítico":a.sev==="media"?"Atenção":"Informativo",Assunto:a.t,Detalhe:a.x}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(al.length?al:[{"—":"sem alertas"}]),"Alertas");
+  XLSX.writeFile(wb,"planejamento-baixada-"+bpParams().recIni.slice(0,4)+".xlsx");toast("Exportado.");
+}
+/* ---- tela e eventos ---- */
+function bpAbasHtml(atual){
+  return `<div class="bp-abas"><button class="${atual==="banco"?"on":""}" onclick="_baixAba='banco';render()">Banco de baixada</button><button class="${atual==="plano"?"on":""}" onclick="_baixAba='plano';render()">🎄 Planejamento do recesso</button></div>`;
+}
+function bpMontarMain(){
+  const el=document.getElementById("bp_main");if(!el)return;
+  const P=bpPessoas(),sc=el.querySelector(".bp-gwrap,.bp-mxwrap,.bp-twrap");let pos=sc?{l:sc.scrollLeft,t:sc.scrollTop}:null;
+  let h;
+  if(!P.length)h='<div class="bp-empty">Nenhum funcionário ativo no cadastro.</div>';
+  else h=_bp.tab==="tempo"?bpViewTempo(P):_bp.tab==="cobertura"?bpViewCobertura(P):_bp.tab==="destinos"?bpViewDestinos(P):_bp.tab==="alimentacao"?bpViewAlim(P):_bp.tab==="tabela"?bpViewTabela(P):bpViewAlertas();
+  el.innerHTML=h;
+  const sc2=el.querySelector(".bp-gwrap,.bp-mxwrap,.bp-twrap");
+  if(sc2&&pos){sc2.scrollLeft=pos.l;sc2.scrollTop=pos.t;}
+  else if(sc2&&_bp.tab==="tempo"){const fs=bpD2n(bpParams().hIni),hoje=bpTodayN();if(hoje>=fs)sc2.scrollLeft=Math.max(0,(hoje-fs)*_bp.dw-60);}
+}
+function bpSoft(){
+  const a=document.getElementById("bp_params"),b=document.getElementById("bp_kpis"),c=document.getElementById("bp_tabs");
+  if(a&&!a.contains(document.activeElement))a.innerHTML=bpParamsHtml();
+  if(b)b.innerHTML=bpKpisHtml();if(c)c.innerHTML=bpTabsHtml();
+}
+function vPlanoBaixada(){
+  const P=bpPessoas(),tem=P.some(p=>p.temPlano),ed=bpPodeEditar();
+  main.innerHTML=`<div class="head"><div><h1>Baixada — planejamento do recesso</h1><p>Quem sai, quando volta, passagens, alimentação e a cobertura da obra no recesso. Quem não está no planejamento conta como presente. Férias e afastamentos do cadastro entram sozinhos.</p></div><div class="acts">${ed?'<button class="btn btn-g" data-bpimp>⇪ Importar do controle atual</button>':""}<button class="btn btn-g" onclick="bpExportarExcel()">⭳ Excel</button></div></div>
+   ${bpAbasHtml("plano")}<input type="file" id="bp_file" accept=".json,application/json" style="display:none" onchange="bpImportarArquivo(this.files[0]);this.value=''">
+   <div id="bpw" class="bpw"><div class="bp-params" id="bp_params">${bpParamsHtml()}</div><div class="bp-kpis" id="bp_kpis">${bpKpisHtml()}</div><div class="bp-tabs" id="bp_tabs">${bpTabsHtml()}</div>${tem?"":'<div class="bp-note" style="margin:10px 0">Ainda não há planejamento. Use <b>Importar do controle atual</b> (arquivo que o assistente gerou) ou <b>Incluir pessoas</b> na Tabela editável.</div>'}<div id="bp_main"></div><div class="bp-gtip" id="bp_gtip"></div></div>`;
+  bpMontarMain();
+}
+function bpCampo(el){
+  const id=el.dataset.bpid,k=el.dataset.bpk,t=el.dataset.bpt;let v=el.value;
+  if(el.type==="checkbox")v=el.checked;else if(t==="n")v=(v===""?null:Number(v));
+  const patch={[k]:v};
+  if(k==="trabalha"&&v){const p=bpPorId(id);if(p&&!p.volta)patch.volta=bpN2iso(bpD2n(v)-1);}
+  if(k==="status"&&v!=="Baixada"&&k==="status"){/* mantém dados; só muda o tipo */}
+  const naFicha=!!el.closest("#bp_ficha");
+  if(!bpSalvar(id,patch,{quiet:true}))return;
+  if(naFicha)bpDesenharFichaSeNecessario(id,k);
+  const a=document.activeElement,dentro=a&&a!==document.body&&a!==el&&a.dataset&&a.dataset.bpk&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
+  if(dentro){_bp.pending=true;bpSoft();}else{_bp.pending=false;bpMontarMain();bpSoft();}
+  if(naFicha)bpAtualizarFicha(id);
+}
+function bpDesenharFichaSeNecessario(id,k){if(["status","passagem","transporte","saida","trabalha","volta","confirmada"].includes(k))setTimeout(()=>bpAtualizarFicha(id),0);}
+let _bpDrag=null;
+function bpInstalarEventos(){
+  if(window._bpEv)return;window._bpEv=true;
+  const dentro=t=>t&&t.closest&&t.closest("#bpw,#bp_ficha");
+  document.addEventListener("click",e=>{
+    const t=e.target;if(!dentro(t))return;
+    const tab=t.closest("[data-bptab]");if(tab){_bp.tab=tab.dataset.bptab;bpSoft();bpMontarMain();return;}
+    const op=t.closest("[data-bpopen]");if(op){e.preventDefault();bpAbrirFicha(op.dataset.bpopen);return;}
+    const al=t.closest("[data-bpalign]");if(al){bpAlinharGrupo(al.dataset.bpalign);return;}
+    const adj=t.closest("[data-bpadj]");if(adj){bpAjustarPlano(adj.dataset.bpadj);return;}
+    const ds=t.closest("[data-bpdesfazer]");if(ds){bpDesfazerOficial(ds.dataset.bpdesfazer);return;}
+    if(t.closest("[data-bpadd]")){bpAbrirIncluir();return;}
+    if(t.closest("[data-bpimp]")){const f=document.getElementById("bp_file");if(f)f.click();return;}
+    const th=t.closest("[data-bpsort]");if(th){const k=th.dataset.bpsort;if(_bp.tsort===k)_bp.tdir=-_bp.tdir;else{_bp.tsort=k;_bp.tdir=1;}bpMontarMain();return;}
+    const c=t.closest("td.c[data-bpf]");if(c){_bp.cov={f:c.dataset.bpf,n:+c.dataset.bpn};const prev=document.querySelector("td.c.sel");if(prev)prev.classList.remove("sel");c.classList.add("sel");const d=document.getElementById("bp_covdet");if(d)d.innerHTML=bpCovDetHtml(bpPessoas());return;}
+  });
+  document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-bpimp]");if(b&&!dentro(e.target)){const f=document.getElementById("bp_file");if(f)f.click();}});
+  document.addEventListener("change",e=>{
+    const el=e.target;if(!dentro(el))return;
+    if(el.dataset.bpui){const k=el.dataset.bpui;_bp[k]=el.type==="checkbox"?el.checked:(el.type==="range"?+el.value:el.value);bpMontarMain();return;}
+    if(el.dataset.bpcfg){const key=el.dataset.bpcfg,v=el.type==="number"?(Number(el.value)||0):el.value;if(el.type==="date"&&!v)return;bpSalvarParams({[key]:v});return;}
+    if(el.dataset.bpmin!==undefined){if(!bpExigeEdicao()){bpMontarMain();return;}const m={...bpParams().minimos},val=Number(el.value)||0,key=normalizaNome(el.dataset.bpmin);delete m[el.dataset.bpmin];if(val>0)m[key]=val;else delete m[key];bpSalvarParams({minimos:m});return;}
+    if(el.dataset.bpk&&el.dataset.bpid)bpCampo(el);
+  });
+  document.addEventListener("input",e=>{
+    const el=e.target;if(!dentro(el)||!el.dataset)return;
+    if(el.dataset.bpui==="q"){_bp.q=el.value;clearTimeout(bpInstalarEventos._t);bpInstalarEventos._t=setTimeout(()=>{bpMontarMain();const s=document.querySelector('[data-bpui="q"]');if(s){s.focus();const l=s.value.length;s.setSelectionRange(l,l);}},250);}
+    if(el.dataset.bpui==="dw"){_bp.dw=+el.value;clearTimeout(bpInstalarEventos._d);bpInstalarEventos._d=setTimeout(()=>{const s=document.querySelector(".bp-gwrap"),sl=s?s.scrollLeft:0;bpMontarMain();const s2=document.querySelector(".bp-gwrap");if(s2)s2.scrollLeft=sl;const r=document.querySelector('[data-bpui="dw"]');if(r)r.focus();},120);}
+  });
+  document.addEventListener("focusout",()=>{if(_bp.pending){setTimeout(()=>{const a=document.activeElement;if(!(a&&a.dataset&&a.dataset.bpk&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))){_bp.pending=false;bpMontarMain();bpSoft();}},0);}});
+  /* arrastar barras do Gantt */
+  document.addEventListener("pointerdown",e=>{
+    const bar=e.target.closest&&e.target.closest(".bp-bar[data-bpbar]");if(!bar||!dentro(bar))return;
+    if(!bpPodeEditar()){const id0=bar.dataset.bpbar;bpAbrirFicha(id0);return;}
+    const p=bpPorId(bar.dataset.bpbar);if(!p)return;const h=e.target.closest(".h");
+    _bpDrag={id:p.id,mode:h?h.dataset.bph:"move",x0:e.clientX,s:bpD2n(p.saida),w:bpWorkDay(p),v:p.volta?bpD2n(p.volta):null,moved:false,bar};
+    try{bar.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();
+  });
+  document.addEventListener("pointermove",e=>{
+    if(!_bpDrag)return;const dw=_bp.dw,dd=Math.round((e.clientX-_bpDrag.x0)/dw);
+    if(Math.abs(e.clientX-_bpDrag.x0)>3)_bpDrag.moved=true;if(!_bpDrag.moved)return;
+    let s=_bpDrag.s,w=_bpDrag.w;
+    if(_bpDrag.mode==="move"){s+=dd;w+=dd;}else if(_bpDrag.mode==="l"){s=Math.min(_bpDrag.s+dd,_bpDrag.w-2);}else{w=Math.max(_bpDrag.w+dd,_bpDrag.s+2);}
+    _bpDrag.ns=s;_bpDrag.nw=w;
+    const hN=bpD2n(bpParams().hIni),a=Math.max(s+1,hN);
+    _bpDrag.bar.style.left=(a-hN)*dw+"px";_bpDrag.bar.style.width=Math.max((w-1-a+1)*dw,dw)+"px";
+    const tip=document.getElementById("bp_gtip");if(tip){tip.style.display="block";tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+14)+"px";tip.textContent="saída "+bpFmtN(s)+" → retorno "+bpFmtN(w)+" ("+(w-s-1)+" dias fora)";}
+  });
+  document.addEventListener("pointerup",()=>{
+    if(!_bpDrag)return;const d=_bpDrag;_bpDrag=null;const tip=document.getElementById("bp_gtip");if(tip)tip.style.display="none";
+    if(!d.moved){bpAbrirFicha(d.id);return;}
+    if(d.ns==null)return;
+    const patch={saida:bpN2iso(d.ns),trabalha:bpN2iso(d.nw)};if(d.v!=null)patch.volta=bpN2iso(d.v+(d.nw-d.w));
+    bpSalvar(d.id,patch);
+  });
+}
+
+
+bpInstalarEventos();
 function nomeSolicitante(p){const f=p.solicitante?DB.func.find(x=>x.id===p.solicitante):null;return (f&&f.nome)||p.solicitanteNome||"";}
 function vinculosDaNota(n){
   const out=[];
