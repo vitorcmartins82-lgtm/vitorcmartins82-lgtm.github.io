@@ -758,7 +758,7 @@ function nivelPermissaoUsuario(secaoChave){
   return nivel;
 }
 function secaoDaTela(cur){return SECOES_PERMISSAO.some(s=>s.chave===cur)?cur:null;}
-const APP_VERSAO="v2026-10-02.40";
+const APP_VERSAO="v2026-10-02.41";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   if(_usuarioLogadoId){
@@ -6131,7 +6131,7 @@ function avisosCalcular(force){
   reg("pessoas","p_cadastro","Cadastro incompleto (CPF, nascimento ou PIX)","func",()=>{const l=efet.map(f=>{const falta=[];if(!String(f.cpf||"").trim())falta.push("CPF");if(!f.nascimento)falta.push("nascimento");if(!String(f.pixChave||"").trim())falta.push("PIX");return{f,falta};}).filter(x=>x.falta.length);return R(l.length?"atencao":"ok",l.length,l.length?l.length+" de "+efet.length+" com dado faltando":"cadastros completos",nomes(l,x=>x.f.nome+" — falta "+x.falta.join(", ")));});
   reg("pessoas","p_fluigfin","Fluig pago e ainda não finalizado","reemb",()=>{const l=DB.reemb.filter(prontoParaFinalizar);return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) pago(s) há mais de "+diasFinalizarFluig()+" dias":"nada esperando finalização",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.dataPagamento||r.data)));});
   reg("pessoas","p_fluigsem","Fluig sem número ou link (últimos 60 dias)","reemb",()=>{const lim=dAtras(60),l=DB.reemb.filter(r=>r.status!=="Finalizado"&&String(r.data||"")>=lim&&(!String(r.fluigNumero||"").trim()||!String(r.fluigLink||"").trim()));return R(l.length?"atencao":"ok",l.length,l.length?l.length+" lançamento(s) sem número ou link":"todos com número e link",nomes(l,r=>funcNome(r.func)+" — "+r.tipo+" "+fmt(r.data)));});
-  reg("pessoas","p_planobaixada","Planejamento de baixada do recesso","baixada",()=>{const P=bpPessoas();if(!P.some(p=>p.temPlano))return R("ok",0,"sem planejamento de baixada ativo");const al=bpAlertas(),alta=al.filter(a=>a.sev==="alta"),med=al.filter(a=>a.sev==="media");return R(alta.length?"atraso":med.length?"atencao":"ok",alta.length+med.length,alta.length?alta.length+" crítico(s) e "+med.length+" de atenção":med.length?med.length+" de atenção":"planejamento sem pendências",alta.concat(med).slice(0,5).map(a=>a.t+" — "+a.x.slice(0,70)));});
+  reg("pessoas","p_planobaixada","Planejamento de baixada do recesso","baixada",()=>{if(iso(today())>bpParams().hFim)return R("ok",0,"janela do recesso encerrada: o novo controle segue pelo Banco de baixada");const P=bpPessoas();if(!P.some(p=>p.temPlano))return R("ok",0,"sem planejamento de baixada ativo");const al=bpAlertas(),alta=al.filter(a=>a.sev==="alta"),med=al.filter(a=>a.sev==="media");return R(alta.length?"atraso":med.length?"atencao":"ok",alta.length+med.length,alta.length?alta.length+" crítico(s) e "+med.length+" de atenção":med.length?med.length+" de atenção":"planejamento sem pendências",alta.concat(med).slice(0,5).map(a=>a.t+" — "+a.x.slice(0,70)));});
   /* ---- PONTO E ESCALA ---- */
   reg("ponto","t_chamada","Chamada de ontem fechada","ponto",()=>{
     const d=dAtras(1),fds=[0,6].includes(pd(d).getDay())||ehFeriado(d);
@@ -6638,7 +6638,7 @@ function bpViewTabela(P){
     return String(va).localeCompare(String(vb),"pt-BR")*_bp.tdir;
   });
   const ed=bpPodeEditar()?"":" disabled";
-  let h=bpBarraFiltros(P,bpPodeEditar()?'<button class="bp-btn" type="button" data-bpadd>＋ Incluir pessoas no planejamento</button> <button class="bp-btn sec" type="button" data-bpimp>⇪ Importar do controle atual</button>':"");
+  let h=bpBarraFiltros(P,bpPodeEditar()?'<button class="bp-btn" type="button" data-bpadd>＋ Incluir pessoas no planejamento</button> <button class="bp-btn sec" type="button" data-bpimp>⇪ Importar do controle atual</button> <button class="bp-btn sec" type="button" onclick="bpNovoFuncionario()">＋ Novo funcionário</button>':"");
   h+=`<div class="bp-note">Clique no título da coluna pra ordenar. Edite direto nas células: as alterações são salvas no cadastro de cada pessoa e aparecem pra todos. A função vem do cadastro. Quem não está no planejamento é contado como fixo na obra; marque “mostrar fixos” pra ver e incluir.</div>`;
   const head=`<th class="l" data-bpsort="nome">Nome ${_bp.tsort==="nome"?(_bp.tdir>0?"▲":"▼"):""}</th>`+BP_COLS.slice(1).map(c=>`<th data-bpsort="${c[0]}">${c[1]} ${_bp.tsort===c[0]?(_bp.tdir>0?"▲":"▼"):""}</th>`).join("");
   const head2=head+(zeragemCfg()?"<th>Saldo recomeça em</th>":"");const grList=bpUniq(P.map(p=>p.grupo));
@@ -6786,43 +6786,83 @@ function bpImportarArquivo(file){
   rd.onload=()=>{let obj;try{obj=JSON.parse(rd.result);}catch(e){toast("Esse arquivo não é um JSON válido.");return;}bpAbrirImportacao(obj);};
   rd.readAsText(file);
 }
+function bpCriarFuncionario(r,admPad,extra){
+  const hj=iso(today()),expOk=_bpDataOk(r.expFim)&&!/efetiv/i.test(String(r.expTexto||""));
+  let adm=admPad,aprox="admissão aproximada: corrigir";
+  if(expOk){const a=bpN2iso(bpD2n(r.expFim)-89);if(a<=hj){adm=a;aprox="admissão estimada pelo fim da experiência ("+bpFmt(r.expFim)+"): confirmar";}}
+  const moi=/(encarregad|engenheir|supervis|t[ée]cnic|assistente|almoxarif|apontador|analista|coordenad|l[ií]der|topograf|planej|comprador|secret|gerente|estagi)/i.test(String(r.funcao||""));
+  return{id:uid(),nome:String(r.nome||"").trim(),funcao:String(r.funcao||"").trim(),classificacao:moi?"MOI":"MOD",vinculo:"Obra",cidade:String(r.origem||"").trim(),admissao:adm,dataChegadaObra:hj,saldoBaixadaInicial:r.fixo?"":String(Number(r.saldo)||0),obs:"Criado pelo controle do recesso 2026/27 — "+aprox,criadoPor:"controle-recesso"};
+}
 function bpAbrirImportacao(obj){
   const linhas=Array.isArray(obj&&obj.pessoas)?obj.pessoas.filter(x=>x&&typeof x==="object"&&x.nome):[];
   if(!linhas.length){toast("O arquivo não tem pessoas do controle.");return;}
-  const funcs=DB.func.slice(),usados=new Set(),itens=[];let fixosOk=0,fixosSem=0;
+  const funcs=DB.func.slice(),itens=[],fixosSem=[];let fixosOk=0;
   linhas.forEach((r,i)=>{
     const m=bpCasar(r.nome,funcs);
-    if(r.fixo){if(m.estado==="sem")fixosSem++;else fixosOk++;return;}
-    itens.push({i,r,estado:m.estado,alvo:m.f?m.f.id:""});
+    if(r.fixo){if(m.estado==="sem")fixosSem.push(r);else fixosOk++;return;}
+    itens.push({i,r,estado:m.estado,alvo:m.estado==="sem"?"NEW":(m.f?m.f.id:"")});
   });
   _bpImp={obj,itens,fixosOk,fixosSem};
-  const exatos=itens.filter(x=>x.estado==="exato"),pend=itens.filter(x=>x.estado!=="exato");
-  const opts=sel=>`<option value="">— ignorar (não está no cadastro) —</option>`+DB.func.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${f.id}" ${f.id===sel?"selected":""}>${esc(f.nome)}${efetivoObra(f)?"":" (inativo/sede)"}</option>`).join("");
-  openModal(`<div class="modal-h"><h3>⇪ Importar o controle do recesso</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="grid stats" style="margin-bottom:12px"><div class="stat green"><div class="n">${exatos.length}</div><div class="l">Casaram com o cadastro</div></div><div class="stat amber"><div class="n">${itens.filter(x=>x.estado==="sugestao").length}</div><div class="l">Parecidos (confira)</div></div><div class="stat red"><div class="n">${itens.filter(x=>x.estado==="sem").length}</div><div class="l">Sem cadastro</div></div><div class="stat"><div class="n">${fixosOk+fixosSem}</div><div class="l">“Fixos” (ficam presentes sem plano)</div></div></div>
-   <p class="hint" style="margin-bottom:8px">${fixosSem?fixosSem+" fixo(s) não constam no cadastro (não precisa fazer nada; só vale cadastrar se trabalham na obra). ":""}Quem está no cadastro do efetivo e não está no controle continua contado como presente. Se a pessoa não casar por diferença de grafia, escolha o nome certo; senão ela fica de fora (cadastre em Funcionários e importe de novo).</p>
-   ${pend.length?`<div class="tblwrap" style="max-height:34vh;overflow:auto"><table class="tbl" style="font-size:12.5px"><thead><tr><th>No controle</th><th>Função</th><th>Vincular a</th></tr></thead><tbody>${pend.map(x=>`<tr><td><b>${esc(x.r.nome)}</b><br><small style="color:var(--muted)">${x.estado==="sugestao"?"parecido":"sem cadastro"}</small></td><td>${esc(x.r.funcao||"")}</td><td><select data-bpvinc="${x.i}" style="max-width:260px">${opts(x.alvo)}</select></td></tr>`).join("")}</tbody></table></div>`:'<p class="hint">Todos casaram direto.</p>'}
-   <p class="hint" style="margin-top:10px">Quem já tem plano na Central será <b>atualizado</b> com os dados do arquivo (a baixada oficial já criada é preservada). Quem já está com a passagem <b>comprada</b> ganha a baixada oficial na hora.${obj.params?" Também importo as datas do recesso e a janela.":""}</p></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="bpConfirmarImportacao()">Importar ${itens.length} pessoa(s)</button></div>`);
+  const exatos=itens.filter(x=>x.estado==="exato"),pend=itens.filter(x=>x.estado!=="exato"),semN=itens.filter(x=>x.estado==="sem").length;
+  const opts=sel=>`<option value="NEW" ${sel==="NEW"?"selected":""}>＋ Criar no cadastro</option><option value="" ${sel===""?"selected":""}>— ignorar —</option>`+DB.func.slice().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR")).map(f=>`<option value="${f.id}" ${f.id===sel?"selected":""}>${esc(f.nome)}${efetivoObra(f)?"":" (inativo/sede)"}</option>`).join("");
+  const precisaAdm=semN||fixosSem.length;
+  openModal(`<div class="modal-h"><h3>⇪ Importar o controle do recesso</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><div class="grid stats" style="margin-bottom:12px"><div class="stat green"><div class="n">${exatos.length}</div><div class="l">Já estão no cadastro</div></div><div class="stat amber"><div class="n">${itens.filter(x=>x.estado==="sugestao").length}</div><div class="l">Parecidos (confira)</div></div><div class="stat red"><div class="n">${semN}</div><div class="l">Com baixada, sem cadastro</div></div><div class="stat"><div class="n">${fixosOk}/${fixosOk+fixosSem.length}</div><div class="l">Fixos já no cadastro</div></div></div>
+   <p class="hint" style="margin-bottom:8px">Quem <b>não está no cadastro</b> pode ser <b>criado agora</b> como funcionário da obra, já com nome, função, cidade de origem e o saldo de baixada do controle. Quem já está no cadastro só recebe o planejamento. Se a grafia do nome for diferente, escolha o nome certo em vez de criar.</p>
+   ${pend.length?`<div class="tblwrap" style="max-height:32vh;overflow:auto"><table class="tbl" style="font-size:12.5px"><thead><tr><th>No controle</th><th>Função</th><th>O que fazer</th></tr></thead><tbody>${pend.map(x=>`<tr><td><b>${esc(x.r.nome)}</b><br><small style="color:var(--muted)">${x.estado==="sugestao"?"parecido com um nome do cadastro":"não está no cadastro"}</small></td><td>${esc(x.r.funcao||"")}</td><td><select data-bpvinc="${x.i}" style="max-width:250px">${opts(x.alvo)}</select></td></tr>`).join("")}</tbody></table></div>`:'<p class="hint">Todos os que têm baixada já estão no cadastro.</p>'}
+   ${fixosSem.length?`<label style="display:flex;gap:6px;align-items:flex-start;font-size:12.5px;margin-top:10px;cursor:pointer"><input type="checkbox" id="bpi_fixos" checked style="width:auto;margin-top:3px"><span>Criar também os <b>${fixosSem.length} “fixos”</b> que não estão no cadastro (ficam presentes todos os dias, sem baixada).<details><summary style="cursor:pointer;color:var(--steel)">ver quem são</summary><div class="hint">${fixosSem.slice(0,60).map(r=>esc(r.nome)).join(" · ")}${fixosSem.length>60?" …":""}</div></details></span></label>`:""}
+   ${precisaAdm?`<div class="fg" style="margin-top:10px;max-width:340px"><label>Data de admissão aproximada, pra quem for criado *</label><input type="date" id="bpi_adm" value="${bpN2iso(bpTodayN()-180)}"><div class="hint">O cadastro exige a admissão e o controle não tem essa data. Quem ainda está em experiência usa o fim da experiência (menos 89 dias). Corrija na ficha depois.</div></div>`:""}
+   <p class="hint" style="margin-top:10px">Quem já tem plano na Central será <b>atualizado</b> com os dados do arquivo (a baixada oficial já criada é preservada). Quem já está com a passagem <b>comprada</b> ganha a baixada oficial na hora.${obj.params?" Também importo as datas do recesso e a janela.":""} Pra o Banco de baixada contar saldo, a pessoa precisa estar <b>alojada</b> em Movimentações.</p></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="bpConfirmarImportacao()">Importar</button></div>`);
 }
 function bpConfirmarImportacao(){
   if(!bpExigeEdicao()||!_bpImp)return;
   document.querySelectorAll("select[data-bpvinc]").forEach(s=>{const it=_bpImp.itens.find(x=>String(x.i)===s.dataset.bpvinc);if(it)it.alvo=s.value;});
   const usados={};let dup="";
-  _bpImp.itens.forEach(it=>{if(!it.alvo)return;if(usados[it.alvo])dup=it.r.nome+" e "+usados[it.alvo];usados[it.alvo]=it.r.nome;});
+  _bpImp.itens.forEach(it=>{if(!it.alvo||it.alvo==="NEW")return;if(usados[it.alvo])dup=it.r.nome+" e "+usados[it.alvo];usados[it.alvo]=it.r.nome;});
   if(dup){toast("Duas linhas do controle apontam para a mesma pessoa: "+dup+". Ajuste os vínculos.");return;}
-  let n=0,atual=0,ign=0,oficiais=0;
+  const criarFixos=!!(document.getElementById("bpi_fixos")&&document.getElementById("bpi_fixos").checked);
+  const nNew=_bpImp.itens.filter(x=>x.alvo==="NEW").length+(criarFixos?_bpImp.fixosSem.length:0);
+  const admPad=_bpDataOk(document.getElementById("bpi_adm")?document.getElementById("bpi_adm").value:"");
+  if(nNew&&(!admPad||admPad>iso(today()))){toast("Informe a data de admissão aproximada (até hoje) pra quem será criado.");return;}
+  let n=0,atual=0,ign=0,oficiais=0,criados=0;
   _bpImp.itens.forEach(it=>{
     if(!it.alvo){ign++;return;}
-    const f=DB.func.find(x=>x.id===it.alvo);if(!f)return;
+    let f;
+    if(it.alvo==="NEW"){f=bpCriarFuncionario(it.r,admPad);DB.func.push(f);criados++;}
+    else f=DB.func.find(x=>x.id===it.alvo);
+    if(!f)return;
     const r=it.r,ant=f.planoBaixada&&typeof f.planoBaixada==="object"?f.planoBaixada:null;
     if(ant)atual++;
     const nova={...bpLinhaPadrao(),funcao:r.funcao||f.funcao||"",origem:r.origem||"",grupo:r.grupo||"",saldo:Number(r.saldo)||0,saida:_bpDataOk(r.saida),volta:_bpDataOk(r.volta),trabalha:_bpDataOk(r.trabalha),expFim:_bpDataOk(r.expFim),expTexto:r.expTexto||"",expAprox:!!r.expAprox,obs:r.obs||"",sugestao:r.sugestao||"",status:BP_STATUS.includes(r.status)?r.status:"Baixada",nota:r.nota||"",transporte:BP_TRANSP.includes(r.transporte)?r.transporte:"A definir",passagem:BP_PASS.includes(r.passagem)?r.passagem:"Pendente",valorPassagem:r.valorPassagem==null?null:Number(r.valorPassagem),hIda:Number(r.hIda)||0,hVolta:Number(r.hVolta)||0,embIda:_bpDataOk(r.embIda),embVolta:_bpDataOk(r.embVolta)};
     if(ant){nova.baixadaId=ant.baixadaId||"";nova.movId=ant.movId||"";nova.confirmada=!!ant.confirmada;}
-    f.planoBaixada=nova;n++;const mo=bpSincronizarOficial(f);if(mo&&/criada/.test(mo))oficiais++;
+    f.planoBaixada=nova;n++;
+    const mo=bpSincronizarOficial(f);if(mo&&/criada/.test(mo))oficiais++;
   });
+  if(criarFixos)_bpImp.fixosSem.forEach(r=>{DB.func.push(bpCriarFuncionario(r,admPad));criados++;});
   const pr=_bpImp.obj&&_bpImp.obj.params;
   if(pr&&typeof pr==="object")DB.cfg.baixaPlano={...bpParams(),recIni:_bpDataOk(pr.recIni)||bpParams().recIni,recRet:_bpDataOk(pr.recRet)||bpParams().recRet,hIni:_bpDataOk(pr.hIni)||bpParams().hIni,hFim:_bpDataOk(pr.hFim)||bpParams().hFim,valorAlim:Number(pr.valorAlim)||bpParams().valorAlim,minimos:pr.minimos&&typeof pr.minimos==="object"?pr.minimos:bpParams().minimos};
   save("func");save("cfg");_bpImp=null;closeModal();_baixAba="plano";_bp.tab="tempo";render();
-  toast(n+" pessoa(s) importada(s) ("+atual+" atualizada(s)); "+ign+" ignorada(s)."+(oficiais?" "+oficiais+" baixada(s) oficial(is) criada(s): a passagem já estava comprada.":""));
+  toast(n+" pessoa(s) no planejamento ("+atual+" atualizada(s)); "+criados+" funcionário(s) criado(s) no cadastro; "+ign+" ignorada(s)."+(oficiais?" "+oficiais+" baixada(s) oficial(is) criada(s).":""));
+}
+/* ---- acrescentar um funcionário novo direto no controle ---- */
+function bpNovoFuncionario(){
+  if(!bpExigeEdicao())return;
+  const fn=bpUniq(DB.func.map(f=>f.funcao));
+  openModal(`<div class="modal-h"><h3>＋ Novo funcionário</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b"><p class="hint" style="margin-bottom:10px">Cria o funcionário no cadastro da Central e, se tiver baixada ou outra situação, já coloca no planejamento. Os demais dados (CPF, telefone, PIX…) você completa depois na ficha em Funcionários.</p>
+   <div class="row2"><div class="fg"><label>Nome completo *</label><input id="nf2_nome"></div><div class="fg"><label>Função</label><input id="nf2_func" list="nf2_funcs"><datalist id="nf2_funcs">${fn.map(x=>`<option value="${esc(x)}">`).join("")}</datalist></div></div>
+   <div class="row2"><div class="fg"><label>Data de admissão *</label><input type="date" id="nf2_adm"></div><div class="fg"><label>Classificação</label><select id="nf2_class"><option value="MOD">MOD — Mão de Obra Direta</option><option value="MOI">MOI — Mão de Obra Indireta</option></select></div></div>
+   <div class="row2"><div class="fg"><label>Cidade de origem</label><input id="nf2_orig"></div><div class="fg"><label>Destino / grupo da baixada</label><input id="nf2_grupo"></div></div>
+   <div class="row2"><div class="fg"><label>Situação no planejamento</label><select id="nf2_status">${["Baixada","Férias","Afastado","Sem baixada","Fixo na obra"].map(x=>`<option>${x}</option>`).join("")}</select></div><div class="fg"><label>Saldo de baixada hoje (dias)</label><input type="number" step="0.1" id="nf2_saldo" value="0"></div></div></div><div class="modal-f"><button class="btn btn-g" onclick="closeModal()">Cancelar</button><button class="btn btn-a" onclick="bpSalvarNovoFuncionario()">Criar</button></div>`);
+}
+function bpSalvarNovoFuncionario(){
+  if(!bpExigeEdicao())return;
+  const nome=$("#nf2_nome").value.trim().toUpperCase(),adm=_bpDataOk($("#nf2_adm").value);
+  if(!nome){toast("Informe o nome.");return;}
+  if(!adm){toast("Informe a data de admissão.");return;}
+  if(DB.func.some(f=>normalizaNome(f.nome)===normalizaNome(nome))&&!confirm("Já existe alguém com esse nome no cadastro. Criar mesmo assim?"))return;
+  const st=$("#nf2_status").value,saldo=Number($("#nf2_saldo").value)||0;
+  const f={id:uid(),nome,funcao:$("#nf2_func").value.trim(),classificacao:$("#nf2_class").value,vinculo:"Obra",cidade:$("#nf2_orig").value.trim(),admissao:adm,dataChegadaObra:iso(today()),saldoBaixadaInicial:String(saldo),obs:"Criado no controle do recesso",criadoPor:"controle-recesso"};
+  if(st!=="Fixo na obra")f.planoBaixada={...bpLinhaPadrao(),funcao:f.funcao,origem:f.cidade,grupo:$("#nf2_grupo").value.trim(),saldo,status:st,transporte:st==="Baixada"?"A definir":"Sem viagem",passagem:st==="Baixada"?"Pendente":"N/A"};
+  DB.func.push(f);save("func");closeModal();_bp.showFixos=true;render();toast(nome+" criado(a)"+(f.planoBaixada?" e incluído(a) no planejamento":"")+(st==="Baixada"||st==="Férias"||st==="Afastado"?". Preencha as datas na tabela.":"."));
 }
 /* ---- Excel ---- */
 function bpExportarExcel(){
@@ -6861,9 +6901,9 @@ function bpSoft(){
 function vPlanoBaixada(){
   if(_fe.dwInit){_bp.dw=_fe.dwAnt||18;_fe.dwInit=false;}
   const P=bpPessoas(),tem=P.some(p=>p.temPlano),ed=bpPodeEditar();
-  main.innerHTML=`<div class="head"><div><h1>Baixada — planejamento do recesso</h1><p>Quem sai, quando volta, passagens, alimentação e a cobertura da obra no recesso. Quem não está no planejamento conta como presente. Férias e afastamentos do cadastro entram sozinhos.</p></div><div class="acts">${ed?'<button class="btn btn-g" data-bpimp>⇪ Importar do controle atual</button>':""}<button class="btn btn-g" onclick="bpExportarExcel()">⭳ Excel</button></div></div>
+  main.innerHTML=`<div class="head"><div><h1>Baixada — planejamento do recesso</h1><p>Quem sai, quando volta, passagens, alimentação e a cobertura da obra no recesso. Quem não está no planejamento conta como presente. Férias e afastamentos do cadastro entram sozinhos.</p></div><div class="acts">${ed?'<button class="btn btn-g" onclick="bpNovoFuncionario()">＋ Novo funcionário</button><button class="btn btn-g" data-bpimp>⇪ Importar do controle atual</button>':""}<button class="btn btn-g" onclick="bpExportarExcel()">⭳ Excel</button></div></div>
    ${bpAbasHtml("plano")}<input type="file" id="bp_file" accept=".json,application/json" style="display:none" onchange="bpImportarArquivo(this.files[0]);this.value=''">
-   <div id="bpw" class="bpw"><div class="bp-params" id="bp_params">${bpParamsHtml()}</div><div class="bp-kpis" id="bp_kpis">${bpKpisHtml()}</div><div class="bp-tabs" id="bp_tabs">${bpTabsHtml()}</div>${tem?"":'<div class="bp-note" style="margin:10px 0">Ainda não há planejamento. Use <b>Importar do controle atual</b> (arquivo que o assistente gerou) ou <b>Incluir pessoas</b> na Tabela editável.</div>'}<div id="bp_main"></div><div class="bp-gtip" id="bp_gtip"></div></div>`;
+   ${iso(today())>bpParams().hFim?`<div class="bp-note" style="margin:0 0 10px;padding:8px 12px;background:#e9f6ee;border:1px solid #bfe0cb;border-radius:8px">✅ A janela do recesso terminou em <b>${fmt(bpParams().hFim)}</b>. O novo controle de baixada segue pelo <b>Banco de baixada</b> (saldo zerado, contagem a partir do retorno de cada um). Esta tela fica como histórico.</div>`:""}<div id="bpw" class="bpw"><div class="bp-params" id="bp_params">${bpParamsHtml()}</div><div class="bp-kpis" id="bp_kpis">${bpKpisHtml()}</div><div class="bp-tabs" id="bp_tabs">${bpTabsHtml()}</div>${tem?"":'<div class="bp-note" style="margin:10px 0">Ainda não há planejamento. Use <b>Importar do controle atual</b> (arquivo que o assistente gerou; ele também cadastra quem ainda não está na Central), <b>Incluir pessoas</b> ou <b>Novo funcionário</b> na Tabela editável.</div>'}<div id="bp_main"></div><div class="bp-gtip" id="bp_gtip"></div></div>`;
   bpMontarMain();
 }
 function bpCampo(el){
