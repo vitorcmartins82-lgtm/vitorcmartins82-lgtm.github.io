@@ -280,12 +280,14 @@ table.bp-tb{border-collapse:separate;border-spacing:0;font-size:12px;min-width:1
     <div style="font-size:13px;color:#9aa3ad">GM.MG.00083 — Vale — Nova Lima</div>
   </div>
   <div style="background:#145048;padding:24px;border-radius:14px;width:100%;max-width:280px">
-    <label style="font-size:12px;display:block;margin-bottom:6px;text-align:left">Senha de acesso</label>
-    <input type="password" id="lockPass" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1d6058;background:#0a2e2b;color:#fff;font-size:15px" onkeydown="if(event.key==='Enter')tentarDesbloquear()">
-    <div id="lockErro" style="color:#e07a5f;font-size:12px;margin-top:8px;display:none;text-align:left">Senha incorreta.</div>
-    <button onclick="tentarDesbloquear()" style="width:100%;margin-top:14px;padding:11px;border-radius:8px;background:#97d700;color:#0d2e2b;font-weight:700;border:none;font-size:14px;cursor:pointer">Entrar</button>
+    <label style="font-size:12px;display:block;margin-bottom:6px;text-align:left">E-mail</label>
+    <input type="email" id="lockEmail" autocomplete="username" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1d6058;background:#0a2e2b;color:#fff;font-size:15px;margin-bottom:12px" onkeydown="if(event.key==='Enter')document.getElementById('lockPass').focus()">
+    <label style="font-size:12px;display:block;margin-bottom:6px;text-align:left">Senha</label>
+    <input type="password" id="lockPass" autocomplete="current-password" style="width:100%;padding:10px;border-radius:8px;border:1px solid #1d6058;background:#0a2e2b;color:#fff;font-size:15px" onkeydown="if(event.key==='Enter')tentarDesbloquear()">
+    <div id="lockErro" style="color:#e07a5f;font-size:12px;margin-top:8px;display:none;text-align:left"></div>
+    <button id="lockBtn" onclick="tentarDesbloquear()" style="width:100%;margin-top:14px;padding:11px;border-radius:8px;background:#97d700;color:#0d2e2b;font-weight:700;border:none;font-size:14px;cursor:pointer">Entrar</button>
   </div>
-  <p style="font-size:11px;color:#6b7480;max-width:280px">Trava simples de acesso ao arquivo — não sincroniza dados entre computadores.</p>
+  <p style="font-size:11px;color:#6b7480;max-width:280px">Acesso protegido: cada pessoa entra com o próprio e-mail e senha.</p>
 </div>
 <div class="app"><nav class="nav" id="nav"></nav><div class="mainwrap"><div id="idBanner"></div><main class="main" id="main"></main></div></div>
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
@@ -295,10 +297,34 @@ table.bp-tb{border-collapse:separate;border-spacing:0;font-size:12px;min-width:1
 "use strict";
 if(typeof pdfjsLib!=="undefined")pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 const SENHA_ATIVA=true; /* true = pede senha normalmente | false = testes, sem senha */
-const SENHA_HASH="2b0895dc12c8ac01aa9b7b026e5f2d4c5a9a8d9cfc8122d67a265d06ad4ebb84";
-const SENHA_MESTRA="120512"; /* funciona no lugar de QUALQUER senha do sistema (entrada, salvar, almoxarifado, engenheiros, categorias, etc.) */
-const SENHA_PERMISSOES="160451"; /* exclusiva pra abrir "Gerenciar permissões" — só o Vitor sabe essa, separada da senha mestra geral */
-function senhaOk(digitada,esperada){const d=(digitada||"").trim();return d===SENHA_MESTRA||d===esperada;}
+/* Senhas do sistema (mestra e de permissões) NÃO ficam mais no código: ficam em hash em DB.cfg, na nuvem protegida por login.
+   Definir/trocar: link "🔑 Senhas do sistema" no rodapé do menu. */
+function sha256Sync(str){const u=unescape(encodeURIComponent(str));const K=[],H=[];let p=0;const isP=n=>{for(let f=2;f*f<=n;f++)if(n%f===0)return false;return true;};const fr=x=>((x-Math.floor(x))*4294967296)|0;for(let c=2;p<64;c++){if(isP(c)){if(p<8)H[p]=fr(Math.pow(c,1/2));K[p]=fr(Math.pow(c,1/3));p++;}}
+const bytes=[];for(let i=0;i<u.length;i++)bytes.push(u.charCodeAt(i));const bl=bytes.length*8;bytes.push(0x80);while(bytes.length%64!==56)bytes.push(0);const hi=Math.floor(bl/4294967296);for(let i=3;i>=0;i--)bytes.push((hi>>>(i*8))&255);for(let i=3;i>=0;i--)bytes.push((bl>>>(i*8))&255);
+const r=(x,n)=>(x>>>n)|(x<<(32-n));const W=new Array(64);for(let o=0;o<bytes.length;o+=64){for(let i=0;i<16;i++)W[i]=(bytes[o+i*4]<<24)|(bytes[o+i*4+1]<<16)|(bytes[o+i*4+2]<<8)|bytes[o+i*4+3];for(let i=16;i<64;i++){const s0=r(W[i-15],7)^r(W[i-15],18)^(W[i-15]>>>3),s1=r(W[i-2],17)^r(W[i-2],19)^(W[i-2]>>>10);W[i]=(W[i-16]+s0+W[i-7]+s1)|0;}
+let [a,b,c,d,e,f,g,h]=H;for(let i=0;i<64;i++){const S1=r(e,6)^r(e,11)^r(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+W[i])|0,S0=r(a,2)^r(a,13)^r(a,22),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;}
+H[0]=(H[0]+a)|0;H[1]=(H[1]+b)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;}
+return H.map(x=>(x>>>0).toString(16).padStart(8,"0")).join("");}
+function _confereSenhaSistema(campo,v){const h=DB.cfg&&DB.cfg[campo];if(!h||v===null||v===undefined)return false;return sha256Sync(String(v).trim())===h;}
+function ehSenhaMestra(v){return _confereSenhaSistema("senhaMestraHash",v);}
+function ehSenhaPermissoes(v){return _confereSenhaSistema("senhaPermissoesHash",v);}
+function definirSenhaSistema(campo,rotulo){
+  if(!_ultimaCargaTs){toast("Espere os dados carregarem da nuvem antes de definir senhas.");return false;}
+  const a=prompt("Nova "+rotulo+" (mínimo 6 caracteres):");if(a===null)return false;
+  if(a.trim().length<6){toast("Senha muito curta — use pelo menos 6 caracteres.");return false;}
+  const b=prompt("Repita a nova "+rotulo+":");if(b===null)return false;
+  if(a.trim()!==b.trim()){toast("As senhas não conferem.");return false;}
+  DB.cfg[campo]=sha256Sync(a.trim());save("cfg");toast("✅ "+rotulo.charAt(0).toUpperCase()+rotulo.slice(1)+" definida.");return true;
+}
+function abrirSenhasSistema(){
+  if(!(DB.cfg&&DB.cfg.senhaPermissoesHash)){toast("Primeiro defina a senha de permissões.");if(!definirSenhaSistema("senhaPermissoesHash","senha de permissões"))return;}
+  else{const v=prompt("Senha de permissões:");if(v===null)return;if(!ehSenhaPermissoes(v)){toast("Senha incorreta.");return;}}
+  const qual=prompt("O que deseja trocar?\n1 = senha mestra"+(DB.cfg.senhaMestraHash?"":" (ainda não definida)")+"\n2 = senha de permissões");
+  if(qual===null)return;
+  if(qual.trim()==="1")definirSenhaSistema("senhaMestraHash","senha mestra");
+  else if(qual.trim()==="2")definirSenhaSistema("senhaPermissoesHash","senha de permissões");
+}
+function senhaOk(digitada,esperada){const d=(digitada||"").trim();return ehSenhaMestra(d)||d===esperada;}
 const SENHA_SALVAR_ATIVA=true; /* true = pede senha antes de salvar | false = testes, sem essa senha */
 const SENHA_SALVAR="1205"; /* pedida antes de qualquer salvar/editar/excluir, só quando SENHA_SALVAR_ATIVA=true */
 const SENHA_SALVAR_MIN=30; /* minutos que a liberação vale depois de digitar certo */
@@ -327,27 +353,60 @@ function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
       const secaoInfo=SECOES_PERMISSAO.find(s=>s.chave===secaoChave);
       const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão de salvar em \""+(secaoInfo?secaoInfo.nome:secaoChave)+"\". Senha mestra pra liberar mesmo assim:");
       if(pass===null)return;
-      if(pass!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");return;}
+      if(!ehSenhaMestra(pass)){toast("Senha incorreta — ação cancelada.");return;}
     }
     executar();
   },true);
 })();
 async function sha256(str){const enc=new TextEncoder().encode(str);const buf=await crypto.subtle.digest('SHA-256',enc);return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
-async function tentarDesbloquear(){const val=document.getElementById("lockPass").value;const valTrim=val.trim();const h=await sha256(val);const ls=document.getElementById("lockScreen");const erro=document.getElementById("lockErro");if(h===SENHA_HASH||valTrim===SENHA_MESTRA){try{sessionStorage.setItem('obra_unlocked','1');}catch(e){}ls.style.display='none';if(!_usuarioLogadoNome&&sessionStorage.getItem('obra_identificacao_pulada')!=='1')setTimeout(()=>abrirLoginUsuario(),300);}else{erro.style.display='block';}}
-function bloquearApp(){try{sessionStorage.removeItem('obra_unlocked');}catch(e){}location.reload();}
+let AUTH=null; /* sessão do Supabase Auth: {access_token,refresh_token,expires_at,email} */
+function authSalvar(a){AUTH=a;try{if(a)localStorage.setItem("obra_auth",JSON.stringify(a));else localStorage.removeItem("obra_auth");}catch(e){}}
+function authDeResposta(j){return{access_token:j.access_token,refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,email:(j.user&&j.user.email)||(AUTH&&AUTH.email)||""};}
+async function authRenovar(){
+  if(!AUTH||!AUTH.refresh_token)return false;
+  try{const r=await fetch(`${SUPA.url}/auth/v1/token?grant_type=refresh_token`,{method:"POST",headers:{"apikey":SUPA.key,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:AUTH.refresh_token})});
+    if(!r.ok){if(r.status===400||r.status===401||r.status===403){authSalvar(null);mostrarLogin("Sua sessão expirou — entre de novo.");}return false;}
+    authSalvar(authDeResposta(await r.json()));return true;}catch(e){return false;}
+}
+async function authGarantir(){if(!AUTH)return false;if(Date.now()<AUTH.expires_at-5*60000)return true;return await authRenovar();}
+function mostrarLogin(msg){const ls=document.getElementById("lockScreen");if(ls)ls.style.display="flex";const e=document.getElementById("lockErro");if(e){e.textContent=msg||"";e.style.display=msg?"block":"none";}}
+function esconderLogin(){const ls=document.getElementById("lockScreen");if(ls)ls.style.display="none";if(!_usuarioLogadoNome&&sessionStorage.getItem("obra_identificacao_pulada")!=="1")setTimeout(()=>abrirLoginUsuario(),300);}
+async function tentarDesbloquear(){
+  const email=(document.getElementById("lockEmail").value||"").trim().toLowerCase();const senha=document.getElementById("lockPass").value||"";
+  if(!email||!senha){mostrarLogin("Preencha e-mail e senha.");return;}
+  const btn=document.getElementById("lockBtn");if(btn){btn.disabled=true;btn.textContent="Entrando...";}
+  try{
+    const r=await fetch(`${SUPA.url}/auth/v1/token?grant_type=password`,{method:"POST",headers:{"apikey":SUPA.key,"Content-Type":"application/json"},body:JSON.stringify({email,password:senha})});
+    if(!r.ok){mostrarLogin(r.status===400?"E-mail ou senha incorretos.":"Não foi possível entrar (erro "+r.status+").");return;}
+    authSalvar(authDeResposta(await r.json()));
+    const c=await fetch(`${SUPA.url}/rest/v1/app_usuarios?select=email`,{headers:supaHeaders()});
+    const linhas=c.ok?await c.json():[];
+    if(!linhas.length){authSalvar(null);mostrarLogin("Este e-mail ainda não foi liberado no sistema — fale com o Vitor.");return;}
+    document.getElementById("lockPass").value="";esconderLogin();loadFromSupabase(true);
+  }catch(e){mostrarLogin("Sem conexão com a nuvem — tente de novo.");}
+  finally{if(btn){btn.disabled=false;btn.textContent="Entrar";}}
+}
+async function authIniciar(){
+  try{AUTH=JSON.parse(localStorage.getItem("obra_auth")||"null");}catch(e){AUTH=null;}
+  if(!AUTH){mostrarLogin();return false;}
+  await authGarantir();
+  if(!AUTH)return false;
+  esconderLogin();return true;
+}
+function bloquearApp(){const a=AUTH;authSalvar(null);const fim=()=>location.reload();if(a&&a.access_token){fetch(`${SUPA.url}/auth/v1/logout`,{method:"POST",headers:{"apikey":SUPA.key,"Authorization":"Bearer "+a.access_token}}).catch(()=>{}).finally(fim);}else fim();}
 function confirmarRestaurar(){
   const val=prompt("Ação sensível: restaurar um backup SUBSTITUI todos os dados atuais.\nDigite a senha pra continuar:");
   if(val===null)return;
   if(!senhaOk(val,SENHA_SALVAR)){toast("Senha incorreta — restaurar cancelado.");return;}
   $("#fileimport").click();
 }
-(function(){try{if(!SENHA_ATIVA||sessionStorage.getItem('obra_unlocked')==='1'){document.addEventListener('DOMContentLoaded',()=>{const ls=document.getElementById('lockScreen');if(ls)ls.style.display='none';if(!_usuarioLogadoNome&&sessionStorage.getItem('obra_identificacao_pulada')!=='1')setTimeout(()=>abrirLoginUsuario(),500);});}}catch(e){}})();
+
 const KEYS=["func","locais","mov","faltas","ferias","baixadas","reemb","veiculos","rotas","abastecimentos","mobilizacoes","vagas","compras_setores","compras_pedidos","compras_despesas","compras_estoque","compras_contratos","compras_notas","compras_estoque_mov","compras_fornecedores","almox_pedidos","vagas_abertas"];
 const CFG_DEFAULT={baixadaCarencia:60,baixadaMes:2.5,faltaDesc:1,expF1:30,expF2:90,alertaBaixada:5,alertaAntecedenciaDias:20,comboioCapacidade:6000,diasAlertaParado:5,prazoNotaFiscalDias:5,alertaVencimentoDias:10,feriados:[],valorCafe:8,valorAlmoco:28,valorJantar:28};
 const SUPA={url:"https://imuguwwwlbwmqslmsmrk.supabase.co",key:"sb_publishable_c0RC7oGRtKQ0ZskiLnmbHQ_me4LMDoF"};
 const LOGO_PRINER="data:image/png;base64,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";
 const LOGO_VALE="data:image/png;base64,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";
-function supaHeaders(extra){return Object.assign({"apikey":SUPA.key,"Content-Type":"application/json"},extra||{});}
+function supaHeaders(extra){return Object.assign({"apikey":SUPA.key,"Content-Type":"application/json"},AUTH&&AUTH.access_token?{"Authorization":"Bearer "+AUTH.access_token}:{},extra||{});}
 let _pendingWrites=0;
 async function dbUpsert(table,obj){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:String(obj.id),data:obj})});if(!res.ok){console.error("Supabase upsert falhou",table,res.status,await res.text());_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase upsert falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
 async function dbDelete(table,id){if(!SUPA.url)return true;_pendingWrites++;try{const res=await fetch(`${SUPA.url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:supaHeaders()});if(!res.ok){console.error("Supabase delete falhou",table,res.status);_ultimoErroNuvem=res.status;_nuvemOk=false;buildNav();return false;}return true;}catch(e){console.error("Supabase delete falhou",table,e);_ultimoErroNuvem="sem conexão";_nuvemOk=false;buildNav();return false;}finally{_pendingWrites--;}}
@@ -395,7 +454,7 @@ function finalizaFetch(table,all,puladas){
 }
 async function syncCfg(){if(!SUPA.url)return;try{await fetch(`${SUPA.url}/rest/v1/cfg`,{method:"POST",headers:supaHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),body:JSON.stringify({id:"cfg",data:DB.cfg})});}catch(e){console.error("Supabase cfg falhou",e);}}
 let _nuvemOk=null;
-async function loadFromSupabase(mostrarToast,apenas){if(!SUPA.url)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast,apenas),800);return;}if(_carregando){if(mostrarToast)toast("Já está atualizando — aguarde um instante.");return;}_carregando=true;_ultimaTentativaTs=Date.now();try{const falhas=[];let falhasSeguidas=0,suspeitaGeral=false;for(const k of (apenas||KEYS)){const arr=await dbFetchTableComRetry(k);
+async function loadFromSupabase(mostrarToast,apenas){if(!SUPA.url||!AUTH)return;if(_pendingWrites>0){setTimeout(()=>loadFromSupabase(mostrarToast,apenas),800);return;}if(_carregando){if(mostrarToast)toast("Já está atualizando — aguarde um instante.");return;}_carregando=true;_ultimaTentativaTs=Date.now();try{const falhas=[];let falhasSeguidas=0,suspeitaGeral=false;for(const k of (apenas||KEYS)){const arr=await dbFetchTableComRetry(k);
       if(arr===null){
         falhas.push(k);falhasSeguidas++;
         if(falhasSeguidas>=2&&!apenas){ /* disjuntor: 3 tabelas seguidas fora = nuvem fora do ar; não insiste nas demais */
@@ -438,7 +497,7 @@ function _txtUltima(){
   return " · atualizado "+h+(modoAtualizacao()==="manual"?" (só manual)":"");
 }
 function tickAtualizacao(){
-  if(!SUPA.url||document.hidden||ov.classList.contains("on")||_pendingWrites>0)return;
+  if(!SUPA.url||!AUTH||document.hidden||ov.classList.contains("on")||_pendingWrites>0)return;
   const agora=Date.now();
   if(pendenciasNuvem()>0&&agora-_ultimoReenvioTs>=120000){_ultimoReenvioTs=agora;reenviarPendencias();}
   if(_tabelasFalharam.length&&agora-_ultimaTentativaTs>=180000){loadFromSupabase(false,_tabelasFalharam.slice());return;}
@@ -533,7 +592,7 @@ async function reenviarTabelasVazias(){
   if(!SUPA.url){toast("Nuvem não configurada.");return;}
   const senha=prompt("Esta ação envia os dados DESTE navegador para tabelas que estão VAZIAS na nuvem. Digite a senha mestra pra continuar:");
   if(senha===null)return;
-  if(senha!==SENHA_MESTRA){toast("Senha incorreta.");return;}
+  if(!ehSenhaMestra(senha)){toast("Senha incorreta.");return;}
   toast("Conferindo a nuvem...");
   const alvo=[];
   for(const k of KEYS){
@@ -773,7 +832,7 @@ function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===tru
     if(CUR!=="permissoes"&&!menuFiltrado.some(m=>m.v===CUR)){CUR=menuFiltrado.some(m=>m.v==="inicio")?"inicio":"painel";setTimeout(render,0);}
  else if(!window._inicioLanding&&CUR==="painel"&&menuFiltrado.some(m=>m.v==="inicio")){window._inicioLanding=true;CUR="inicio";setTimeout(render,0);}
   }
-  nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+menuFiltrado.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}${m.v==="aprovacoes"?badgeAprovacoes():m.v==="avisos"?badgeAvisos():""}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}${SUPA.url?`<br><span style="opacity:.9">Atualizar sozinho: <select onchange="setModoAtualizacao(this.value)" style="background:#1a2733;color:#cdd3da;border:1px solid #33414f;border-radius:4px;font-size:11px"><option value="15" ${modoAtualizacao()==="15"?"selected":""}>a cada 15 min</option><option value="30" ${modoAtualizacao()==="30"?"selected":""}>a cada 30 min</option><option value="manual" ${modoAtualizacao()==="manual"?"selected":""}>só manual</option></select></span>`:""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Bloquear</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><a href="#" onclick="abrirDiagnostico();return false" style="color:#9aa3ad;text-decoration:underline">🔎 Diagnóstico dos dados</a><br><a href="#" onclick="abrirGerenciarPermissoes();return false" style="color:#9aa3ad;text-decoration:underline">⚙ Gerenciar permissões</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
+  nav.innerHTML=`<div class="brand"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><img src="${LOGO_PRINER}" style="height:26px;display:block;border-radius:4px"><div style="background:#fff;border-radius:6px;padding:4px 7px;display:inline-flex"><img src="${LOGO_VALE}" style="height:16px;display:block"></div></div><b>Central da Obra</b><span>GM.MG.00083 — Vale — Nova Lima</span><span style="font-size:10px;color:#c7ccd3;text-transform:none;letter-spacing:normal;display:block;margin-top:6px;line-height:1.5">Eng. Preposto: Arthur Ferreira<br>Resp. Central: Vitor Martins (Sup. Adm.)</span></div>`+usuarioBadge+menuFiltrado.map(m=>m.sec?`<div class="sec">${m.sec}</div>`:`<a class="mi ${m.v===CUR?'on':''}" data-v="${m.v}"><span class="ic">${m.ic}</span><span class="lbl">${m.l}${m.v==="aprovacoes"?badgeAprovacoes():m.v==="avisos"?badgeAvisos():""}</span></a>`).join("")+`<div class="foot">${statusTxt}${SUPA.url?' · <a href="#" onclick="loadFromSupabase(true);return false" style="color:#9aa3ad;text-decoration:underline">🔄 Atualizar</a>':""}${SUPA.url?`<br><span style="opacity:.9">Atualizar sozinho: <select onchange="setModoAtualizacao(this.value)" style="background:#1a2733;color:#cdd3da;border:1px solid #33414f;border-radius:4px;font-size:11px"><option value="15" ${modoAtualizacao()==="15"?"selected":""}>a cada 15 min</option><option value="30" ${modoAtualizacao()==="30"?"selected":""}>a cada 30 min</option><option value="manual" ${modoAtualizacao()==="manual"?"selected":""}>só manual</option></select></span>`:""}<br>Backup na tela Painel.<br><a href="#" onclick="bloquearApp();return false" style="color:#9aa3ad;text-decoration:underline">🔒 Sair</a><br><a href="#" onclick="abrirSenhasSistema();return false" style="color:#9aa3ad;text-decoration:underline">🔑 Senhas do sistema</a><br><a href="#" onclick="confirmarRestaurar();return false" style="color:#5a6270;text-decoration:underline;font-size:10px">⚠ Restaurar backup (avançado)</a><br><a href="#" onclick="abrirDiagnostico();return false" style="color:#9aa3ad;text-decoration:underline">🔎 Diagnóstico dos dados</a><br><a href="#" onclick="abrirGerenciarPermissoes();return false" style="color:#9aa3ad;text-decoration:underline">⚙ Gerenciar permissões</a><br><span style="opacity:.6">Versão do arquivo: ${APP_VERSAO}</span></div>`;nav.querySelectorAll("a.mi").forEach(a=>a.addEventListener("click",()=>{CUR=a.dataset.v;VIEWER=(CUR==="areas");buildNav();render();window.scrollTo(0,0);}));atualizarBannerIdentificacao();}
 function atualizarBannerIdentificacao(){
   const el=$("#idBanner");if(!el)return;
   el.innerHTML=_usuarioLogadoNome?"":`<div class="idbanner-bar" onclick="abrirLoginUsuario()">👤 <b>Você ainda não se identificou.</b> Clique aqui pra identificar-se com seu CPF — isso garante que fique registrado quem faz cada alteração no sistema.<span style="text-decoration:underline;white-space:nowrap">Identificar-se →</span></div>`;
@@ -782,9 +841,10 @@ let _usuarioLogadoId="",_usuarioLogadoNome="";
 try{const s=JSON.parse(sessionStorage.getItem('obra_usuario')||'null');if(s){_usuarioLogadoId=s.id;_usuarioLogadoNome=s.nome;}}catch(e){}
 function nomeUsuarioLogado(){return _usuarioLogadoNome;}
 function abrirGerenciarPermissoes(){
-  const senha=prompt("Senha exclusiva pra gerenciar permissões:");
+  if(!(DB.cfg&&DB.cfg.senhaPermissoesHash)){toast("A senha de permissões ainda não foi definida — defina agora.");if(!definirSenhaSistema("senhaPermissoesHash","senha de permissões"))return;}
+  else{const senha=prompt("Senha exclusiva pra gerenciar permissões:");
   if(senha===null)return;
-  if(senha!==SENHA_PERMISSOES){toast("Senha incorreta.");return;}
+  if(!ehSenhaPermissoes(senha)){toast("Senha incorreta.");return;}}
   CUR="permissoes";window._gpSelecionado=window._gpSelecionado||null;render();
 }
 function vPermissoes(){
@@ -876,7 +936,7 @@ function buscarPorCpfLogin(){
 }
 function entrarEmergencia(){
   const el=$("#lg_emerg");
-  if(!el||el.value!==SENHA_MESTRA){toast("Senha mestra incorreta.");return;}
+  if(!el||!ehSenhaMestra(el.value)){toast("Senha mestra incorreta.");return;}
   if(DB.func.length>0&&!_tabelasFalharam.includes("func")){toast("A lista de funcionários está disponível — identifique-se com o CPF.");return;}
   _usuarioLogadoId="__emergencia__";_usuarioLogadoNome="Administrador (emergência)";
   try{sessionStorage.setItem('obra_usuario',JSON.stringify({id:_usuarioLogadoId,nome:_usuarioLogadoNome}));}catch(e){}
@@ -1956,7 +2016,7 @@ function confirmarPermissaoArea(secaoChave,nomeArea){
   if(nivelPermissaoUsuario(secaoChave)==="salvar")return true;
   const pass=prompt((_usuarioLogadoNome||"Você")+" não tem permissão de salvar em \""+nomeArea+"\". Senha mestra pra liberar mesmo assim:");
   if(pass===null)return false;
-  if(pass!==SENHA_MESTRA){toast("Senha incorreta — ação cancelada.");return false;}
+  if(!ehSenhaMestra(pass)){toast("Senha incorreta — ação cancelada.");return false;}
   return true;
 }
 function marcarPresenca(fid,data){DB.faltas.push({id:uid(),func:fid,data,tipo:"Presença",motivo:""});save("faltas");renderChamada();toast("Presença registrada.");}
@@ -2254,7 +2314,7 @@ function exportFluigExcel(){
 }
 function desbloquearReemb(){
   const v=$("#area_restrita_senha").value;
-  if(v===SENHA_MESTRA){_reembUnlocked=true;render();}else{toast("Senha incorreta.");}
+  if(ehSenhaMestra(v)){_reembUnlocked=true;render();}else{toast("Senha incorreta.");}
 }
 function formaPagamentoTxt(r){
   if(r.formaPag==="Fluig")return `Fluig${r.fluigNumero?" nº "+esc(r.fluigNumero):""}${r.fluigLink?` · <a href="${esc(r.fluigLink)}" target="_blank" style="color:var(--steel)">abrir</a>`:""}`;
@@ -4489,7 +4549,7 @@ function confirmarLiberarExcecao(id){
   if(!engId){toast("Selecione o engenheiro que está aprovando.");return;}
   const engF=DB.func.find(x=>x.id===engId);const eng=engF?engF.nome:"";
   const senha=$("#ex_senha").value;const esperada=engF?senhaAprovacaoDe(engF):"";
-  if(!esperada&&(senha||"").trim()!==SENHA_MESTRA){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
+  if(!esperada&&!ehSenhaMestra(senha)){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
   if(!senhaOk(senha,esperada)){toast("Senha incorreta para "+eng+".");return;}
   const p=DB.compras_pedidos.find(x=>x.id===id);
   p.excecaoLiberada=true;p.excecaoLiberadaData=iso(today());p.excecaoLiberadaObs=$("#ex_obs").value.trim();p.excecaoLiberadaPor=eng;
@@ -4573,7 +4633,7 @@ function confirmarAprovacaoEngenheiro(id){
   const eng=engF?engF.nome:"";
   const senha=$("#ap_senha").value;
   const esperada=engF?senhaAprovacaoDe(engF):"";
-  if(!esperada&&(senha||"").trim()!==SENHA_MESTRA){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
+  if(!esperada&&!ehSenhaMestra(senha)){toast(eng+" ainda não tem senha de aprovação — defina em ⚙ Gerenciar permissões.");return;}
   if(!senhaOk(senha,esperada)){toast("Senha incorreta para "+eng+".");return;}
   const p=DB.compras_pedidos.find(x=>x.id===id);
   p.status="Aprovado pelo engenheiro";p.aprovadoPor=eng;p.aprovadoData=iso(today());
@@ -9991,7 +10051,7 @@ function vRecrutamento(){
 }
 function desbloquearRecrutamento(){
   const v=$("#area_restrita_senha").value;
-  if(v===SENHA_MESTRA){_recrutUnlocked=true;render();}else{toast("Senha incorreta.");}
+  if(ehSenhaMestra(v)){_recrutUnlocked=true;render();}else{toast("Senha incorreta.");}
 }
 function renderCandidatosTbl(){
   let list=candidatosList();
@@ -10113,7 +10173,7 @@ function exportCandidatosExcel(){
 }
 
 _pendCarregar();load();if(!SUPA.url){seed();seedVeiculos();}buildNav();render();
-if(SUPA.url){loadFromSupabase();setInterval(tickAtualizacao,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)tickAtualizacao();});}
+if(SUPA.url){authIniciar().then(ok=>{if(ok)loadFromSupabase();});setInterval(()=>{if(AUTH)authGarantir();},60000);setInterval(tickAtualizacao,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)tickAtualizacao();});}
 </script>
 </body>
 </html>
