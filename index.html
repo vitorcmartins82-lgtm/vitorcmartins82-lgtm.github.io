@@ -896,6 +896,32 @@ window._restritaOk=window._restritaOk||{};
 function desbloquearRestrita(v){const el=$("#area_restrita_senha");if(el&&ehSenhaMestra(el.value)){window._restritaOk[v]=true;render();}else{toast((DB.cfg&&DB.cfg.senhaMestraHash)?"Senha incorreta.":"A senha mestra ainda não foi definida — use 🔑 Senhas do sistema.");}}
 function _salvarAreas(a){if(!_ultimaCargaTs){toast("Espere os dados carregarem da nuvem.");return false;}DB.cfg.areasRestritas=a;save("cfg");return true;}
 function arAlternarPessoa(v,fid,liberar){const a=areasRestritas();const l=new Set(a[v]||[]);if(liberar)l.add(fid);else l.delete(fid);a[v]=[...l];if(_salvarAreas(a)){toast(liberar?"Acesso liberado.":"Acesso removido.");renderDetalhePermissoes();buildNav();}}
+function arAbrirSelecao(v){
+  window._arArea=v;window._arSel=new Set();
+  openModal(`<div class="modal-h"><h3>Liberar pessoas — ${esc(nomeTela(v))}</h3><button class="x" onclick="closeModal()">×</button></div><div class="modal-b">
+    <input type="search" id="ar_busca" placeholder="Buscar por nome..." oninput="arRenderSelecao()" style="width:100%;padding:9px;border:1px solid #dcdfe3;border-radius:8px;margin-bottom:8px">
+    <div style="font-size:12.5px;margin-bottom:8px"><a href="#" onclick="arMarcarVisiveis(true);return false">Marcar todos da lista</a> · <a href="#" onclick="arMarcarVisiveis(false);return false">Desmarcar todos</a></div>
+    <div id="ar_lista" style="max-height:52vh;overflow-y:auto;border:1px solid #eef0ec;border-radius:8px;padding:4px 10px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px"><span id="ar_cont" class="hint">Nenhuma pessoa marcada</span><button class="btn btn-a" onclick="arConfirmarSelecao()">Liberar marcadas</button></div>
+  </div>`);
+  arRenderSelecao();setTimeout(()=>{const b=$("#ar_busca");if(b)b.focus();},50);
+}
+function _arCandidatos(){const v=window._arArea;const lib=new Set(areasRestritas()[v]||[]);const q=normalizaNome(($("#ar_busca")||{}).value||"");return porNome(pessoasPermissao().filter(f=>!lib.has(f.id)&&(!q||normalizaNome(f.nome).includes(q))));}
+function arRenderSelecao(){
+  const el=$("#ar_lista");if(!el)return;const L=_arCandidatos(),sel=window._arSel;
+  const linha=f=>`<label style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #f2f3f0;cursor:pointer"><input type="checkbox" ${sel.has(f.id)?"checked":""} onchange="arMarcar('${f.id}',this.checked)" style="width:18px;height:18px"><span>${esc(f.nome)}${f._sede?' <span class="tag t-amber" style="font-size:9px">controle sede</span>':vinculoDe(f)==="Sede"?' <span class="tag t-amber" style="font-size:9px">sede</span>':''}</span></label>`;
+  const c=L.filter(temLiberacao),o=L.filter(f=>!temLiberacao(f));
+  const tit=t=>`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 2px">${t}</div>`;
+  el.innerHTML=L.length?(c.length?tit("✅ Já têm liberação em alguma página ("+c.length+")")+c.map(linha).join(""):"")+(o.length?tit("Demais pessoas ("+o.length+")")+o.map(linha).join(""):""):'<p class="hint" style="padding:10px 0">Ninguém encontrado.</p>';
+  const n=sel.size;const ct=$("#ar_cont");if(ct)ct.textContent=n?n+" pessoa(s) marcada(s)":"Nenhuma pessoa marcada";
+}
+function arMarcar(id,on){if(on)window._arSel.add(id);else window._arSel.delete(id);const n=window._arSel.size;const ct=$("#ar_cont");if(ct)ct.textContent=n?n+" pessoa(s) marcada(s)":"Nenhuma pessoa marcada";}
+function arMarcarVisiveis(on){_arCandidatos().forEach(f=>{if(on)window._arSel.add(f.id);else window._arSel.delete(f.id);});arRenderSelecao();}
+function arConfirmarSelecao(){
+  const v=window._arArea,ids=[...window._arSel];if(!ids.length){toast("Marque pelo menos uma pessoa.");return;}
+  const a=areasRestritas();a[v]=[...new Set((a[v]||[]).concat(ids))];
+  if(_salvarAreas(a)){closeModal();toast(ids.length+" pessoa(s) liberada(s) em \""+nomeTela(v)+"\".");renderDetalhePermissoes();buildNav();}
+}
 function arTornarRestrita(v){if(!v)return;const a=areasRestritas();if(a[v])return;a[v]=[];if(_salvarAreas(a)){toast("\""+nomeTela(v)+"\" agora é área restrita.");renderDetalhePermissoes();buildNav();}}
 function arRemoverRestricao(v){if(AREAS_RESTRITAS_FIXAS.includes(v))return;if(!confirm("Tirar a restrição de \""+nomeTela(v)+"\"? Volta a valer só a permissão normal de cada pessoa."))return;const a=areasRestritas();delete a[v];if(_salvarAreas(a)){toast("Restrição removida.");renderDetalhePermissoes();buildNav();}}
 const PERM_SEMID_PADRAO={painel:"ver"}; /* até o Vitor configurar: sem CPF vê só o Painel */
@@ -966,7 +992,7 @@ function renderDetalhePermissoes(){
       return `<div style="border:1px solid #e3e7e2;border-radius:10px;padding:16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px"><b style="font-size:15px">🔒 ${esc(nomeTela(v))}</b>${AREAS_RESTRITAS_FIXAS.includes(v)?'<span class="hint">sempre restrita</span>':`<button class="btn btn-g btn-sm" onclick="arRemoverRestricao('${v}')">Tirar restrição</button>`}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${libs.length?libs.map(f=>`<span class="tag t-green" style="font-size:12px;padding:5px 9px">${esc(f.nome)} <a href="#" onclick="arAlternarPessoa('${v}','${f.id}',false);return false" style="margin-left:4px;color:inherit;text-decoration:none">✕</a></span>`).join(""):'<span class="hint">Ninguém liberado ainda (só o Vitor entra).</span>'}</div>
-        <select onchange="if(this.value)arAlternarPessoa('${v}',this.value,true)" style="width:100%;padding:7px;font-size:13.5px"><option value="">+ Liberar uma pessoa...</option>${(()=>{const op=f=>`<option value="${f.id}">${esc(f.nome)}${f._sede?" (controle sede)":vinculoDe(f)==="Sede"?" (sede)":""}</option>`;const c=outros.filter(temLiberacao),o=outros.filter(f=>!temLiberacao(f));return (c.length?`<optgroup label="✅ Já têm liberação em alguma página (${c.length})">${c.map(op).join("")}</optgroup>`:"")+`<optgroup label="Demais pessoas">${o.map(op).join("")}</optgroup>`;})()}</select></div>`;};
+        <button class="btn btn-a btn-sm" onclick="arAbrirSelecao('${v}')">+ Liberar pessoas</button></div>`;};
     const naoRestritas=SECOES_PERMISSAO.filter(x=>!a[x.chave]&&x.chave!=="inicio");
     el.innerHTML=`<div class="panel" style="padding:24px">
      <h2 style="margin:0 0 4px;font-size:19px">🔒 Áreas restritas</h2>
