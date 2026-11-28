@@ -821,6 +821,19 @@ function nivelPermissaoUsuario(secaoChave){
   if(f.perfilSoLeitura&&nivel==="salvar")nivel="ver";
   return nivel;
 }
+/* ===== ÁREAS RESTRITAS: só quem está na lista vê a tela (nem Admin total passa, só o Vitor) e ao abrir pede a senha mestra ===== */
+const AREAS_RESTRITAS_FIXAS=["reemb","recrutamento"];
+function areasRestritas(){const a=Object.assign({},(DB.cfg&&DB.cfg.areasRestritas)||{});AREAS_RESTRITAS_FIXAS.forEach(t=>{if(!Array.isArray(a[t]))a[t]=[];});return a;}
+function telaRestrita(v){return Object.prototype.hasOwnProperty.call(areasRestritas(),v);}
+function usuarioEhVitor(){if(_usuarioLogadoId==="__emergencia__")return true;const f=DB.func.find(x=>x.id===_usuarioLogadoId);if(!f)return false;const n=normalizaNome(f.nome);return n.includes("VITOR")&&n.includes("MARTINS");}
+function podeVerRestrita(v){if(!telaRestrita(v))return true;if(!_usuarioLogadoId)return false;if(usuarioEhVitor())return true;return (areasRestritas()[v]||[]).includes(_usuarioLogadoId);}
+function nomeTela(v){const m=MENU.find(x=>x.v===v);return m?m.l:v;}
+window._restritaOk=window._restritaOk||{};
+function desbloquearRestrita(v){const el=$("#area_restrita_senha");if(el&&ehSenhaMestra(el.value)){window._restritaOk[v]=true;render();}else{toast((DB.cfg&&DB.cfg.senhaMestraHash)?"Senha incorreta.":"A senha mestra ainda não foi definida — use 🔑 Senhas do sistema.");}}
+function _salvarAreas(a){if(!_ultimaCargaTs){toast("Espere os dados carregarem da nuvem.");return false;}DB.cfg.areasRestritas=a;save("cfg");return true;}
+function arAlternarPessoa(v,fid,liberar){const a=areasRestritas();const l=new Set(a[v]||[]);if(liberar)l.add(fid);else l.delete(fid);a[v]=[...l];if(_salvarAreas(a)){toast(liberar?"Acesso liberado.":"Acesso removido.");renderDetalhePermissoes();buildNav();}}
+function arTornarRestrita(v){if(!v)return;const a=areasRestritas();if(a[v])return;a[v]=[];if(_salvarAreas(a)){toast("\""+nomeTela(v)+"\" agora é área restrita.");renderDetalhePermissoes();buildNav();}}
+function arRemoverRestricao(v){if(AREAS_RESTRITAS_FIXAS.includes(v))return;if(!confirm("Tirar a restrição de \""+nomeTela(v)+"\"? Volta a valer só a permissão normal de cada pessoa."))return;const a=areasRestritas();delete a[v];if(_salvarAreas(a)){toast("Restrição removida.");renderDetalhePermissoes();buildNav();}}
 const PERM_SEMID_PADRAO={painel:"ver"}; /* até o Vitor configurar: sem CPF vê só o Painel */
 function permissoesSemId(){return Object.assign({},(DB.cfg&&DB.cfg.permissoesSemId)||PERM_SEMID_PADRAO);}
 function nivelSemId(chave){const n=permissoesSemId()[chave]||"nenhum";return n==="salvar"?"ver":n;}
@@ -833,7 +846,7 @@ const APP_VERSAO="v2026-10-02.58";
 function buildNav(){const nav=$("#nav");const statusTxt=SUPA.url?(_nuvemOk===true?"🟢 Sincronizado com a nuvem"+_txtUltima()+_txtPend():_nuvemOk===false?"🟡 Sem conexão — usando dados locais"+_txtPend():"🔄 Conectando..."):(LS?"Dados salvos neste navegador.":"Prévia — baixe o arquivo p/ salvar.");const usuarioBadge=_usuarioLogadoNome?`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#1a3d38;border:1px solid #2d5c54;border-radius:8px;padding:8px 10px;margin:0 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="font-size:12.5px;color:#d7ecd9">👤 ${esc(_usuarioLogadoNome)}</span><span style="font-size:11px;color:#9aa3ad;text-decoration:underline">trocar</span></div>`:`<div onclick="abrirLoginUsuario()" style="cursor:pointer;background:#4a3410;border:1px solid #8a6a1f;border-radius:8px;padding:9px 10px;margin:0 14px 12px;text-align:center;font-size:12.5px;color:#f0c766;font-weight:600">👤 Clique aqui pra se identificar</div>`;
   let menuFiltrado=MENU.filter(m=>m.v!=="aprovacoes"||usuarioEhAprovador());
   {
-    menuFiltrado=MENU.filter(m=>{if(m.sec)return true;if(m.v==="aprovacoes")return usuarioEhAprovador();const chave=secaoDaTela(m.v);if(!chave)return true;if(!_usuarioLogadoId)return m.v==="inicio"||nivelSemId(chave)!=="nenhum";return nivelPermissaoUsuario(chave)!=="nenhum";});
+    menuFiltrado=MENU.filter(m=>{if(m.sec)return true;if(m.v==="aprovacoes")return usuarioEhAprovador();if(telaRestrita(m.v))return podeVerRestrita(m.v);const chave=secaoDaTela(m.v);if(!chave)return true;if(!_usuarioLogadoId)return m.v==="inicio"||nivelSemId(chave)!=="nenhum";return nivelPermissaoUsuario(chave)!=="nenhum";});
     menuFiltrado=menuFiltrado.filter((m,i)=>{if(!m.sec)return true;for(let j=i+1;j<menuFiltrado.length;j++){if(menuFiltrado[j].sec)return false;return true;}return false;});
     if(CUR!=="permissoes"&&!menuFiltrado.some(m=>m.v===CUR)){CUR=_usuarioLogadoId?(menuFiltrado.some(m=>m.v==="inicio")?"inicio":"painel"):((menuFiltrado.find(m=>!m.sec&&m.v!=="inicio"&&secaoDaTela(m.v))||{v:"inicio"}).v);setTimeout(render,0);}
  else if(_usuarioLogadoId&&!window._inicioLanding&&CUR==="painel"&&menuFiltrado.some(m=>m.v==="inicio")){window._inicioLanding=true;CUR="inicio";setTimeout(render,0);}
@@ -872,11 +885,29 @@ function renderListaPermissoes(){
   const termo=(window._gpBusca||"").toLowerCase();
   const lista=porNome(DB.func.filter(f=>ativo(f)&&(!termo||f.nome.toLowerCase().includes(termo))));
   const el=$("#gp_lista");if(!el)return;
+  const itemAreas=`<div onclick="window._gpSelecionado='__areas__';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px dashed #b9c2bd;background:${window._gpSelecionado==='__areas__'?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado==='__areas__'?'700':'400'}">🔒 Áreas restritas</div>`;
   const itemSemId=`<div onclick="window._gpSelecionado='__semid__';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px dashed #b9c2bd;background:${window._gpSelecionado==='__semid__'?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado==='__semid__'?'700':'400'}">👥 Sem identificação (sem CPF)</div>`;
-  el.innerHTML=itemSemId+(lista.length?lista.map(f=>`<div onclick="window._gpSelecionado='${f.id}';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:4px;background:${window._gpSelecionado===f.id?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado===f.id?'700':'400'}">${esc(f.nome)}${f.podeAutorizarPin?' <span class="tag t-green" style="font-size:9px">admin</span>':''}</div>`).join(""):'<p class="hint">Ninguém encontrado.</p>');
+  el.innerHTML=itemAreas+itemSemId+(lista.length?lista.map(f=>`<div onclick="window._gpSelecionado='${f.id}';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:4px;background:${window._gpSelecionado===f.id?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado===f.id?'700':'400'}">${esc(f.nome)}${f.podeAutorizarPin?' <span class="tag t-green" style="font-size:9px">admin</span>':''}</div>`).join(""):'<p class="hint">Ninguém encontrado.</p>');
 }
 function renderDetalhePermissoes(){
   const el=$("#gp_detalhe");if(!el)return;
+  if(window._gpSelecionado==="__areas__"){
+    const a=areasRestritas();
+    const pessoas=porNome(DB.func.filter(ativo));
+    const card=v=>{const lib=new Set(a[v]||[]);const libs=pessoas.filter(f=>lib.has(f.id));const outros=pessoas.filter(f=>!lib.has(f.id));
+      return `<div style="border:1px solid #e3e7e2;border-radius:10px;padding:16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px"><b style="font-size:15px">🔒 ${esc(nomeTela(v))}</b>${AREAS_RESTRITAS_FIXAS.includes(v)?'<span class="hint">sempre restrita</span>':`<button class="btn btn-g btn-sm" onclick="arRemoverRestricao('${v}')">Tirar restrição</button>`}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${libs.length?libs.map(f=>`<span class="tag t-green" style="font-size:12px;padding:5px 9px">${esc(f.nome)} <a href="#" onclick="arAlternarPessoa('${v}','${f.id}',false);return false" style="margin-left:4px;color:inherit;text-decoration:none">✕</a></span>`).join(""):'<span class="hint">Ninguém liberado ainda (só o Vitor entra).</span>'}</div>
+        <select onchange="if(this.value)arAlternarPessoa('${v}',this.value,true)" style="width:100%;padding:7px;font-size:13.5px"><option value="">+ Liberar uma pessoa...</option>${outros.map(f=>`<option value="${f.id}">${esc(f.nome)}${vinculoDe(f)==="Sede"?" (sede)":""}</option>`).join("")}</select></div>`;};
+    const naoRestritas=SECOES_PERMISSAO.filter(x=>!a[x.chave]&&x.chave!=="inicio");
+    el.innerHTML=`<div class="panel" style="padding:24px">
+     <h2 style="margin:0 0 4px;font-size:19px">🔒 Áreas restritas</h2>
+     <p class="hint" style="margin-bottom:18px">Só quem estiver na lista vê a tela no menu — <b>nem o Admin total entra sem estar aqui</b> (só o Vitor). Mesmo liberada, a pessoa precisa digitar a <b>senha mestra</b> para abrir. Dentro da tela, salvar continua seguindo a permissão normal de cada um.</p>
+     ${Object.keys(a).map(card).join("")}
+     <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><select id="ar_nova" style="flex:1;padding:8px;font-size:13.5px"><option value="">Escolha uma tela para tornar restrita...</option>${naoRestritas.map(x=>`<option value="${x.chave}">${esc(x.nome)}</option>`).join("")}</select><button class="btn btn-a btn-sm" onclick="arTornarRestrita($('#ar_nova').value)">Tornar restrita</button></div>
+    </div>`;
+    return;
+  }
   if(window._gpSelecionado==="__semid__"){
     const p=permissoesSemId();
     const linha=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid #eef0ec"><b style="font-size:14px">${esc(s.nome)}</b><select onchange="mudarPermissaoSemId('${s.chave}',this.value)" style="min-width:150px;padding:7px;font-size:13.5px"><option value="nenhum" ${(p[s.chave]||"nenhum")==="nenhum"?"selected":""}>Nenhum</option><option value="ver" ${p[s.chave]==="ver"||p[s.chave]==="salvar"?"selected":""}>Ver</option></select></div>`;
@@ -884,7 +915,7 @@ function renderDetalhePermissoes(){
      <h2 style="margin:0 0 4px;font-size:19px">👥 Sem identificação</h2>
      <p class="hint" style="margin-bottom:20px">O que aparece para quem entrou com o login e <b>não</b> informou o CPF. Essas pessoas só podem <b>ver</b> — para salvar ou editar, o sistema sempre pede o CPF.</p>
      ${SECOES_PERMISSAO.filter(s=>s.chave!=="inicio").map(linha).join("")}
-     <p class="hint" style="margin-top:14px">🔒 Fluig e Recrutamento continuam abrindo só com a senha mestra.</p></div>`;
+     <p class="hint" style="margin-top:14px">🔒 Áreas restritas nunca aparecem para quem está sem identificação.</p></div>`;
     return;
   }
   const f=DB.func.find(x=>x.id===window._gpSelecionado);
@@ -897,7 +928,7 @@ function renderDetalhePermissoes(){
    <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")} · ${esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
    ${SECOES_PERMISSAO.map(linhaSecao).join("")}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
-   <p class="hint" style="margin-top:14px">🔒 Fluig e Recrutamento não entram nessa lista — essas duas áreas só abrem com a senha mestra, direto na tela delas (não dependem de liberação por pessoa).</p>
+   <p class="hint" style="margin-top:14px">🔒 Fluig, Recrutamento e as telas marcadas como restritas são liberadas por pessoa em <b>Áreas restritas</b> (no topo da lista) — o Admin total não passa por cima delas.</p>
    <div style="padding:14px 0;border-top:1px solid #eef0ec;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><div><b style="font-size:14.5px">Aprovador de pedidos de compra</b><br><small style="color:var(--muted)">Pode aprovar pedidos (aparece na lista de "Aprovado por" com senha própria) e ganha o menu ✅ Aprovações, mesmo sem acesso à tela de Pedidos</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','aprovadorPedidos',this.checked)" ${f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id))?"checked":""} style="width:22px;height:22px"></div>
      ${(f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id)))?`<div class="fg" style="margin:10px 0 0"><label>Senha de aprovação desta pessoa</label><input type="text" value="${esc(senhaAprovacaoDe(f))}" placeholder="defina uma senha (só números, ex.: 4 dígitos)" onchange="salvarSenhaAprovacao('${f.id}',this.value)"></div>`:''}
    </div>
@@ -964,7 +995,7 @@ function pularIdentificacao(){
   closeModal();
 }
 function sairUsuario(){
-  _usuarioLogadoId="";_usuarioLogadoNome="";
+  _usuarioLogadoId="";_usuarioLogadoNome="";window._restritaOk={};_reembUnlocked=false;_recrutUnlocked=false;
   try{sessionStorage.removeItem('obra_usuario');}catch(e){}
   closeModal();buildNav();toast("Saiu.");
 }
@@ -977,7 +1008,7 @@ function usuarioLogadoPodeAutorizarPin(){
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
   return !!f.podeAutorizarPin;
 }
-function render(){migrarFluxoPedidos();({inicio:vInicio,avisos:vAvisos,painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,ajustes:vAjustes,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,escala:vEscala,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
+function render(){migrarFluxoPedidos();if(CUR!=="permissoes"&&telaRestrita(CUR)){if(!podeVerRestrita(CUR)){CUR="inicio";toast("Você não tem acesso a essa área.");}else if(!AREAS_RESTRITAS_FIXAS.includes(CUR)&&!window._restritaOk[CUR]){main.innerHTML=telaSenhaMestra(esc(nomeTela(CUR)),"desbloquearRestrita_"+CUR);window["desbloquearRestrita_"+CUR]=()=>desbloquearRestrita(CUR);bannerNuvem();return;}}({inicio:vInicio,avisos:vAvisos,painel:vPainel,func:vFunc,frentes:vFrentes,aniversariantes:vAniversariantes,experiencia:vExperiencia,contratacao:vContratacao,ajustes:vAjustes,mov:vMov,mobilizacao:vMobilizacao,recrutamento:vRecrutamento,baixada:vBaixada,transportefds:vTransporteFds,valealimentacao:vValeAlimentacao,ponto:vPonto,escala:vEscala,reemb:vReemb,locais:vLocais,mapa:vMapa,veiculos:vVeiculos,abastecimento:vAbastecimento,painelCompras:vPainelCompras,lancamentos:vLancamentos,aprovacoes:vAprovacoes,pedidos:vPedidos,listasemana:vListaSemana,fornecedores:vFornecedores,contratos:vContratos,contasmensais:vContasMensais,custoscontratos:vCustosContratos,notasfiscais:vNotasFiscais,setores:vSetores,despesas:vDespesas,almoxarifado:vAlmoxarifado,almoxPedidos:vAlmoxPedidos,areas:vAreas,permissoes:vPermissoes}[CUR])();bannerNuvem();}
 function vPainel(){const ativos=DB.func.filter(efetivoObra);const sedeAtivosP=DB.func.filter(sedeAtiva);const emHotel=DB.mov.filter(m=>!m.saida&&m.tipo==="Hotel").length;const emAloj=DB.mov.filter(m=>!m.saida&&m.tipo==="Alojamento").length;const totalP=ativos.length||1;const locaisCount=ativos.filter(f=>{const m=estadiaAtual(f.id);return !m||m.tipo==="Local";}).length;const alojadosCount=ativos.length-locaisCount;const pctLocal=((locaisCount/totalP)*100).toFixed(0);const pctAlojado=((alojadosCount/totalP)*100).toFixed(0);const modCount=ativos.filter(f=>f.classificacao==="MOD").length;const moiCount=ativos.filter(f=>f.classificacao==="MOI").length;const alerts=[];ativos.forEach(f=>{const s=saldoBaixada(f.id);if(s.saldo>=DB.cfg.alertaBaixada)alerts.push({c:"var(--amber)",b:f.nome+" — baixada disponível",s:s.saldo+" dias acumulados. Programar viagem."});else if(s.faltamDias!==null&&s.faltamDias<=DB.cfg.alertaAntecedenciaDias)alerts.push({c:"var(--steel)",b:f.nome+" — baixada se aproximando",s:"Faltam ~"+s.faltamDias+" dias corridos pra completar "+DB.cfg.alertaBaixada+" dias (hoje: "+s.saldo+")."});const ex=expStatus(f);if(ex.alerta)alerts.push({c:"var(--red)",b:f.nome+" — experiência vencendo",s:ex.txt+": faltam "+ex.rest+" dia(s) para decidir."});});ativos.filter(f=>{const m=estadiaAtual(f.id);return !m;}).forEach(f=>alerts.push({c:"var(--muted)",b:f.nome+" — sem hospedagem lançada",s:"Ativo, mas sem alojamento/hotel/local registrado."}));
   const duplicados=[];[...ativos,...sedeAtivosP].forEach(f=>{const abertas=DB.mov.filter(m=>m.func===f.id&&!m.saida&&(m.tipo==="Alojamento"||m.tipo==="Hotel"||m.tipo==="Local"));if(abertas.length>1)duplicados.push({f,abertas});});
   duplicados.forEach(({f,abertas})=>alerts.unshift({c:"var(--red)",b:"⚠ "+f.nome+" — "+abertas.length+" movimentações abertas ao mesmo tempo",s:"Tipos: "+abertas.map(m=>m.tipo+(m.local?" ("+localNome(m.local)+")":"")).join(", ")+". Isso pode estar inflando as contagens — feche as antigas em Movimentações."}));
@@ -2287,6 +2318,7 @@ function reembFiltrados(){
   return list;
 }
 function vReemb(){
+  if(!podeVerRestrita("reemb")){main.innerHTML=`<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px">🔒</div><h2>Fluig</h2><p class="hint">Você não está na lista de quem pode ver esta área.</p></div>`;return;}
   if(!_reembUnlocked){main.innerHTML=telaSenhaMestra("Fluig — lançamentos","desbloquearReemb");return;}
   const lancadores=[...new Set(DB.reemb.map(r=>r.lancadoPor).filter(Boolean))].sort();
   const filtrando=_reembCrDe||_reembCrAte||_reembFiltroFunc||_reembFiltroDe||_reembFiltroAte||_reembFiltroTipo||_reembFiltroLancadoPor||_reembFiltroStatus||_reembFiltroFreq;
@@ -10039,6 +10071,7 @@ function diasEntreEtapas(hist,statusA,statusB){
 }
 let _recrutUnlocked=false;
 function vRecrutamento(){
+  if(!podeVerRestrita("recrutamento")){main.innerHTML=`<div class="panel" style="max-width:380px;margin:60px auto;text-align:center;padding:30px 20px"><div style="font-size:34px">🔒</div><h2>Recrutamento</h2><p class="hint">Você não está na lista de quem pode ver esta área.</p></div>`;return;}
   if(!_recrutUnlocked){
     main.innerHTML=telaSenhaMestra("Recrutamento","desbloquearRecrutamento");
     return;
