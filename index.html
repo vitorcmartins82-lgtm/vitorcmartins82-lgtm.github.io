@@ -361,13 +361,40 @@ async function sha256(str){const enc=new TextEncoder().encode(str);const buf=awa
 let AUTH=null; /* sessão do Supabase Auth: {access_token,refresh_token,expires_at,email} */
 function authSalvar(a){AUTH=a;try{if(a)localStorage.setItem("obra_auth",JSON.stringify(a));else localStorage.removeItem("obra_auth");}catch(e){}}
 function authDeResposta(j){return{access_token:j.access_token,refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,email:(j.user&&j.user.email)||(AUTH&&AUTH.email)||""};}
-async function authRenovar(){
-  if(!AUTH||!AUTH.refresh_token)return false;
-  try{const r=await fetch(`${SUPA.url}/auth/v1/token?grant_type=refresh_token`,{method:"POST",headers:{"apikey":SUPA.key,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:AUTH.refresh_token})});
-    if(!r.ok){if(r.status===400||r.status===401||r.status===403){authSalvar(null);mostrarLogin("Sua sessão expirou — entre de novo.");}return false;}
-    authSalvar(authDeResposta(await r.json()));return true;}catch(e){return false;}
+function authLerStorage(){try{return JSON.parse(localStorage.getItem("obra_auth")||"null");}catch(e){return null;}}
+function authAdotarStorage(){const st=authLerStorage();if(st&&st.access_token&&(!AUTH||st.expires_at>AUTH.expires_at||st.refresh_token!==AUTH.refresh_token)){AUTH=st;return true;}return false;}
+let _renovando=null;
+function authRenovar(forcar){
+  if(_renovando)return _renovando;
+  _renovando=(async()=>{
+    authAdotarStorage(); /* outra aba pode já ter renovado */
+    if(!AUTH||!AUTH.refresh_token)return false;
+    if(!forcar&&Date.now()<AUTH.expires_at-5*60000)return true;
+    const usado=AUTH.refresh_token;
+    try{const r=await fetch(`${SUPA.url}/auth/v1/token?grant_type=refresh_token`,{method:"POST",headers:{"apikey":SUPA.key,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:usado})});
+      if(!r.ok){
+        const st=authLerStorage();if(st&&st.refresh_token&&st.refresh_token!==usado){AUTH=st;return true;} /* outra aba renovou primeiro */
+        if(r.status===400||r.status===401||r.status===403){authSalvar(null);mostrarLogin("Sua sessão expirou — entre de novo.");}
+        return false;}
+      authSalvar(authDeResposta(await r.json()));return true;}catch(e){return false;}
+  })().finally(()=>{_renovando=null;});
+  return _renovando;
 }
-async function authGarantir(){if(!AUTH)return false;if(Date.now()<AUTH.expires_at-5*60000)return true;return await authRenovar();}
+async function authGarantir(){authAdotarStorage();if(!AUTH)return false;if(Date.now()<AUTH.expires_at-5*60000)return true;return await authRenovar(true);}
+/* abas abertas ao mesmo tempo compartilham o mesmo login */
+window.addEventListener("storage",e=>{if(e.key!=="obra_auth")return;const st=authLerStorage();if(st)AUTH=st;else{AUTH=null;mostrarLogin("Você saiu do sistema em outra aba — entre de novo.");}});
+/* se o banco recusar por login vencido (401), renova o login e tenta de novo uma vez */
+(function(){const orig=window.fetch.bind(window);
+  window.fetch=async function(input,init){
+    const url=typeof input==="string"?input:((input&&input.url)||"");
+    const res=await orig(input,init);
+    if(res.status===401&&SUPA.url&&url.indexOf(SUPA.url+"/rest/")===0&&AUTH&&init&&init.headers){
+      const ok=await authRenovar(true);
+      if(ok&&AUTH){const h=Object.assign({},init.headers,{"Authorization":"Bearer "+AUTH.access_token});return orig(input,Object.assign({},init,{headers:h}));}
+    }
+    return res;
+  };
+})();
 function mostrarLogin(msg){const ls=document.getElementById("lockScreen");if(ls)ls.style.display="flex";const e=document.getElementById("lockErro");if(e){e.textContent=msg||"";e.style.display=msg?"block":"none";}}
 function esconderLogin(){const ls=document.getElementById("lockScreen");if(ls)ls.style.display="none";if(!_usuarioLogadoNome&&sessionStorage.getItem("obra_identificacao_pulada")!=="1")setTimeout(()=>abrirLoginUsuario(),300);}
 async function tentarDesbloquear(){
@@ -392,7 +419,7 @@ async function authIniciar(){
   if(!AUTH)return false;
   esconderLogin();return true;
 }
-function bloquearApp(){const a=AUTH;authSalvar(null);const fim=()=>location.reload();if(a&&a.access_token){fetch(`${SUPA.url}/auth/v1/logout`,{method:"POST",headers:{"apikey":SUPA.key,"Authorization":"Bearer "+a.access_token}}).catch(()=>{}).finally(fim);}else fim();}
+function bloquearApp(){const a=AUTH;authSalvar(null);const fim=()=>location.reload();if(a&&a.access_token){fetch(`${SUPA.url}/auth/v1/logout?scope=local`,{method:"POST",headers:{"apikey":SUPA.key,"Authorization":"Bearer "+a.access_token}}).catch(()=>{}).finally(fim);}else fim();}
 function confirmarRestaurar(){
   const val=prompt("Ação sensível: restaurar um backup SUBSTITUI todos os dados atuais.\nDigite a senha pra continuar:");
   if(val===null)return;
