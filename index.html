@@ -344,7 +344,7 @@ function senhaSalvarValida(){return Date.now()<_senhaSalvarValidaAte;}
       abrirLoginUsuario();
       return;
     }
-    const fLogado=DB.func.find(x=>x.id===_usuarioLogadoId);
+    const fLogado=pessoaPorId(_usuarioLogadoId);
     if(onclickAttr.startsWith("salvarPedido(")){executar();return;}
     if(fLogado&&fLogado.perfilSoLeitura&&!usuarioLogadoPodeAutorizarPin()){toast("Seu perfil é somente leitura — não é possível salvar ou modificar.");return;}
     const secaoChave=secaoDaTela(CUR);
@@ -771,7 +771,7 @@ function exportExperienciaExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows.length?rows:[{"—":"sem dados"}]),"Experiência");
   XLSX.writeFile(wb,"controle-experiencia-"+iso(today())+".xlsx");toast("Exportado.");
 }
-function funcNome(id){const f=DB.func.find(x=>x.id===id);return f?f.nome:"—";}
+function funcNome(id){const f=pessoaPorId(id);return f?f.nome:"—";}
 function localNome(id){const l=DB.locais.find(x=>x.id===id);return l?l.nome:"—";}
 function ativo(f){return !f.demissao&&!f.transferidoEm;}
 function transferido(f){return !!f.transferidoEm&&!f.demissao;}
@@ -840,7 +840,7 @@ function migrarPermissoesAntigas(f){
 function nivelPermissaoUsuario(secaoChave){
   if(!_usuarioLogadoId)return null;
   if(_usuarioLogadoId==="__emergencia__")return"salvar";
-  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  const f=pessoaPorId(_usuarioLogadoId);
   if(!f)return null;
   if(usuarioLogadoPodeAutorizarPin())return"salvar";
   const perms=migrarPermissoesAntigas(f);
@@ -848,11 +848,41 @@ function nivelPermissaoUsuario(secaoChave){
   if(f.perfilSoLeitura&&nivel==="salvar")nivel="ver";
   return nivel;
 }
+/* ===== CONTROLE SEDE: quem não está na lista de funcionários, mas precisa acessar (nome + CPF + permissões) ===== */
+function acessosSede(){return Array.isArray(DB.cfg&&DB.cfg.acessosSede)?DB.cfg.acessosSede:[];}
+function pessoaPorId(id){if(!id)return null;return DB.func.find(x=>x.id===id)||acessosSede().find(x=>x.id===id)||null;}
+function salvarPessoa(p){save(p&&p._sede?"cfg":"func");}
+function pessoasPermissao(){return DB.func.filter(ativo).concat(acessosSede());}
+function temLiberacao(f){
+  if(f.podeAutorizarPin||f.aprovadorPedidos===true)return true;
+  const n=normalizaNome(f.nome||"");if(n.includes("VITOR")&&n.includes("MARTINS"))return true;
+  const p=migrarPermissoesAntigas(f);if(Object.values(p).some(v=>v&&v!=="nenhum"))return true;
+  const a=areasRestritas();return Object.keys(a).some(k=>(a[k]||[]).includes(f.id));
+}
+function fmtCpf(c){c=soDigitos(c||"").padStart(11,"0");return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4");}
+function sedeAdicionar(){
+  const nome=($("#sd_nome").value||"").trim().toUpperCase();const cpf=soDigitos($("#sd_cpf").value||"");
+  if(!nome||cpf.length!==11){toast("Informe o nome e o CPF (11 números).");return;}
+  if(!_ultimaCargaTs){toast("Espere os dados carregarem da nuvem.");return;}
+  const pad=x=>soDigitos(x).padStart(11,"0");
+  if(DB.func.some(f=>ativo(f)&&f.cpf&&pad(f.cpf)===cpf)){toast("Esse CPF já está na lista de funcionários — ajuste as permissões direto na pessoa.");return;}
+  if(acessosSede().some(x=>pad(x.cpf)===cpf)){toast("Esse CPF já está no Controle Sede.");return;}
+  const p={id:"sede_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),nome,cpf,_sede:true,permissoes:{}};
+  DB.cfg.acessosSede=acessosSede().concat([p]);save("cfg");toast(nome+" incluído(a) — agora ajuste as permissões.");
+  window._gpSelecionado=p.id;renderListaPermissoes();renderDetalhePermissoes();
+}
+function sedeRemover(id){
+  const p=acessosSede().find(x=>x.id===id);if(!p)return;
+  if(!confirm("Remover "+p.nome+" do Controle Sede? A pessoa perde o acesso pelo CPF."))return;
+  DB.cfg.acessosSede=acessosSede().filter(x=>x.id!==id);
+  const a=areasRestritas();Object.keys(a).forEach(k=>{a[k]=(a[k]||[]).filter(x=>x!==id);});DB.cfg.areasRestritas=a;
+  save("cfg");toast("Removido do Controle Sede.");window._gpSelecionado="__sede__";renderListaPermissoes();renderDetalhePermissoes();
+}
 /* ===== ÁREAS RESTRITAS: só quem está na lista vê a tela (nem Admin total passa, só o Vitor) e ao abrir pede a senha mestra ===== */
 const AREAS_RESTRITAS_FIXAS=["reemb","recrutamento"];
 function areasRestritas(){const a=Object.assign({},(DB.cfg&&DB.cfg.areasRestritas)||{});AREAS_RESTRITAS_FIXAS.forEach(t=>{if(!Array.isArray(a[t]))a[t]=[];});return a;}
 function telaRestrita(v){return Object.prototype.hasOwnProperty.call(areasRestritas(),v);}
-function usuarioEhVitor(){if(_usuarioLogadoId==="__emergencia__")return true;const f=DB.func.find(x=>x.id===_usuarioLogadoId);if(!f)return false;const n=normalizaNome(f.nome);return n.includes("VITOR")&&n.includes("MARTINS");}
+function usuarioEhVitor(){if(_usuarioLogadoId==="__emergencia__")return true;const f=pessoaPorId(_usuarioLogadoId);if(!f)return false;const n=normalizaNome(f.nome);return n.includes("VITOR")&&n.includes("MARTINS");}
 function podeVerRestrita(v){if(!telaRestrita(v))return true;if(!_usuarioLogadoId)return false;if(usuarioEhVitor())return true;return (areasRestritas()[v]||[]).includes(_usuarioLogadoId);}
 /* Abas de dentro das páginas que também podem virar área restrita */
 const ABAS_RESTRINGIVEIS=[
@@ -917,22 +947,26 @@ function vPermissoes(){
 }
 function renderListaPermissoes(){
   const termo=(window._gpBusca||"").toLowerCase();
-  const lista=porNome(DB.func.filter(f=>ativo(f)&&(!termo||f.nome.toLowerCase().includes(termo))));
+  const lista=porNome(pessoasPermissao().filter(f=>!termo||f.nome.toLowerCase().includes(termo)));
   const el=$("#gp_lista");if(!el)return;
-  const itemAreas=`<div onclick="window._gpSelecionado='__areas__';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px dashed #b9c2bd;background:${window._gpSelecionado==='__areas__'?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado==='__areas__'?'700':'400'}">🔒 Áreas restritas</div>`;
-  const itemSemId=`<div onclick="window._gpSelecionado='__semid__';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px dashed #b9c2bd;background:${window._gpSelecionado==='__semid__'?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado==='__semid__'?'700':'400'}">👥 Sem identificação (sem CPF)</div>`;
-  el.innerHTML=itemAreas+itemSemId+(lista.length?lista.map(f=>`<div onclick="window._gpSelecionado='${f.id}';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:4px;background:${window._gpSelecionado===f.id?'#eef2ee':'transparent'};font-weight:${window._gpSelecionado===f.id?'700':'400'}">${esc(f.nome)}${f.podeAutorizarPin?' <span class="tag t-green" style="font-size:9px">admin</span>':''}</div>`).join(""):'<p class="hint">Ninguém encontrado.</p>');
+  const sel=window._gpSelecionado;
+  const fixo=(id,txt)=>`<div onclick="window._gpSelecionado='${id}';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px dashed #b9c2bd;background:${sel===id?'#eef2ee':'transparent'};font-weight:${sel===id?'700':'400'}">${txt}</div>`;
+  const item=f=>`<div onclick="window._gpSelecionado='${f.id}';renderListaPermissoes();renderDetalhePermissoes()" style="cursor:pointer;padding:9px 12px;border-radius:8px;margin-bottom:3px;background:${sel===f.id?'#eef2ee':'transparent'};font-weight:${sel===f.id?'700':'400'}">${esc(f.nome)}${f.podeAutorizarPin?' <span class="tag t-green" style="font-size:9px">admin</span>':''}${f._sede?' <span class="tag t-amber" style="font-size:9px">controle sede</span>':(vinculoDe(f)==="Sede"?' <span class="tag t-amber" style="font-size:9px">sede</span>':'')}</div>`;
+  const com=lista.filter(temLiberacao),sem=lista.filter(f=>!temLiberacao(f));
+  const tit=t=>`<div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:14px 4px 6px">${t}</div>`;
+  el.innerHTML=fixo('__areas__','🔒 Áreas restritas')+fixo('__semid__','👥 Sem identificação (sem CPF)')+fixo('__sede__','🏢 Controle Sede ('+acessosSede().length+')')
+    +(lista.length?tit('✅ Com liberação ('+com.length+')')+(com.map(item).join("")||'<p class="hint">Ninguém.</p>')+tit('Sem liberação ('+sem.length+')')+sem.map(item).join(""):'<p class="hint" style="margin-top:10px">Ninguém encontrado.</p>');
 }
 function renderDetalhePermissoes(){
   const el=$("#gp_detalhe");if(!el)return;
   if(window._gpSelecionado==="__areas__"){
     const a=areasRestritas();
-    const pessoas=porNome(DB.func.filter(ativo));
+    const pessoas=porNome(pessoasPermissao());
     const card=v=>{const lib=new Set(a[v]||[]);const libs=pessoas.filter(f=>lib.has(f.id));const outros=pessoas.filter(f=>!lib.has(f.id));
       return `<div style="border:1px solid #e3e7e2;border-radius:10px;padding:16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px"><b style="font-size:15px">🔒 ${esc(nomeTela(v))}</b>${AREAS_RESTRITAS_FIXAS.includes(v)?'<span class="hint">sempre restrita</span>':`<button class="btn btn-g btn-sm" onclick="arRemoverRestricao('${v}')">Tirar restrição</button>`}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${libs.length?libs.map(f=>`<span class="tag t-green" style="font-size:12px;padding:5px 9px">${esc(f.nome)} <a href="#" onclick="arAlternarPessoa('${v}','${f.id}',false);return false" style="margin-left:4px;color:inherit;text-decoration:none">✕</a></span>`).join(""):'<span class="hint">Ninguém liberado ainda (só o Vitor entra).</span>'}</div>
-        <select onchange="if(this.value)arAlternarPessoa('${v}',this.value,true)" style="width:100%;padding:7px;font-size:13.5px"><option value="">+ Liberar uma pessoa...</option>${outros.map(f=>`<option value="${f.id}">${esc(f.nome)}${vinculoDe(f)==="Sede"?" (sede)":""}</option>`).join("")}</select></div>`;};
+        <select onchange="if(this.value)arAlternarPessoa('${v}',this.value,true)" style="width:100%;padding:7px;font-size:13.5px"><option value="">+ Liberar uma pessoa...</option>${(()=>{const op=f=>`<option value="${f.id}">${esc(f.nome)}${f._sede?" (controle sede)":vinculoDe(f)==="Sede"?" (sede)":""}</option>`;const c=outros.filter(temLiberacao),o=outros.filter(f=>!temLiberacao(f));return (c.length?`<optgroup label="✅ Já têm liberação em alguma página (${c.length})">${c.map(op).join("")}</optgroup>`:"")+`<optgroup label="Demais pessoas">${o.map(op).join("")}</optgroup>`;})()}</select></div>`;};
     const naoRestritas=SECOES_PERMISSAO.filter(x=>!a[x.chave]&&x.chave!=="inicio");
     el.innerHTML=`<div class="panel" style="padding:24px">
      <h2 style="margin:0 0 4px;font-size:19px">🔒 Áreas restritas</h2>
@@ -952,39 +986,53 @@ function renderDetalhePermissoes(){
      <p class="hint" style="margin-top:14px">🔒 Áreas restritas nunca aparecem para quem está sem identificação.</p></div>`;
     return;
   }
-  const f=DB.func.find(x=>x.id===window._gpSelecionado);
+  if(window._gpSelecionado==="__sede__"){
+    const L=porNome(acessosSede().slice());
+    el.innerHTML=`<div class="panel" style="padding:24px">
+     <h2 style="margin:0 0 4px;font-size:19px">🏢 Controle Sede</h2>
+     <p class="hint" style="margin-bottom:18px">Pessoas que <b>não estão na lista de funcionários</b> (ex.: equipe da sede), mas precisam usar o sistema. Elas se identificam pelo CPF normalmente e <b>não entram no efetivo</b>. Depois de incluir, clique no nome para liberar ou restringir as telas.</p>
+     <div style="display:grid;grid-template-columns:1fr 180px auto;gap:8px;align-items:end;margin-bottom:20px">
+       <div class="fg" style="margin:0"><label>Nome</label><input type="text" id="sd_nome" placeholder="Nome completo"></div>
+       <div class="fg" style="margin:0"><label>CPF</label><input type="text" id="sd_cpf" inputmode="numeric" placeholder="só números" onkeydown="if(event.key==='Enter')sedeAdicionar()"></div>
+       <button class="btn btn-a" onclick="sedeAdicionar()">+ Incluir</button>
+     </div>
+     ${L.length?L.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #eef0ec"><div><b>${esc(p.nome)}</b> ${temLiberacao(p)?'<span class="tag t-green" style="font-size:9px">com liberação</span>':'<span class="tag" style="font-size:9px">sem liberação</span>'}<br><small style="color:var(--muted)">CPF ${fmtCpf(p.cpf)}</small></div><div style="display:flex;gap:6px"><button class="btn btn-a btn-sm" onclick="window._gpSelecionado='${p.id}';renderListaPermissoes();renderDetalhePermissoes()">Permissões</button><button class="btn btn-g btn-sm" onclick="sedeRemover('${p.id}')">Remover</button></div></div>`).join(""):'<p class="hint">Ninguém cadastrado ainda.</p>'}
+    </div>`;
+    return;
+  }
+  const f=pessoaPorId(window._gpSelecionado);
   if(!f){el.innerHTML='<div class="panel"><p class="hint" style="padding:20px">Escolhe uma pessoa na lista ao lado.</p></div>';return;}
   const perms=migrarPermissoesAntigas(f);
   const ehAdminNato=normalizaNome(f.nome).includes("VITOR")&&normalizaNome(f.nome).includes("MARTINS");
   const linhaSecao=s=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid #eef0ec"><b style="font-size:14px">${esc(s.nome)}</b><select onchange="mudarPermissao('${f.id}','${s.chave}',this.value)" style="min-width:150px;padding:7px;font-size:13.5px">${NIVEIS_PERMISSAO.map(n=>`<option value="${n}" ${perms[s.chave]===n?"selected":""}>${n==='nenhum'?'Nenhum':n==='ver'?'Ver':'Ver e Salvar'}</option>`).join("")}</select></div>`;
   el.innerHTML=`<div class="panel" style="padding:24px">
    <h2 style="margin:0 0 4px;font-size:19px">${esc(f.nome)}</h2>
-   <p class="hint" style="margin-bottom:20px">${esc(f.funcao||"—")} · ${esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
+   <p class="hint" style="margin-bottom:20px">${f._sede?`🏢 Controle Sede · CPF ${fmtCpf(f.cpf)} · <a href="#" onclick="sedeRemover('${f.id}');return false" style="color:var(--red)">remover acesso</a>`:esc(f.funcao||"—")+" · "+esc(f.cpf||"sem CPF cadastrado")}${ehAdminNato?' · <span class="tag t-green">reconhecido automaticamente como admin total</span>':''}</p>
    ${SECOES_PERMISSAO.map(linhaSecao).join("")}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eef0ec;margin-top:6px"><div><b style="font-size:14.5px">Somente leitura (em tudo acima)</b><br><small style="color:var(--muted)">Vê o que tiver liberado nas telas de cima, mas nunca consegue salvar ou modificar nada</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','perfilSoLeitura',this.checked)" ${f.perfilSoLeitura?"checked":""} style="width:22px;height:22px"></div>
    <p class="hint" style="margin-top:14px">🔒 Fluig, Recrutamento e as telas marcadas como restritas são liberadas por pessoa em <b>Áreas restritas</b> (no topo da lista) — o Admin total não passa por cima delas.</p>
-   <div style="padding:14px 0;border-top:1px solid #eef0ec;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><div><b style="font-size:14.5px">Aprovador de pedidos de compra</b><br><small style="color:var(--muted)">Pode aprovar pedidos (aparece na lista de "Aprovado por" com senha própria) e ganha o menu ✅ Aprovações, mesmo sem acesso à tela de Pedidos</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','aprovadorPedidos',this.checked)" ${f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id))?"checked":""} style="width:22px;height:22px"></div>
+   ${f._sede?"":`<div style="padding:14px 0;border-top:1px solid #eef0ec;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px"><div><b style="font-size:14.5px">Aprovador de pedidos de compra</b><br><small style="color:var(--muted)">Pode aprovar pedidos (aparece na lista de "Aprovado por" com senha própria) e ganha o menu ✅ Aprovações, mesmo sem acesso à tela de Pedidos</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','aprovadorPedidos',this.checked)" ${f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id))?"checked":""} style="width:22px;height:22px"></div>
      ${(f.aprovadorPedidos===true||(f.aprovadorPedidos===undefined&&aprovadoresPedidos().some(a=>a.id===f.id)))?`<div class="fg" style="margin:10px 0 0"><label>Senha de aprovação desta pessoa</label><input type="text" value="${esc(senhaAprovacaoDe(f))}" placeholder="defina uma senha (só números, ex.: 4 dígitos)" onchange="salvarSenhaAprovacao('${f.id}',this.value)"></div>`:''}
-   </div>
+   </div>`}
    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;margin-top:6px"><div><b style="font-size:14.5px">Admin total</b><br><small style="color:var(--muted)">Acesso completo a tudo, sempre — igual o Vitor</small></div><input type="checkbox" onchange="mudarFlagPermissao('${f.id}','podeAutorizarPin',this.checked)" ${f.podeAutorizarPin?"checked":""} style="width:22px;height:22px"></div>
    </div>`;
 }
 function salvarSenhaAprovacao(fid,valor){
-  const f=DB.func.find(x=>x.id===fid);
+  const f=pessoaPorId(fid);
   f.senhaAprovacao=(valor||"").trim();
   if(f.aprovadorPedidos===undefined)f.aprovadorPedidos=true;
-  save("func");toast("Senha de aprovação salva.");
+  salvarPessoa(f);toast("Senha de aprovação salva.");
 }
 function mudarPermissao(fid,secaoChave,nivel){
-  const f=DB.func.find(x=>x.id===fid);
+  const f=pessoaPorId(fid);
   f.permissoes=migrarPermissoesAntigas(f);
   f.permissoes[secaoChave]=nivel;
-  save("func");toast("Permissão atualizada.");
+  salvarPessoa(f);toast("Permissão atualizada.");
 }
 function mudarFlagPermissao(fid,campo,valor){
-  const f=DB.func.find(x=>x.id===fid);
+  const f=pessoaPorId(fid);
   f[campo]=valor;
-  save("func");toast("Atualizado.");
+  salvarPessoa(f);toast("Atualizado.");
   renderDetalhePermissoes();
 }
 function abrirLoginUsuario(){
@@ -999,7 +1047,7 @@ function buscarPorCpfLogin(){
   const cpfDigitado=soDigitos($("#lg_cpf").value);
   if(!cpfDigitado){toast("Digite o CPF.");return;}
   const pad=x=>soDigitos(x).padStart(11,"0");
-  const f=DB.func.find(x=>ativo(x)&&x.cpf&&pad(x.cpf)===cpfDigitado.padStart(11,"0"));
+  const f=DB.func.find(x=>ativo(x)&&x.cpf&&pad(x.cpf)===cpfDigitado.padStart(11,"0"))||acessosSede().find(x=>x.cpf&&pad(x.cpf)===cpfDigitado.padStart(11,"0"));
   const wrap=$("#lg_pessoawrap");
   if(!f){
     const baseFora=DB.func.length===0||_tabelasFalharam.includes("func");
@@ -1036,7 +1084,7 @@ function sairUsuario(){
 function usuarioLogadoPodeAutorizarPin(){
   if(!_usuarioLogadoId)return false;
   if(_usuarioLogadoId==="__emergencia__")return true;
-  const f=DB.func.find(x=>x.id===_usuarioLogadoId);
+  const f=pessoaPorId(_usuarioLogadoId);
   if(!f)return false;
   const nomeNorm=normalizaNome(f.nome);
   if(nomeNorm.includes("VITOR")&&nomeNorm.includes("MARTINS"))return true;
